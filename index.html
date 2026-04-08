@@ -261,11 +261,11 @@
 
     <!-- ================== MODAIS ================== -->
 
-    <!-- Modal Gerenciar Todas Parcelas (NOVO) -->
+    <!-- Modal Gerenciar Todas Parcelas -->
     <div id="modal-gerenciar-parcelas" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[200] flex items-center justify-center hidden-screen p-4">
         <div class="bg-white rounded-3xl p-6 w-full max-w-lg shadow-2xl max-h-[90vh] flex flex-col">
             <div class="flex justify-between items-center mb-4 border-b border-slate-100 pb-4">
-                <h3 class="text-xl font-bold text-brand-900 flex items-center gap-2"><i class="fas fa-hand-holding-usd text-orange-500"></i> Contas a Receber</h3>
+                <h3 id="titulo-modal-parcelas" class="text-xl font-bold text-brand-900 flex items-center gap-2"><i class="fas fa-hand-holding-usd text-orange-500"></i> Contas a Receber</h3>
                 <button onclick="fecharModalGerenciarParcelas()" class="w-10 h-10 bg-slate-100 text-slate-500 rounded-full hover:bg-slate-200 active:scale-95"><i class="fas fa-times"></i></button>
             </div>
             <div class="overflow-y-auto no-scrollbar flex-1 pr-2">
@@ -576,7 +576,11 @@
             <button onclick="navegarApp('estoque')" id="tab-estoque" class="flex-1 flex flex-col items-center p-2 text-slate-400 min-w-[60px] tab-active transition-all"><i class="fas fa-box text-lg mb-1"></i><span class="text-[8px] sm:text-[9px] font-bold mt-1 uppercase">Estoque</span></button>
             <button onclick="navegarApp('clientes')" id="tab-clientes" class="flex-1 flex flex-col items-center p-2 text-slate-400 min-w-[60px] transition-all"><i class="fas fa-users text-lg mb-1"></i><span class="text-[8px] sm:text-[9px] font-bold mt-1 uppercase">Clientes</span></button>
             <button onclick="navegarApp('fornecedores')" id="tab-fornecedores" class="flex-1 flex flex-col items-center p-2 text-slate-400 min-w-[60px] transition-all"><i class="fas fa-truck text-lg mb-1"></i><span class="text-[8px] sm:text-[9px] font-bold mt-1 uppercase">Fornec.</span></button>
-            <button onclick="navegarApp('vendas')" id="tab-vendas" class="flex-1 flex flex-col items-center p-2 text-slate-400 min-w-[60px] transition-all"><i class="fas fa-list-alt text-lg mb-1"></i><span class="text-[8px] sm:text-[9px] font-bold mt-1 uppercase">Relatórios</span></button>
+            <button onclick="navegarApp('vendas')" id="tab-vendas" class="relative flex-1 flex flex-col items-center p-2 text-slate-400 min-w-[60px] transition-all">
+                <i class="fas fa-list-alt text-lg mb-1"></i>
+                <span class="text-[8px] sm:text-[9px] font-bold mt-1 uppercase">Relatórios</span>
+                <span id="badge-alertas" class="absolute top-1 right-2 sm:right-4 bg-red-500 text-white text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center hidden-screen shadow-md">0</span>
+            </button>
             <button onclick="navegarApp('graficos')" id="tab-graficos" class="flex-1 flex flex-col items-center p-2 text-slate-400 min-w-[60px] transition-all"><i class="fas fa-chart-pie text-lg mb-1"></i><span class="text-[8px] sm:text-[9px] font-bold mt-1 uppercase">Gráficos</span></button>
             <button onclick="navegarApp('despesas')" id="tab-despesas" class="flex-1 flex flex-col items-center p-2 text-slate-400 min-w-[60px] transition-all"><i class="fas fa-wallet text-lg mb-1"></i><span class="text-[8px] sm:text-[9px] font-bold mt-1 uppercase">Despesas</span></button>
         </div>
@@ -600,6 +604,7 @@
         let tempMaxEstoque = 0;
         
         let graficoInstancia = null;
+        let filtroClienteIdAtual = null;
 
         function saveDB() {
             localStorage.setItem('db_estoque_v4', JSON.stringify(dbProdutos));
@@ -608,6 +613,7 @@
             localStorage.setItem('db_parcelas_v4', JSON.stringify(dbParcelas));
             localStorage.setItem('db_despesas_v4', JSON.stringify(dbDespesas));
             localStorage.setItem('db_fornecedores_v4', JSON.stringify(dbFornecedores));
+            if (typeof verificarAlertasVencimento === 'function') verificarAlertasVencimento(false);
         }
 
         // --- UTILITÁRIOS ---
@@ -622,6 +628,40 @@
         };
         const guid = () => Date.now().toString() + Math.random().toString(36).substr(2, 5);
 
+        // --- VERIFICAÇÃO AUTOMÁTICA DE CARTÃO ---
+        function verificarBaixasAutomaticas() {
+            let houveBaixa = false;
+            let valorTotalBaixado = 0;
+            const hoje = new Date();
+            hoje.setHours(0,0,0,0);
+            
+            dbParcelas.forEach(p => {
+                if (p.status === 'pendente') {
+                    const venda = dbVendas.find(v => v.idCompra === p.vid);
+                    if (venda && venda.metodo.includes('Cartão de Crédito')) {
+                        const venc = new Date(p.vencimento);
+                        venc.setHours(0,0,0,0);
+                        
+                        if (hoje >= venc) {
+                            p.status = 'pago';
+                            houveBaixa = true;
+                            valorTotalBaixado += p.valor;
+                        }
+                    }
+                }
+            });
+
+            if (houveBaixa) {
+                saveDB();
+                if (!document.getElementById('screen-vendas').classList.contains('hidden-screen')) {
+                    renderRelatorios();
+                }
+                setTimeout(() => {
+                    showToast(`Cartão: ${fmtMoeda(valorTotalBaixado)} creditado automaticamente aos recebidos!`);
+                }, 500);
+            }
+        }
+
         // --- NAVEGAÇÃO ---
         let currentCat = '';
         function navegarApp(screen) {
@@ -634,7 +674,10 @@
             if (screen === 'estoque') renderCategorias();
             if (screen === 'clientes') renderClientes();
             if (screen === 'fornecedores') renderFornecedores();
-            if (screen === 'vendas') renderRelatorios();
+            if (screen === 'vendas') {
+                verificarBaixasAutomaticas();
+                renderRelatorios();
+            }
             if (screen === 'graficos') renderGraficos();
             if (screen === 'despesas') renderDespesas();
         }
@@ -1284,14 +1327,35 @@
             document.getElementById('msg-vazia-clientes').classList.toggle('hidden-screen', dbClientes.length > 0);
 
             dbClientes.forEach(c => {
-                list.innerHTML += `
-                    <div class="bg-white p-5 rounded-3xl border border-brand-100 shadow-sm flex justify-between items-center group">
-                        <div>
-                            <h3 class="font-bold text-slate-800 text-lg">${c.nome}</h3>
-                            <p class="text-xs text-slate-400"><i class="fas fa-phone mr-1"></i> ${c.tel} | <i class="fas fa-id-card mr-1"></i> ${c.cpf}</p>
-                            <p class="text-[10px] text-brand-600 font-medium mt-1 uppercase"><i class="fas fa-map-marker-alt mr-1"></i> ${c.endereco || 'Endereço não informado'}</p>
+                const dividas = dbParcelas.filter(p => p.cid === c.id && p.status === 'pendente');
+                const totalDivida = dividas.reduce((acc, p) => acc + p.valor, 0);
+                
+                let badgeDivida = '';
+                if (totalDivida > 0) {
+                    badgeDivida = `
+                        <div class="mt-4 pt-3 border-t border-slate-100 flex justify-between items-center">
+                            <div>
+                                <span class="text-[9px] text-red-500 font-bold uppercase tracking-wider">Dívida (Carnê)</span>
+                                <p class="font-black text-red-600 text-sm">${fmtMoeda(totalDivida)}</p>
+                            </div>
+                            <button onclick="abrirModalGerenciarParcelas('${c.id}')" class="bg-red-50 text-red-600 border border-red-200 px-3 py-2 rounded-xl text-xs font-bold active:scale-95 flex items-center gap-1 transition hover:bg-red-100">
+                                <i class="fas fa-hand-holding-usd"></i> Ver Parcelas
+                            </button>
                         </div>
-                        <button onclick="deleteCli('${c.id}')" class="text-slate-300 hover:text-red-500 p-2 opacity-0 group-hover:opacity-100 transition"><i class="fas fa-trash-alt"></i></button>
+                    `;
+                }
+
+                list.innerHTML += `
+                    <div class="bg-white p-5 rounded-3xl border border-brand-100 shadow-sm flex flex-col group relative">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h3 class="font-bold text-slate-800 text-lg">${c.nome}</h3>
+                                <p class="text-xs text-slate-400"><i class="fas fa-phone mr-1"></i> ${c.tel} | <i class="fas fa-id-card mr-1"></i> ${c.cpf}</p>
+                                <p class="text-[10px] text-brand-600 font-medium mt-1 uppercase"><i class="fas fa-map-marker-alt mr-1"></i> ${c.endereco || 'Endereço não informado'}</p>
+                            </div>
+                            <button onclick="deleteCli('${c.id}')" class="text-slate-300 hover:text-red-500 p-2 transition"><i class="fas fa-trash-alt"></i></button>
+                        </div>
+                        ${badgeDivida}
                     </div>`;
             });
         }
@@ -1457,21 +1521,33 @@
         }
 
         // --- GERENCIAR PARCELAS (NOVO) ---
-        function abrirModalGerenciarParcelas() {
+        function abrirModalGerenciarParcelas(cid = null) {
+            filtroClienteIdAtual = cid;
             renderListaTodasParcelas();
             document.getElementById('modal-gerenciar-parcelas').classList.remove('hidden-screen');
         }
 
         function fecharModalGerenciarParcelas() {
             document.getElementById('modal-gerenciar-parcelas').classList.add('hidden-screen');
+            filtroClienteIdAtual = null;
         }
 
         function renderListaTodasParcelas() {
             const list = document.getElementById('lista-todas-parcelas');
             list.innerHTML = '';
             
+            let pendentes = dbParcelas.filter(p => p.status === 'pendente');
+            
+            if (filtroClienteIdAtual) {
+                pendentes = pendentes.filter(p => p.cid === filtroClienteIdAtual);
+                const cli = dbClientes.find(x => x.id === filtroClienteIdAtual);
+                document.getElementById('titulo-modal-parcelas').innerHTML = `<i class="fas fa-user-tag text-orange-500"></i> Dívida de: ${cli ? cli.nome : ''}`;
+            } else {
+                document.getElementById('titulo-modal-parcelas').innerHTML = `<i class="fas fa-hand-holding-usd text-orange-500"></i> Contas a Receber (Todas)`;
+            }
+
             // Ordenar por data mais antiga primeiro
-            const pendentes = dbParcelas.filter(p => p.status === 'pendente').sort((a,b) => new Date(a.vencimento) - new Date(b.vencimento));
+            pendentes.sort((a,b) => new Date(a.vencimento) - new Date(b.vencimento));
 
             if(pendentes.length === 0) {
                 list.innerHTML = '<p class="text-center text-slate-500 py-8 font-bold">Nenhuma parcela a receber no momento! 🎉</p>';
@@ -1507,7 +1583,7 @@
                 saveDB(); 
                 renderRelatorios(); 
                 renderListaTodasParcelas(); // Atualiza a lista do modal sem fechar ele
-                showToast("Baixa realizada com sucesso!");
+                showToast(`Sucesso! ${fmtMoeda(p.valor)} adicionado ao "Recebido (Mês)".`);
             }, 'emerald');
         }
 
@@ -1518,7 +1594,7 @@
                 p.vencimento = new Date().toISOString(); // Define o dia do pagamento
                 saveDB(); 
                 renderRelatorios(); 
-                showToast("Parcela recebida e computada!");
+                showToast(`Sucesso! ${fmtMoeda(p.valor)} adicionado ao "Recebido (Mês)".`);
             }, 'emerald');
         }
 
@@ -1946,7 +2022,32 @@
         }
         function fecharModalConfirm() { document.getElementById('modal-confirmacao').classList.add('hidden-screen'); }
 
+        function verificarAlertasVencimento(showToastAlert = false) {
+            const hoje = new Date();
+            const prox = dbParcelas.filter(p => {
+                if(p.status !== 'pendente') return false;
+                const d = new Date(p.vencimento);
+                const diff = (d - hoje) / (1000 * 3600 * 24);
+                return diff <= 3 && diff >= -30; 
+            });
+
+            const badge = document.getElementById('badge-alertas');
+            if (badge) {
+                if (prox.length > 0) {
+                    badge.textContent = prox.length;
+                    badge.classList.remove('hidden-screen');
+                    if (showToastAlert) {
+                        setTimeout(() => showToast(`Atenção: ${prox.length} dívida(s) vencendo em breve!`), 1000);
+                    }
+                } else {
+                    badge.classList.add('hidden-screen');
+                }
+            }
+        }
+
         // Inicialização
+        verificarBaixasAutomaticas();
+        verificarAlertasVencimento(true);
         renderCategorias();
     </script>
 </body>
