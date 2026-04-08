@@ -5,95 +5,486 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Gestor de Estoque e Preços</title>
     
-    <!-- Configurações para funcionar como Aplicativo no Celular -->
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="theme-color" content="#2563eb">
+    <meta name="theme-color" content="#e11d48">
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    
+    <script>
+        // Configuração da Paleta de Cores (Tons de Rosa)
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#fff1f2',  // Fundo muito claro
+                            100: '#ffe4e6', // Fundo claro
+                            200: '#fecdd3', // Bordas
+                            500: '#f43f5e', // Botões hover
+                            600: '#e11d48', // Cor Principal
+                            700: '#be123c', // Textos escuros
+                            800: '#9f1239',
+                            900: '#881337',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; -webkit-tap-highlight-color: transparent; }
-        .alert-low-stock { background-color: #fef2f2 !important; border-color: #fca5a5 !important; }
+        body { font-family: 'Inter', sans-serif; background-color: #fff1f2; -webkit-tap-highlight-color: transparent; }
+        
+        /* Alerta de Estoque Baixo (Vermelho sobre Rosa) */
+        .alert-low-stock { background-color: #fee2e2 !important; border-color: #fca5a5 !important; }
         .alert-low-stock span { color: #991b1b !important; }
         .alert-low-stock input { color: #991b1b !important; }
+        
         input[type="number"]::-webkit-inner-spin-button, 
         input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+        
+        .hidden-screen { display: none !important; }
+
+        /* Toast Animation */
+        @keyframes slideInDown {
+            from { transform: translateY(-100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .toast-enter { animation: slideInDown 0.3s ease-out forwards; }
     </style>
 </head>
-<body class="p-4 md:p-8 text-slate-800 pb-24">
+<body class="p-4 md:p-8 text-slate-800 pb-28">
 
-    <div class="max-w-4xl mx-auto">
-        <!-- Cabeçalho Principal -->
-        <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4 bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
-            <h1 class="text-xl md:text-2xl font-bold text-slate-700 flex items-center">
-                <i class="fas fa-box-open text-blue-600 mr-3 text-2xl"></i> 
-                Gestor de Estoque
-            </h1>
-            <button onclick="adicionarLinha()" class="w-full md:w-auto bg-blue-600 hover:bg-blue-700 text-white px-5 py-3 rounded-xl shadow-sm transition font-medium text-sm flex justify-center items-center active:scale-95">
+    <!-- Toast Notification (Feedback de Venda) -->
+    <div id="toast-container" class="fixed top-4 left-0 right-0 z-50 flex justify-center hidden-screen pointer-events-none">
+        <div id="toast-msg" class="bg-emerald-500 text-white px-6 py-3 rounded-full shadow-lg font-medium flex items-center gap-2">
+            <i class="fas fa-check-circle"></i> <span>Venda Registrada!</span>
+        </div>
+    </div>
+
+    <!-- ================== TELA 1: CATEGORIAS ================== -->
+    <div id="tela-categorias" class="max-w-4xl mx-auto">
+        <div class="flex items-center justify-between mb-8 bg-white p-5 rounded-3xl shadow-sm border border-brand-100">
+            <div>
+                <h1 class="text-2xl font-bold text-brand-900">Meu Estoque</h1>
+                <p class="text-sm text-brand-600">Selecione uma categoria</p>
+            </div>
+            <div class="w-12 h-12 bg-brand-100 rounded-full flex items-center justify-center text-brand-600 text-xl">
+                <i class="fas fa-gem"></i>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-2 md:grid-cols-3 gap-4" id="grid-categorias">
+            <!-- Gerado via JS -->
+        </div>
+    </div>
+
+    <!-- ================== TELA 2: LISTA DE PRODUTOS ================== -->
+    <div id="tela-produtos" class="max-w-4xl mx-auto hidden-screen">
+        
+        <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4 bg-white p-4 rounded-2xl shadow-sm border border-brand-100 sticky top-4 z-10">
+            <div class="flex items-center w-full md:w-auto">
+                <button onclick="voltarCategorias()" class="mr-4 w-10 h-10 bg-brand-50 text-brand-600 rounded-full flex items-center justify-center hover:bg-brand-100 transition active:scale-95">
+                    <i class="fas fa-arrow-left"></i>
+                </button>
+                <h1 id="titulo-categoria" class="text-xl md:text-2xl font-bold text-brand-900 flex-1">Categoria</h1>
+            </div>
+            
+            <button onclick="adicionarLinha()" class="w-full md:w-auto bg-brand-600 hover:bg-brand-700 text-white px-6 py-3 rounded-xl shadow-md shadow-brand-200 transition font-medium text-sm flex justify-center items-center active:scale-95">
                 <i class="fas fa-plus mr-2"></i> Novo Produto
             </button>
         </div>
 
-        <!-- Container da Lista de Produtos (Cards) -->
+        <!-- Lista de Produtos -->
         <div id="listaProdutos" class="flex flex-col gap-5">
-            <!-- Os cards serão inseridos aqui via JavaScript -->
+            <!-- Cards gerados via JS -->
+        </div>
+        
+        <!-- Mensagem Vazia -->
+        <div id="msg-vazia" class="text-center py-12 hidden-screen">
+            <div class="w-20 h-20 bg-brand-100 text-brand-400 rounded-full flex items-center justify-center text-3xl mx-auto mb-4">
+                <i class="fas fa-box-open"></i>
+            </div>
+            <h3 class="text-lg font-bold text-brand-800">Nenhum produto aqui</h3>
+            <p class="text-brand-600 mt-1">Clique em "Novo Produto" para adicionar.</p>
+        </div>
+    </div>
+
+    <!-- ================== TELA 3: RELATÓRIO DE VENDAS ================== -->
+    <div id="tela-vendas" class="max-w-4xl mx-auto hidden-screen">
+        <div class="flex items-center justify-between mb-6 bg-white p-5 rounded-3xl shadow-sm border border-brand-100">
+            <div>
+                <h1 class="text-2xl font-bold text-brand-900">Desempenho</h1>
+                <p id="titulo-mes" class="text-sm text-brand-600 font-medium capitalize">Mês Atual</p>
+            </div>
+            <div class="w-12 h-12 bg-brand-100 rounded-full flex items-center justify-center text-brand-600 text-xl">
+                <i class="fas fa-chart-pie"></i>
+            </div>
+        </div>
+
+        <!-- Cards de Resumo -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <div class="bg-white p-5 rounded-3xl border border-brand-100 shadow-sm flex items-center gap-4">
+                <div class="w-12 h-12 bg-orange-50 text-orange-500 rounded-2xl flex items-center justify-center text-xl"><i class="fas fa-shopping-bag"></i></div>
+                <div>
+                    <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">Peças Vendidas</p>
+                    <p id="resumo-qtd" class="text-2xl font-black text-slate-800">0</p>
+                </div>
+            </div>
+            <div class="bg-white p-5 rounded-3xl border border-brand-100 shadow-sm flex items-center gap-4">
+                <div class="w-12 h-12 bg-emerald-50 text-emerald-500 rounded-2xl flex items-center justify-center text-xl"><i class="fas fa-dollar-sign"></i></div>
+                <div>
+                    <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">Faturamento</p>
+                    <p id="resumo-faturamento" class="text-2xl font-black text-emerald-600">R$ 0,00</p>
+                </div>
+            </div>
+            <div class="bg-brand-600 p-5 rounded-3xl shadow-md shadow-brand-200 flex items-center gap-4 text-white">
+                <div class="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center text-xl"><i class="fas fa-piggy-bank"></i></div>
+                <div>
+                    <p class="text-xs font-bold text-brand-200 uppercase tracking-widest">Lucro Líquido</p>
+                    <p id="resumo-lucro" class="text-2xl font-black text-white">R$ 0,00</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Histórico de Vendas -->
+        <h3 class="text-lg font-bold text-brand-900 mb-4 ml-2">Histórico de Vendas</h3>
+        <div id="listaVendas" class="flex flex-col gap-3">
+            <!-- Vendas geradas via JS -->
+        </div>
+        
+        <!-- Mensagem Sem Vendas -->
+        <div id="msg-sem-vendas" class="text-center py-10 bg-white rounded-3xl border border-brand-100 hidden-screen">
+            <div class="w-16 h-16 bg-slate-50 text-slate-300 rounded-full flex items-center justify-center text-2xl mx-auto mb-3">
+                <i class="fas fa-receipt"></i>
+            </div>
+            <h3 class="text-base font-bold text-slate-500">Nenhuma venda este mês</h3>
+        </div>
+    </div>
+
+    <!-- ================== NAVEGAÇÃO INFERIOR (BOTTOM NAV) ================== -->
+    <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 shadow-[0_-4px_20px_rgba(0,0,0,0.05)] pb-safe z-40">
+        <div class="max-w-4xl mx-auto flex justify-around p-2">
+            <button id="nav-estoque" onclick="navegarApp('estoque')" class="flex flex-col items-center p-2 text-brand-600 w-1/2 rounded-xl transition active:bg-brand-50">
+                <i class="fas fa-box text-xl mb-1"></i>
+                <span class="text-xs font-bold">Estoque</span>
+            </button>
+            <button id="nav-vendas" onclick="navegarApp('vendas')" class="flex flex-col items-center p-2 text-slate-400 w-1/2 rounded-xl transition active:bg-brand-50">
+                <i class="fas fa-chart-bar text-xl mb-1"></i>
+                <span class="text-xs font-bold">Relatórios</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- ================== MODAL DE CONFIRMAÇÃO (Excluir Produto ou Estornar Venda) ================== -->
+    <div id="modal-confirmacao" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center hidden-screen p-4">
+        <div class="bg-white rounded-3xl p-6 w-full max-w-sm shadow-xl transform transition-all">
+            <div class="w-14 h-14 bg-red-100 rounded-full flex items-center justify-center text-red-500 text-2xl mx-auto mb-4">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <h3 id="modal-titulo" class="text-xl font-bold text-center text-slate-800 mb-2">Atenção</h3>
+            <p id="modal-texto" class="text-center text-slate-500 mb-6 text-sm">Esta ação não pode ser desfeita.</p>
+            <div class="flex gap-3">
+                <button onclick="fecharModal()" class="flex-1 bg-slate-100 text-slate-700 font-bold py-3 rounded-xl active:scale-95 transition">Cancelar</button>
+                <button id="btn-confirmar-exclusao" class="flex-1 bg-red-500 text-white font-bold py-3 rounded-xl shadow-lg shadow-red-200 active:scale-95 transition">Sim, Confirmar</button>
+            </div>
         </div>
     </div>
 
     <script>
+        // Formatações
         const formatarMoeda = (valor) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valor || 0);
         const formatarPorcentagem = (valor) => new Intl.NumberFormat('pt-BR', { style: 'percent', minimumFractionDigits: 1 }).format((valor || 0) / 100);
+        const formatarData = (isoString) => {
+            const data = new Date(isoString);
+            return data.toLocaleDateString('pt-BR') + ' às ' + data.toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'});
+        };
 
-        let contadorId = 0;
+        // Estrutura de Categorias
+        const categoriasInfo = [
+            { id: 'vestidos', nome: 'Vestidos', icone: 'fa-female' },
+            { id: 'blusas', nome: 'Blusas', icone: 'fa-tshirt' },
+            { id: 'calcas', nome: 'Calças', icone: 'fa-socks' },
+            { id: 'saias', nome: 'Saias', icone: 'fa-vest' },
+            { id: 'conjuntos', nome: 'Conjuntos', icone: 'fa-layer-group' },
+            { id: 'acessorios', nome: 'Acessórios', icone: 'fa-hat-cowboy' }
+        ];
 
-        // BANCO DE DADOS LOCAL: Salva todos os dados no aparelho
+        let bancoDeDados = [];
+        let bancoVendas = [];
+        let categoriaAtiva = '';
+        let acaoConfirmacao = null; // Para saber se vai apagar produto ou estornar venda
+        let idAlvoConfirmacao = null;
+
+        // INICIALIZAÇÃO
+        window.onload = () => {
+            const dadosSalvos = localStorage.getItem('estoque_rosa_db');
+            if (dadosSalvos) bancoDeDados = JSON.parse(dadosSalvos);
+            
+            const vendasSalvas = localStorage.getItem('vendas_rosa_db');
+            if (vendasSalvas) bancoVendas = JSON.parse(vendasSalvas);
+
+            renderizarCategorias();
+        };
+
+        // SALVAR BANCOS
         function salvarBancoDados() {
-            const itens = [];
-            document.querySelectorAll('[id^="linha-"]').forEach(linha => {
-                itens.push({
-                    id: linha.id.replace('linha-', ''),
-                    nome: linha.querySelector('.input-nome').value,
-                    estoque: linha.querySelector('.input-estoque').value,
-                    custo: linha.querySelector('.input-custo').value,
-                    margem: linha.querySelector('.input-margem').value,
-                    desconto: linha.querySelector('.input-desconto').value
-                });
-            });
-            localStorage.setItem('estoque_db', JSON.stringify(itens));
+            localStorage.setItem('estoque_rosa_db', JSON.stringify(bancoDeDados));
+        }
+        function salvarBancoVendas() {
+            localStorage.setItem('vendas_rosa_db', JSON.stringify(bancoVendas));
         }
 
-        // Função principal de cálculo e formatação
-        function calcularValores(id, salvar = true) {
+        // ================== NAVEGAÇÃO PRINCIPAL (BOTTOM NAV) ==================
+        function navegarApp(aba) {
+            const btnEstoque = document.getElementById('nav-estoque');
+            const btnVendas = document.getElementById('nav-vendas');
+            const telaCategorias = document.getElementById('tela-categorias');
+            const telaProdutos = document.getElementById('tela-produtos');
+            const telaVendas = document.getElementById('tela-vendas');
+
+            if (aba === 'estoque') {
+                btnEstoque.classList.replace('text-slate-400', 'text-brand-600');
+                btnVendas.classList.replace('text-brand-600', 'text-slate-400');
+                
+                telaVendas.classList.add('hidden-screen');
+                if(categoriaAtiva) {
+                    telaProdutos.classList.remove('hidden-screen');
+                } else {
+                    telaCategorias.classList.remove('hidden-screen');
+                    renderizarCategorias();
+                }
+            } else if (aba === 'vendas') {
+                btnVendas.classList.replace('text-slate-400', 'text-brand-600');
+                btnEstoque.classList.replace('text-brand-600', 'text-slate-400');
+                
+                telaCategorias.classList.add('hidden-screen');
+                telaProdutos.classList.add('hidden-screen');
+                telaVendas.classList.remove('hidden-screen');
+                renderizarRelatorio();
+            }
+        }
+
+        // ================== NAVEGAÇÃO DE CATEGORIAS ==================
+        function abrirCategoria(catId, catNome) {
+            categoriaAtiva = catId;
+            document.getElementById('titulo-categoria').textContent = catNome;
+            document.getElementById('tela-categorias').classList.add('hidden-screen');
+            document.getElementById('tela-produtos').classList.remove('hidden-screen');
+            renderizarProdutos();
+        }
+
+        function voltarCategorias() {
+            categoriaAtiva = '';
+            document.getElementById('tela-produtos').classList.add('hidden-screen');
+            document.getElementById('tela-categorias').classList.remove('hidden-screen');
+            renderizarCategorias();
+        }
+
+        // ================== TELA DE CATEGORIAS ==================
+        function renderizarCategorias() {
+            const grid = document.getElementById('grid-categorias');
+            grid.innerHTML = '';
+
+            categoriasInfo.forEach(cat => {
+                const totalItens = bancoDeDados.filter(p => p.categoria === cat.id).length;
+                
+                grid.innerHTML += `
+                    <div onclick="abrirCategoria('${cat.id}', '${cat.nome}')" class="bg-white p-5 rounded-3xl shadow-sm border border-brand-100 flex flex-col items-center justify-center gap-3 cursor-pointer hover:shadow-md hover:border-brand-300 transition transform active:scale-95">
+                        <div class="w-14 h-14 bg-brand-50 text-brand-500 rounded-full flex items-center justify-center text-2xl">
+                            <i class="fas ${cat.icone}"></i>
+                        </div>
+                        <div class="text-center">
+                            <h3 class="font-bold text-slate-800">${cat.nome}</h3>
+                            <p class="text-xs text-brand-600 font-medium">${totalItens} ${totalItens === 1 ? 'produto' : 'produtos'}</p>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        // ================== TELA DE PRODUTOS ==================
+        function renderizarProdutos() {
+            const container = document.getElementById('listaProdutos');
+            container.innerHTML = '';
+            
+            const produtosDaCategoria = bancoDeDados.filter(p => p.categoria === categoriaAtiva);
+
+            if (produtosDaCategoria.length === 0) {
+                document.getElementById('msg-vazia').classList.remove('hidden-screen');
+            } else {
+                document.getElementById('msg-vazia').classList.add('hidden-screen');
+                produtosDaCategoria.slice().reverse().forEach(produto => {
+                    container.appendChild(criarCardProduto(produto));
+                    calcularValoresDisplay(produto.id);
+                });
+            }
+        }
+
+        function criarCardProduto(produto) {
+            const div = document.createElement('div');
+            div.id = `linha-${produto.id}`;
+            div.className = "bg-white rounded-3xl shadow-sm border border-brand-100 p-5 w-full relative";
+            
+            div.innerHTML = `
+                <!-- Nome e Excluir -->
+                <div class="flex justify-between items-start mb-5 gap-3 border-b border-slate-50 pb-4">
+                    <div class="w-full">
+                        <span class="text-[10px] font-bold text-brand-400 uppercase tracking-widest block mb-1">NOME DA PEÇA</span>
+                        <input type="text" placeholder="Ex: Vestido Longo..." class="input-nome w-full bg-transparent border-none focus:ring-0 text-slate-800 font-bold text-lg md:text-xl placeholder-slate-300 p-0" value="${produto.nome}" onchange="atualizarDado('${produto.id}', 'nome', this.value)">
+                    </div>
+                    <button onclick="prepararExclusaoProduto('${produto.id}')" class="bg-slate-50 text-slate-400 hover:bg-red-500 hover:text-white transition-colors p-3 rounded-2xl flex-shrink-0 active:scale-95">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
+                </div>
+
+                <!-- Inputs Editáveis -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
+                    <!-- Estoque -->
+                    <div class="col-span-2 md:col-span-1 bg-brand-50/50 p-3 rounded-2xl border border-brand-100 container-estoque flex flex-col justify-center items-center">
+                        <span class="text-[10px] font-bold text-brand-500 uppercase tracking-widest mb-2">Estoque</span>
+                        <div class="flex items-center justify-center space-x-3 w-full">
+                            <button onclick="alterarEstoque('${produto.id}', -1)" class="w-10 h-10 flex items-center justify-center rounded-full bg-white border border-brand-200 text-brand-600 hover:bg-brand-100 shadow-sm active:scale-90 transition-transform"><i class="fas fa-minus"></i></button>
+                            <input type="number" class="input-estoque w-14 text-center bg-transparent border-none focus:ring-0 font-black text-2xl text-slate-800 p-0" value="${produto.estoque}" onchange="atualizarDado('${produto.id}', 'estoque', this.value)">
+                            <button onclick="alterarEstoque('${produto.id}', 1)" class="w-10 h-10 flex items-center justify-center rounded-full bg-brand-500 text-white hover:bg-brand-600 shadow-sm shadow-brand-200 active:scale-90 transition-transform"><i class="fas fa-plus"></i></button>
+                        </div>
+                    </div>
+
+                    <!-- Custo -->
+                    <div class="p-3 bg-white border border-slate-100 rounded-2xl flex flex-col justify-center shadow-sm">
+                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 block">Custo</span>
+                        <div class="flex items-center text-slate-700 font-bold text-lg">
+                            <span class="mr-1 text-slate-400">R$</span>
+                            <input type="number" step="0.01" class="input-custo w-full bg-transparent border-none focus:ring-0 p-0 text-slate-800" placeholder="0.00" value="${produto.custo}" oninput="atualizarDado('${produto.id}', 'custo', this.value)">
+                        </div>
+                    </div>
+                    
+                    <!-- Margem -->
+                    <div class="p-3 bg-white border border-slate-100 rounded-2xl flex flex-col justify-center shadow-sm">
+                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 block">Margem</span>
+                        <div class="flex items-center text-slate-700 font-bold text-lg">
+                            <input type="number" class="input-margem w-full bg-transparent border-none focus:ring-0 p-0 text-slate-800" placeholder="0" value="${produto.margem}" oninput="atualizarDado('${produto.id}', 'margem', this.value)">
+                            <span class="ml-1 text-brand-400">%</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Desconto -->
+                    <div class="p-3 bg-white border border-slate-100 rounded-2xl flex flex-col justify-center shadow-sm">
+                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1 block">Desconto</span>
+                        <div class="flex items-center text-slate-700 font-bold text-lg">
+                            <input type="number" class="input-desconto w-full bg-transparent border-none focus:ring-0 p-0 text-slate-800" placeholder="0" value="${produto.desconto}" oninput="atualizarDado('${produto.id}', 'desconto', this.value)">
+                            <span class="ml-1 text-brand-400">%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Resultados Finais -->
+                <div class="grid grid-cols-2 gap-3 bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                    <div class="col-span-1 p-3 rounded-xl bg-white border border-slate-200 flex flex-col justify-center">
+                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Preço Sugerido</span>
+                        <span class="res-vitrine text-slate-500 font-bold text-lg">-</span>
+                    </div>
+                    
+                    <div class="col-span-1 p-3 rounded-xl bg-brand-50 border border-brand-200 flex flex-col justify-center">
+                        <span class="text-[10px] font-bold text-brand-700 uppercase tracking-widest mb-1">Preço Final (Venda)</span>
+                        <span class="res-final text-brand-700 font-black text-xl">-</span>
+                    </div>
+                    
+                    <div class="col-span-1 p-3 rounded-xl bg-white border border-slate-200 flex flex-col justify-center">
+                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Lucro (R$)</span>
+                        <span class="res-lucro-rs text-slate-700 font-bold text-lg">-</span>
+                    </div>
+                    
+                    <div class="col-span-1 p-3 rounded-xl bg-white border border-slate-200 flex flex-col justify-center">
+                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Margem Real</span>
+                        <span class="res-lucro-pct text-slate-500 font-bold text-lg">-</span>
+                    </div>
+                </div>
+
+                <!-- BOTÃO REGISTRAR VENDA -->
+                <div class="mt-4 pt-4 border-t border-slate-100">
+                    <button onclick="registrarVenda('${produto.id}')" class="w-full bg-brand-600 hover:bg-brand-700 text-white font-bold py-3 rounded-xl shadow-md shadow-brand-200 transition flex justify-center items-center gap-2 active:scale-95">
+                        <i class="fas fa-shopping-bag"></i> Registrar Venda (1 unid.)
+                    </button>
+                </div>
+            `;
+            return div;
+        }
+
+        // ================== LÓGICA DE PRODUTOS ==================
+        function adicionarLinha() {
+            const novoProduto = {
+                id: Date.now().toString(),
+                categoria: categoriaAtiva,
+                nome: '',
+                estoque: '0',
+                custo: '',
+                margem: '',
+                desconto: ''
+            };
+            bancoDeDados.push(novoProduto);
+            salvarBancoDados();
+            renderizarProdutos(); 
+        }
+
+        function atualizarDado(id, campo, valor) {
+            const produtoIndex = bancoDeDados.findIndex(p => p.id === id);
+            if (produtoIndex > -1) {
+                bancoDeDados[produtoIndex][campo] = valor;
+                salvarBancoDados();
+                calcularValoresDisplay(id);
+            }
+        }
+
+        function alterarEstoque(id, delta) {
+            const index = bancoDeDados.findIndex(p => p.id === id);
+            if (index > -1) {
+                let novoValor = (parseInt(bancoDeDados[index].estoque) || 0) + delta;
+                if (novoValor < 0) novoValor = 0;
+                
+                bancoDeDados[index].estoque = novoValor.toString();
+                salvarBancoDados();
+
+                // Atualiza visualmente se a linha estiver na tela
+                const linha = document.getElementById(`linha-${id}`);
+                if (linha) {
+                    const input = linha.querySelector('.input-estoque');
+                    if (input) input.value = novoValor;
+                    calcularValoresDisplay(id);
+                }
+            }
+        }
+
+        function calcularValoresDisplay(id) {
             const linha = document.getElementById(`linha-${id}`);
             if(!linha) return;
 
-            const custoInput = linha.querySelector('.input-custo');
-            const margemInput = linha.querySelector('.input-margem');
-            const descontoInput = linha.querySelector('.input-desconto');
-            const estoqueInput = linha.querySelector('.input-estoque');
-            
-            const estoque = parseInt(estoqueInput.value) || 0;
-            const custo = parseFloat(custoInput.value) || 0;
-            const margem = parseFloat(margemInput.value) || 0;
-            const desconto = parseFloat(descontoInput.value) || 0;
+            const produto = bancoDeDados.find(p => p.id === id);
+            if(!produto) return;
 
+            const containerEstoque = linha.querySelector('.container-estoque');
             const cellVitrine = linha.querySelector('.res-vitrine');
             const cellFinal = linha.querySelector('.res-final');
             const cellLucroRs = linha.querySelector('.res-lucro-rs');
             const cellLucroPct = linha.querySelector('.res-lucro-pct');
-            const containerEstoque = linha.querySelector('.container-estoque');
 
-            // Alerta visual de estoque (<= 3)
+            const estoque = parseInt(produto.estoque) || 0;
+            const custo = parseFloat(produto.custo);
+            const margem = parseFloat(produto.margem);
+            const desconto = parseFloat(produto.desconto);
+
             if (estoque <= 3) {
                 containerEstoque.classList.add('alert-low-stock');
             } else {
                 containerEstoque.classList.remove('alert-low-stock');
             }
 
-            if (custo > 0) {
-                const precoVitrine = (custo * (1 + (margem / 100))) / (1 - (desconto / 100));
-                const precoFinal = precoVitrine * (1 - (desconto / 100));
+            if (!isNaN(custo) && custo > 0 && !isNaN(margem)) {
+                const descSeguro = isNaN(desconto) ? 0 : desconto;
+                const precoVitrine = (custo * (1 + (margem / 100))) / (1 - (descSeguro / 100));
+                const precoFinal = precoVitrine * (1 - (descSeguro / 100));
                 const lucroRs = precoFinal - custo;
                 const lucroPct = (lucroRs / custo) * 100;
 
@@ -101,154 +492,174 @@
                 cellFinal.textContent = formatarMoeda(precoFinal);
                 cellLucroRs.textContent = formatarMoeda(lucroRs);
                 cellLucroPct.textContent = formatarPorcentagem(lucroPct);
-                cellLucroRs.className = `res-lucro-rs font-bold text-lg ${lucroRs < 0 ? 'text-red-600' : 'text-slate-700'}`;
+                cellLucroRs.className = `res-lucro-rs font-bold text-lg ${lucroRs < 0 ? 'text-red-500' : 'text-slate-800'}`;
             } else {
                 cellVitrine.textContent = '-';
                 cellFinal.textContent = '-';
                 cellLucroRs.textContent = '-';
                 cellLucroPct.textContent = '-';
-            }
-
-            // Atualiza o banco de dados sempre que houver recálculo
-            if(salvar) salvarBancoDados();
-        }
-
-        // Funções dos botões de quantidade
-        function alterarEstoque(id, delta) {
-            const input = document.querySelector(`#linha-${id} .input-estoque`);
-            let novoValor = (parseInt(input.value) || 0) + delta;
-            if (novoValor < 0) novoValor = 0;
-            input.value = novoValor;
-            calcularValores(id);
-        }
-
-        // Adicionar a estrutura do Produto (Card)
-        function criarLinhaHTML() {
-            contadorId++;
-            const id = contadorId;
-            const div = document.createElement('div');
-            div.id = `linha-${id}`;
-            div.className = "bg-white rounded-2xl shadow-sm border border-slate-200 p-5 transition-all w-full";
-            
-            div.innerHTML = `
-                <div class="flex justify-between items-start mb-5 gap-3 border-b border-slate-100 pb-4">
-                    <div class="w-full">
-                        <span class="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-1">Nome do Produto</span>
-                        <input type="text" placeholder="Ex: Vestido Floral" class="input-nome w-full bg-transparent border-none focus:ring-0 text-slate-800 font-bold text-lg md:text-xl placeholder-slate-300 p-0" oninput="salvarBancoDados()">
-                    </div>
-                    <button onclick="removerLinha(${id})" class="bg-red-50 text-red-500 hover:bg-red-500 hover:text-white transition-colors p-3 rounded-xl flex-shrink-0 active:scale-95" title="Apagar Produto">
-                        <i class="fas fa-trash-alt"></i>
-                    </button>
-                </div>
-
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
-                    <div class="col-span-2 md:col-span-1 bg-slate-50 p-3 rounded-xl border border-slate-200 container-estoque transition-colors flex flex-col justify-center items-center">
-                        <span class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Estoque</span>
-                        <div class="flex items-center justify-center space-x-3 w-full">
-                            <button onclick="alterarEstoque(${id}, -1)" class="w-10 h-10 flex items-center justify-center rounded-full bg-white border border-slate-300 text-slate-600 hover:bg-slate-200 shadow-sm active:scale-95 transition-transform"><i class="fas fa-minus"></i></button>
-                            <input type="number" class="input-estoque w-14 text-center bg-transparent border-none focus:ring-0 font-black text-2xl text-slate-700 p-0" value="0" min="0" oninput="calcularValores(${id})">
-                            <button onclick="alterarEstoque(${id}, 1)" class="w-10 h-10 flex items-center justify-center rounded-full bg-blue-600 text-white hover:bg-blue-700 shadow-sm active:scale-95 transition-transform"><i class="fas fa-plus"></i></button>
-                        </div>
-                    </div>
-
-                    <div class="p-3 bg-white border border-slate-200 rounded-xl flex flex-col justify-center">
-                        <span class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1 block">Custo</span>
-                        <div class="flex items-center text-slate-700 font-bold text-lg">
-                            <span class="mr-1 text-slate-400">R$</span>
-                            <input type="number" step="0.01" class="input-custo w-full bg-transparent border-none focus:ring-0 p-0 text-slate-700" placeholder="0.00" oninput="calcularValores(${id})">
-                        </div>
-                    </div>
-                    
-                    <div class="p-3 bg-white border border-slate-200 rounded-xl flex flex-col justify-center">
-                        <span class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1 block">Margem</span>
-                        <div class="flex items-center text-slate-700 font-bold text-lg">
-                            <input type="number" class="input-margem w-full bg-transparent border-none focus:ring-0 p-0 text-slate-700" placeholder="0" oninput="calcularValores(${id})">
-                            <span class="ml-1 text-slate-400">%</span>
-                        </div>
-                    </div>
-                    
-                    <div class="p-3 bg-white border border-slate-200 rounded-xl flex flex-col justify-center">
-                        <span class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1 block">Desconto</span>
-                        <div class="flex items-center text-slate-700 font-bold text-lg">
-                            <input type="number" class="input-desconto w-full bg-transparent border-none focus:ring-0 p-0 text-slate-700" placeholder="0" oninput="calcularValores(${id})">
-                            <span class="ml-1 text-slate-400">%</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-2 gap-3 bg-slate-50 p-4 rounded-xl border border-slate-200">
-                    <div class="col-span-1 p-3 rounded-lg bg-orange-50 border border-orange-100 flex flex-col">
-                        <span class="text-xs font-bold text-orange-800 uppercase tracking-wider mb-1">Preço Vitrine</span>
-                        <span class="res-vitrine text-orange-900 font-black text-xl">-</span>
-                    </div>
-                    
-                    <div class="col-span-1 p-3 rounded-lg bg-teal-50 border border-teal-100 flex flex-col">
-                        <span class="text-xs font-bold text-teal-800 uppercase tracking-wider mb-1">Preço c/ Desconto</span>
-                        <span class="res-final text-teal-900 font-black text-xl">-</span>
-                    </div>
-                    
-                    <div class="col-span-1 p-3 rounded-lg bg-white border border-slate-200 flex flex-col">
-                        <span class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Lucro (R$)</span>
-                        <span class="res-lucro-rs text-slate-700 font-bold text-lg">-</span>
-                    </div>
-                    
-                    <div class="col-span-1 p-3 rounded-lg bg-white border border-slate-200 flex flex-col">
-                        <span class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Margem Real</span>
-                        <span class="res-lucro-pct text-slate-500 font-bold text-lg">-</span>
-                    </div>
-                </div>
-            `;
-            return { id, div };
-        }
-
-        function adicionarLinha() {
-            const container = document.getElementById('listaProdutos');
-            const { id, div } = criarLinhaHTML();
-            container.insertBefore(div, container.firstChild);
-            calcularValores(id, true);
-        }
-
-        function removerLinha(id) {
-            const linha = document.getElementById(`linha-${id}`);
-            if(linha) {
-                linha.remove();
-                salvarBancoDados();
+                cellLucroRs.className = 'res-lucro-rs font-bold text-lg text-slate-400';
             }
         }
 
-        // CARREGA O BANCO DE DADOS AO ABRIR O APLICATIVO
-        window.onload = () => {
-            const container = document.getElementById('listaProdutos');
-            const dadosSalvos = localStorage.getItem('estoque_db');
+        // ================== LÓGICA DE VENDAS E RELATÓRIO ==================
+        function registrarVenda(idProduto) {
+            const produto = bancoDeDados.find(p => p.id === idProduto);
+            if (!produto) return;
+
+            const estoqueAtual = parseInt(produto.estoque) || 0;
+            if (estoqueAtual <= 0) {
+                alert("O estoque deste produto está zerado!");
+                return;
+            }
+
+            // Cálculos para gravar no histórico
+            const custo = parseFloat(produto.custo) || 0;
+            const margem = parseFloat(produto.margem) || 0;
+            const desconto = parseFloat(produto.desconto) || 0;
+
+            if (custo <= 0) {
+                alert("Preencha o Custo e a Margem antes de vender.");
+                return;
+            }
+
+            const precoVitrine = (custo * (1 + (margem / 100))) / (1 - (desconto / 100));
+            const precoFinal = precoVitrine * (1 - (desconto / 100));
+            const lucroRs = precoFinal - custo;
+
+            // Debita do estoque
+            alterarEstoque(idProduto, -1);
+
+            // Grava a venda
+            const novaVenda = {
+                idVenda: Date.now().toString(),
+                idProduto: idProduto,
+                nomeProduto: produto.nome || "Produto sem nome",
+                valorVenda: precoFinal,
+                lucro: lucroRs,
+                data: new Date().toISOString()
+            };
+
+            bancoVendas.push(novaVenda);
+            salvarBancoVendas();
+
+            // Feedback visual
+            mostrarToast("Venda Registrada com sucesso!");
+        }
+
+        function mostrarToast(mensagem) {
+            const toastContainer = document.getElementById('toast-container');
+            const toastMsg = document.getElementById('toast-msg');
+            toastMsg.innerHTML = `<i class="fas fa-check-circle"></i> <span>${mensagem}</span>`;
             
-            if (dadosSalvos && dadosSalvos !== '[]') {
-                const itens = JSON.parse(dadosSalvos);
-                // Renderiza na ordem correta
-                itens.reverse().forEach(item => {
-                    const { id, div } = criarLinhaHTML();
-                    container.insertBefore(div, container.firstChild);
-                    
-                    const linha = document.getElementById(`linha-${id}`);
-                    linha.querySelector('.input-nome').value = item.nome;
-                    linha.querySelector('.input-estoque').value = item.estoque;
-                    linha.querySelector('.input-custo').value = item.custo;
-                    linha.querySelector('.input-margem').value = item.margem;
-                    linha.querySelector('.input-desconto').value = item.desconto;
-                    
-                    calcularValores(id, false); // false = não precisa salvar ao carregar
-                });
+            toastContainer.classList.remove('hidden-screen');
+            toastContainer.classList.add('toast-enter');
+            
+            setTimeout(() => {
+                toastContainer.classList.remove('toast-enter');
+                toastContainer.classList.add('hidden-screen');
+            }, 3000);
+        }
+
+        function renderizarRelatorio() {
+            const hoje = new Date();
+            const mesAtual = hoje.getMonth();
+            const anoAtual = hoje.getFullYear();
+
+            // Formata o título do mês
+            document.getElementById('titulo-mes').textContent = hoje.toLocaleString('pt-BR', { month: 'long', year: 'numeric' });
+
+            // Filtra vendas do mês atual
+            const vendasMes = bancoVendas.filter(v => {
+                const dataVenda = new Date(v.data);
+                return dataVenda.getMonth() === mesAtual && dataVenda.getFullYear() === anoAtual;
+            });
+
+            // Calcula totais
+            const totalPecas = vendasMes.length;
+            const faturamento = vendasMes.reduce((acc, val) => acc + val.valorVenda, 0);
+            const lucroTotal = vendasMes.reduce((acc, val) => acc + val.lucro, 0);
+
+            document.getElementById('resumo-qtd').textContent = totalPecas;
+            document.getElementById('resumo-faturamento').textContent = formatarMoeda(faturamento);
+            document.getElementById('resumo-lucro').textContent = formatarMoeda(lucroTotal);
+
+            // Renderiza lista de histórico
+            const listaDiv = document.getElementById('listaVendas');
+            listaDiv.innerHTML = '';
+
+            if (vendasMes.length === 0) {
+                document.getElementById('msg-sem-vendas').classList.remove('hidden-screen');
             } else {
-                // Se não houver dados, cria um de exemplo
-                adicionarLinha();
-                const linha = document.getElementById('linha-1');
-                linha.querySelector('.input-nome').value = "Vestido Floral";
-                linha.querySelector('.input-custo').value = 100;
-                linha.querySelector('.input-margem').value = 30;
-                linha.querySelector('.input-desconto').value = 10;
-                linha.querySelector('.input-estoque').value = 4;
-                calcularValores(1, true);
+                document.getElementById('msg-sem-vendas').classList.add('hidden-screen');
+                
+                vendasMes.slice().reverse().forEach(venda => {
+                    listaDiv.innerHTML += `
+                        <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex justify-between items-center group">
+                            <div>
+                                <p class="font-bold text-slate-800">${venda.nomeProduto}</p>
+                                <p class="text-xs text-slate-400 mb-1">${formatarData(venda.data)}</p>
+                                <div class="flex gap-2 text-xs font-medium">
+                                    <span class="text-emerald-600 bg-emerald-50 px-2 py-1 rounded-md">Venda: ${formatarMoeda(venda.valorVenda)}</span>
+                                    <span class="text-brand-600 bg-brand-50 px-2 py-1 rounded-md">Lucro: ${formatarMoeda(venda.lucro)}</span>
+                                </div>
+                            </div>
+                            <button onclick="prepararEstorno('${venda.idVenda}', '${venda.nomeProduto}')" class="w-10 h-10 rounded-full bg-slate-50 text-slate-300 hover:bg-red-500 hover:text-white transition active:scale-90 flex items-center justify-center">
+                                <i class="fas fa-undo-alt"></i>
+                            </button>
+                        </div>
+                    `;
+                });
             }
+        }
+
+        // ================== MODAL GERAL (EXCLUSÃO/ESTORNO) ==================
+        function fecharModal() {
+            acaoConfirmacao = null;
+            idAlvoConfirmacao = null;
+            document.getElementById('modal-confirmacao').classList.add('hidden-screen');
+        }
+
+        // Contexto: Apagar Produto
+        function prepararExclusaoProduto(id) {
+            acaoConfirmacao = 'produto';
+            idAlvoConfirmacao = id;
+            document.getElementById('modal-titulo').textContent = 'Excluir Produto?';
+            document.getElementById('modal-texto').textContent = 'O produto será apagado permanentemente do estoque.';
+            document.getElementById('modal-confirmacao').classList.remove('hidden-screen');
+        }
+
+        // Contexto: Estornar Venda
+        function prepararEstorno(idVenda, nomeProduto) {
+            acaoConfirmacao = 'estorno';
+            idAlvoConfirmacao = idVenda;
+            document.getElementById('modal-titulo').textContent = 'Estornar Venda?';
+            document.getElementById('modal-texto').textContent = `A venda de "${nomeProduto}" será apagada e 1 unidade voltará para o estoque.`;
+            document.getElementById('modal-confirmacao').classList.remove('hidden-screen');
+        }
+
+        // Executa a ação dependendo do que foi clicado
+        document.getElementById('btn-confirmar-exclusao').onclick = function() {
+            if (acaoConfirmacao === 'produto' && idAlvoConfirmacao) {
+                bancoDeDados = bancoDeDados.filter(p => p.id !== idAlvoConfirmacao);
+                salvarBancoDados();
+                renderizarProdutos();
+            } 
+            else if (acaoConfirmacao === 'estorno' && idAlvoConfirmacao) {
+                const venda = bancoVendas.find(v => v.idVenda === idAlvoConfirmacao);
+                if (venda) {
+                    // Devolve 1 unidade pro estoque daquele produto (se ele ainda existir)
+                    alterarEstoque(venda.idProduto, 1); 
+                    
+                    // Remove do registro de vendas
+                    bancoVendas = bancoVendas.filter(v => v.idVenda !== idAlvoConfirmacao);
+                    salvarBancoVendas();
+                    renderizarRelatorio();
+                }
+            }
+            fecharModal();
         };
+
     </script>
 </body>
 </html>
