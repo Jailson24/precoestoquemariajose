@@ -71,7 +71,10 @@
         <div id="tela-categorias" class="max-w-4xl mx-auto">
             <div class="flex items-center justify-between mb-8 bg-white p-5 rounded-3xl shadow-sm border border-brand-100">
                 <div><h1 class="text-2xl font-bold text-brand-900">Meu Estoque</h1><p class="text-sm text-brand-600">Selecione uma categoria</p></div>
-                <div class="w-12 h-12 bg-brand-100 rounded-full flex items-center justify-center text-brand-600 text-xl"><i class="fas fa-gem"></i></div>
+                <div class="flex gap-2">
+                    <button onclick="abrirResumoEstoque()" class="w-12 h-12 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 rounded-2xl flex items-center justify-center text-xl transition active:scale-95 shadow-sm" title="Resumo do Estoque"><i class="fas fa-clipboard-list"></i></button>
+                    <div class="w-12 h-12 bg-brand-100 rounded-2xl flex items-center justify-center text-brand-600 text-xl"><i class="fas fa-gem"></i></div>
+                </div>
             </div>
             <div class="grid grid-cols-2 md:grid-cols-3 gap-4" id="grid-categorias"></div>
         </div>
@@ -99,6 +102,16 @@
         <div id="msg-vazia-clientes" class="text-center py-12 hidden-screen"><p class="text-slate-400">Nenhum cliente cadastrado.</p></div>
     </div>
 
+    <!-- ================== TELA DE FORNECEDORES ================== -->
+    <div id="screen-fornecedores" class="max-w-4xl mx-auto hidden-screen">
+        <div class="flex items-center justify-between mb-6 bg-white p-5 rounded-3xl shadow-sm border border-brand-100">
+            <div><h1 class="text-2xl font-bold text-brand-900">Fornecedores</h1><p class="text-sm text-brand-600">Parceiros e Distribuidores</p></div>
+            <button onclick="abrirModalFornecedor()" class="w-12 h-12 bg-brand-600 text-white rounded-2xl shadow-lg flex items-center justify-center text-xl active:scale-95"><i class="fas fa-truck"></i></button>
+        </div>
+        <div id="listaFornecedores" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+        <div id="msg-vazia-fornecedores" class="text-center py-12 hidden-screen"><p class="text-slate-400">Nenhum fornecedor cadastrado.</p></div>
+    </div>
+
     <!-- ================== TELA DE RELATÓRIOS E FINANCEIRO ================== -->
     <div id="screen-vendas" class="max-w-4xl mx-auto hidden-screen">
         <div class="flex items-center justify-between mb-6 bg-white p-5 rounded-3xl shadow-sm border border-brand-100">
@@ -124,7 +137,7 @@
                 <p class="text-[10px] text-slate-400">Vendas parceladas em aberto</p>
             </div>
             <div class="bg-brand-600 p-5 rounded-3xl shadow-md text-white">
-                <p class="text-[10px] font-bold text-brand-200 uppercase tracking-widest mb-1">Lucro Efetivado</p>
+                <p class="text-[10px] font-bold text-brand-200 uppercase tracking-widest mb-1">Lucro das Vendas</p>
                 <p id="resumo-lucro-real" class="text-2xl font-black text-white">R$ 0,00</p>
                 <p class="text-[10px] text-brand-100">Sobre o que já foi pago</p>
             </div>
@@ -145,6 +158,60 @@
         <h3 class="text-lg font-bold text-brand-900 mb-4 ml-2">Histórico de Vendas</h3>
         <div id="listaVendas" class="flex flex-col gap-3"></div>
         <div id="msg-vazia-vendas" class="text-center py-10 bg-white rounded-3xl border border-brand-100 hidden-screen"><p class="text-slate-400">Nenhuma venda registrada.</p></div>
+    </div>
+
+    <!-- ================== TELA DE DESPESAS E PONTO DE EQUILÍBRIO ================== -->
+    <div id="screen-despesas" class="max-w-4xl mx-auto hidden-screen">
+        <div class="flex items-center justify-between mb-6 bg-white p-5 rounded-3xl shadow-sm border border-brand-100">
+            <div><h1 class="text-2xl font-bold text-brand-900">Despesas</h1><p id="titulo-mes-despesas" class="text-sm text-brand-600 capitalize">Mês Atual</p></div>
+            <div class="w-12 h-12 bg-brand-100 rounded-full flex items-center justify-center text-brand-600 text-xl"><i class="fas fa-wallet"></i></div>
+        </div>
+
+        <!-- Dashboard Ponto de Equilíbrio -->
+        <div class="bg-white p-6 rounded-3xl border border-brand-100 shadow-sm mb-6">
+            <h3 class="text-lg font-bold text-slate-800 mb-5 flex items-center gap-2"><i class="fas fa-balance-scale text-brand-600"></i> Ponto de Equilíbrio</h3>
+            
+            <div class="flex justify-between items-end mb-2">
+                <div>
+                    <p class="text-[10px] font-bold text-slate-400 uppercase">Lucro Bruto (Mês)</p>
+                    <p id="despesas-lucro-bruto" class="text-xl font-bold text-slate-700">R$ 0,00</p>
+                </div>
+                <div class="text-right">
+                    <p class="text-[10px] font-bold text-slate-400 uppercase">Despesas (Mês)</p>
+                    <p id="despesas-total" class="text-xl font-bold text-red-500">R$ 0,00</p>
+                </div>
+            </div>
+
+            <!-- Barra de Progresso (Gauge) -->
+            <div class="w-full bg-slate-100 h-6 rounded-full overflow-hidden border border-slate-200 relative mb-3">
+                <div id="barra-equilibrio" class="h-full bg-red-500 transition-all duration-500" style="width: 0%;"></div>
+            </div>
+            
+            <div class="text-center mb-6" id="status-equilibrio">
+                <!-- Injetado via JS -->
+            </div>
+
+            <div class="p-4 bg-slate-50 rounded-2xl border border-slate-200 flex justify-between items-center">
+                <span class="text-sm text-slate-600 font-bold uppercase tracking-wider">Lucro Líquido Final:</span>
+                <span class="text-2xl font-black text-slate-400" id="despesas-lucro-liquido">R$ 0,00</span>
+            </div>
+        </div>
+
+        <!-- Formulário Adicionar Despesa -->
+        <div class="bg-white p-5 rounded-3xl border border-brand-100 shadow-sm mb-6">
+            <h3 class="text-sm font-bold text-slate-800 mb-3">Registrar Gasto</h3>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <input type="text" id="add-desp-desc" placeholder="Ex: Luz, Aluguel, Embalagem" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none text-sm font-bold text-slate-700 sm:col-span-2">
+                <div class="flex gap-2">
+                    <input type="number" id="add-desp-valor" step="0.01" placeholder="Valor (R$)" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none text-sm font-bold text-slate-700">
+                    <button onclick="salvarNovaDespesa()" class="w-14 bg-red-500 text-white rounded-xl shadow-md flex items-center justify-center active:scale-95"><i class="fas fa-plus"></i></button>
+                </div>
+            </div>
+        </div>
+
+        <h3 class="text-lg font-bold text-brand-900 mb-4 ml-2">Histórico de Gastos (Mês)</h3>
+        <div id="lista-despesas" class="flex flex-col gap-3"></div>
+        <div id="msg-vazia-despesas" class="text-center py-10 bg-white rounded-3xl border border-brand-100 hidden-screen"><p class="text-slate-400">Nenhuma despesa registrada este mês.</p></div>
     </div>
 
     <!-- ================== NOVA TELA: GRÁFICOS ================== -->
@@ -400,6 +467,58 @@
         </div>
     </div>
 
+    <!-- Modal Cadastro Fornecedor -->
+    <div id="modal-fornecedor" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[200] flex items-center justify-center hidden-screen p-4 overflow-y-auto">
+        <div class="bg-white rounded-3xl p-6 w-full max-w-md shadow-2xl my-auto">
+            <h3 class="text-xl font-bold text-brand-900 mb-4">Novo Fornecedor</h3>
+            <div class="flex flex-col gap-3">
+                <input type="text" id="forn-empresa" placeholder="Empresa / Marca" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none focus:border-brand-500 font-bold text-slate-700">
+                <input type="text" id="forn-contato" placeholder="Nome do Contato (Opcional)" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none text-slate-700">
+                <div class="grid grid-cols-2 gap-3">
+                    <input type="text" id="forn-cnpj" placeholder="CNPJ / CPF" class="bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none text-slate-700">
+                    <input type="tel" id="forn-tel" placeholder="Telefone / Whats" class="bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none text-slate-700">
+                </div>
+                <input type="email" id="forn-email" placeholder="E-mail" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none text-slate-700">
+                <textarea id="forn-detalhes" placeholder="Observações / Produtos Fornecidos" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none h-20 text-slate-700"></textarea>
+                <div class="flex gap-3 mt-2">
+                    <button onclick="fecharModalFornecedor()" class="flex-1 bg-slate-100 text-slate-600 font-bold py-3 rounded-xl">Cancelar</button>
+                    <button onclick="salvarNovoFornecedor()" class="flex-1 bg-brand-600 text-white font-bold py-3 rounded-xl shadow-lg">Salvar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Resumo Estoque -->
+    <div id="modal-resumo-estoque" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[200] flex items-center justify-center hidden-screen p-4">
+        <div class="bg-white rounded-3xl p-6 w-full max-w-sm shadow-2xl">
+            <div class="flex justify-between items-center mb-5">
+                <h3 class="text-xl font-bold text-brand-900 flex items-center gap-2"><i class="fas fa-clipboard-list text-emerald-600"></i> Resumo Geral</h3>
+                <button onclick="fecharResumoEstoque()" class="text-slate-400 hover:text-slate-600 active:scale-95"><i class="fas fa-times text-xl"></i></button>
+            </div>
+            
+            <div class="flex flex-col gap-3 mb-6">
+                <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+                    <span class="text-xs font-bold text-slate-500 uppercase">Total de Peças</span>
+                    <span id="resumo-estoque-pecas" class="text-xl font-black text-slate-800">0</span>
+                </div>
+                <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+                    <span class="text-xs font-bold text-slate-500 uppercase">Custo Investido</span>
+                    <span id="resumo-estoque-custo" class="text-lg font-bold text-slate-600">R$ 0,00</span>
+                </div>
+                <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+                    <span class="text-xs font-bold text-slate-500 uppercase">Valor Venda (Cheia)</span>
+                    <span id="resumo-estoque-venda" class="text-lg font-black text-brand-600">R$ 0,00</span>
+                </div>
+                <div class="flex justify-between items-center bg-emerald-50 p-3 rounded-xl border border-emerald-100">
+                    <span class="text-xs font-bold text-emerald-800 uppercase">Lucro Projetado Bruto</span>
+                    <span id="resumo-estoque-lucro" class="text-lg font-black text-emerald-600">R$ 0,00</span>
+                </div>
+            </div>
+            
+            <button onclick="fecharResumoEstoque()" class="w-full bg-slate-100 text-slate-700 font-bold py-3 rounded-xl active:scale-95">Fechar</button>
+        </div>
+    </div>
+
     <!-- Modal Confirmação Geral -->
     <div id="modal-confirmacao" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[400] flex items-center justify-center hidden-screen p-4">
         <div class="bg-white rounded-3xl p-6 w-full max-w-sm shadow-xl">
@@ -413,13 +532,15 @@
         </div>
     </div>
 
-    <!-- ================== NAVEGAÇÃO INFERIOR ================== -->
+    <!-- ================== NAVEGAÇÃO INFERIOR (ATUALIZADA) ================== -->
     <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 shadow-lg z-30">
-        <div class="max-w-4xl mx-auto flex justify-around p-1">
-            <button onclick="navegarApp('estoque')" id="tab-estoque" class="flex flex-col items-center p-2 text-slate-400 w-1/4 tab-active transition-all"><i class="fas fa-box text-xl mb-1"></i><span class="text-[9px] font-bold mt-1 uppercase">Estoque</span></button>
-            <button onclick="navegarApp('clientes')" id="tab-clientes" class="flex flex-col items-center p-2 text-slate-400 w-1/4 transition-all"><i class="fas fa-users text-xl mb-1"></i><span class="text-[9px] font-bold mt-1 uppercase">Clientes</span></button>
-            <button onclick="navegarApp('vendas')" id="tab-vendas" class="flex flex-col items-center p-2 text-slate-400 w-1/4 transition-all"><i class="fas fa-list-alt text-xl mb-1"></i><span class="text-[9px] font-bold mt-1 uppercase">Relatórios</span></button>
-            <button onclick="navegarApp('graficos')" id="tab-graficos" class="flex flex-col items-center p-2 text-slate-400 w-1/4 transition-all"><i class="fas fa-chart-pie text-xl mb-1"></i><span class="text-[9px] font-bold mt-1 uppercase">Gráficos</span></button>
+        <div class="max-w-4xl mx-auto flex justify-between p-1 overflow-x-auto no-scrollbar">
+            <button onclick="navegarApp('estoque')" id="tab-estoque" class="flex-1 flex flex-col items-center p-2 text-slate-400 min-w-[60px] tab-active transition-all"><i class="fas fa-box text-lg mb-1"></i><span class="text-[8px] sm:text-[9px] font-bold mt-1 uppercase">Estoque</span></button>
+            <button onclick="navegarApp('clientes')" id="tab-clientes" class="flex-1 flex flex-col items-center p-2 text-slate-400 min-w-[60px] transition-all"><i class="fas fa-users text-lg mb-1"></i><span class="text-[8px] sm:text-[9px] font-bold mt-1 uppercase">Clientes</span></button>
+            <button onclick="navegarApp('fornecedores')" id="tab-fornecedores" class="flex-1 flex flex-col items-center p-2 text-slate-400 min-w-[60px] transition-all"><i class="fas fa-truck text-lg mb-1"></i><span class="text-[8px] sm:text-[9px] font-bold mt-1 uppercase">Fornec.</span></button>
+            <button onclick="navegarApp('vendas')" id="tab-vendas" class="flex-1 flex flex-col items-center p-2 text-slate-400 min-w-[60px] transition-all"><i class="fas fa-list-alt text-lg mb-1"></i><span class="text-[8px] sm:text-[9px] font-bold mt-1 uppercase">Relatórios</span></button>
+            <button onclick="navegarApp('graficos')" id="tab-graficos" class="flex-1 flex flex-col items-center p-2 text-slate-400 min-w-[60px] transition-all"><i class="fas fa-chart-pie text-lg mb-1"></i><span class="text-[8px] sm:text-[9px] font-bold mt-1 uppercase">Gráficos</span></button>
+            <button onclick="navegarApp('despesas')" id="tab-despesas" class="flex-1 flex flex-col items-center p-2 text-slate-400 min-w-[60px] transition-all"><i class="fas fa-wallet text-lg mb-1"></i><span class="text-[8px] sm:text-[9px] font-bold mt-1 uppercase">Despesas</span></button>
         </div>
     </nav>
 
@@ -429,6 +550,8 @@
         let dbClientes = JSON.parse(localStorage.getItem('db_clientes_v4')) || [];
         let dbVendas = JSON.parse(localStorage.getItem('db_vendas_v4')) || [];
         let dbParcelas = JSON.parse(localStorage.getItem('db_parcelas_v4')) || [];
+        let dbDespesas = JSON.parse(localStorage.getItem('db_despesas_v4')) || [];
+        let dbFornecedores = JSON.parse(localStorage.getItem('db_fornecedores_v4')) || [];
         
         // Variáveis Auxiliares Globais
         let carrinho = [];
@@ -446,12 +569,14 @@
             localStorage.setItem('db_clientes_v4', JSON.stringify(dbClientes));
             localStorage.setItem('db_vendas_v4', JSON.stringify(dbVendas));
             localStorage.setItem('db_parcelas_v4', JSON.stringify(dbParcelas));
+            localStorage.setItem('db_despesas_v4', JSON.stringify(dbDespesas));
+            localStorage.setItem('db_fornecedores_v4', JSON.stringify(dbFornecedores));
         }
 
         // --- UTILITÁRIOS ---
         const fmtMoeda = v => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0);
         const fmtData = s => new Date(s).toLocaleDateString('pt-BR');
-        const fmtDataHora = s => new Date(s).toLocaleString('pt-BR');
+        const fmtDataHora = s => new Date(s).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
         const showToast = m => {
             const c = document.getElementById('toast-container');
             document.getElementById('toast-msg').querySelector('span').textContent = m;
@@ -463,16 +588,18 @@
         // --- NAVEGAÇÃO ---
         let currentCat = '';
         function navegarApp(screen) {
-            ['screen-estoque', 'screen-clientes', 'screen-vendas', 'screen-graficos'].forEach(s => document.getElementById(s).classList.add('hidden-screen'));
-            ['tab-estoque', 'tab-clientes', 'tab-vendas', 'tab-graficos'].forEach(t => document.getElementById(t).classList.remove('tab-active', 'text-brand-600'));
+            ['screen-estoque', 'screen-clientes', 'screen-fornecedores', 'screen-vendas', 'screen-graficos', 'screen-despesas'].forEach(s => document.getElementById(s).classList.add('hidden-screen'));
+            ['tab-estoque', 'tab-clientes', 'tab-fornecedores', 'tab-vendas', 'tab-graficos', 'tab-despesas'].forEach(t => document.getElementById(t).classList.remove('tab-active', 'text-brand-600'));
             
             document.getElementById(`screen-${screen}`).classList.remove('hidden-screen');
             document.getElementById(`tab-${screen}`).classList.add('tab-active', 'text-brand-600');
 
             if (screen === 'estoque') renderCategorias();
             if (screen === 'clientes') renderClientes();
+            if (screen === 'fornecedores') renderFornecedores();
             if (screen === 'vendas') renderRelatorios();
             if (screen === 'graficos') renderGraficos();
+            if (screen === 'despesas') renderDespesas();
         }
 
         // --- CATEGORIAS & PRODUTOS ---
@@ -870,7 +997,7 @@
                     id: guid(), idCompra: idCompra, 
                     pid: item.pid, pnome: info.nome, qtde: item.qtde,
                     valor: info.valorTotal, custo: (info.custoUnit * item.qtde), lucro: lucroTotalItem,
-                    tipo: `S/ Desc.`, // Campo antigo (mantido por compatibilidade)
+                    tipo: `S/ Desc.`, 
                     metodo: metodo,
                     canal: canal,
                     data: dataIso, status: 'pago'
@@ -1021,27 +1148,106 @@
             });
         }
 
+        // --- FORNECEDORES ---
+        function renderFornecedores() {
+            const list = document.getElementById('listaFornecedores'); list.innerHTML = '';
+            document.getElementById('msg-vazia-fornecedores').classList.toggle('hidden-screen', dbFornecedores.length > 0);
+
+            dbFornecedores.forEach(f => {
+                list.innerHTML += `
+                    <div class="bg-white p-5 rounded-3xl border border-brand-100 shadow-sm flex justify-between items-center group">
+                        <div>
+                            <h3 class="font-bold text-slate-800 text-lg">${f.empresa}</h3>
+                            <p class="text-xs text-slate-500 font-medium"><i class="fas fa-user mr-1"></i> ${f.contato || 'N/A'} | <i class="fas fa-phone mx-1"></i> ${f.tel}</p>
+                            <p class="text-[10px] text-slate-400 mt-1 uppercase"><i class="fas fa-id-card mr-1"></i> ${f.cnpj}</p>
+                        </div>
+                        <button onclick="deleteFornecedor('${f.id}')" class="text-slate-300 hover:text-red-500 p-2 opacity-0 group-hover:opacity-100 transition"><i class="fas fa-trash-alt"></i></button>
+                    </div>`;
+            });
+        }
+
+        function abrirModalFornecedor() { document.getElementById('modal-fornecedor').classList.remove('hidden-screen'); }
+        function fecharModalFornecedor() { document.getElementById('modal-fornecedor').classList.add('hidden-screen'); }
+        
+        function salvarNovoFornecedor() {
+            const emp = document.getElementById('forn-empresa').value;
+            if(!emp) return alert("Preencha o nome da Empresa/Marca!");
+            dbFornecedores.push({
+                id: guid(),
+                empresa: emp, contato: document.getElementById('forn-contato').value,
+                cnpj: document.getElementById('forn-cnpj').value, email: document.getElementById('forn-email').value,
+                tel: document.getElementById('forn-tel').value, detalhes: document.getElementById('forn-detalhes').value
+            });
+            saveDB(); fecharModalFornecedor(); renderFornecedores();
+            document.querySelectorAll('#modal-fornecedor input, #modal-fornecedor textarea').forEach(i => i.value = '');
+            showToast("Fornecedor cadastrado!");
+        }
+
+        function deleteFornecedor(id) {
+            openModalConfirm("Excluir Fornecedor?", "Todos os dados deste parceiro serão apagados.", () => {
+                dbFornecedores = dbFornecedores.filter(f => f.id !== id);
+                saveDB(); renderFornecedores();
+            });
+        }
+
+        // --- RESUMO DO ESTOQUE ---
+        function abrirResumoEstoque() {
+            let totalPecas = 0;
+            let custoTotal = 0;
+            let valorVendaTotal = 0;
+
+            dbProdutos.forEach(p => {
+                let qtd = parseInt(p.estoque) || 0;
+                if (qtd > 0) {
+                    let custo = parseFloat(p.custo) || 0;
+                    let margem = parseFloat(p.margem) || 0;
+                    let desc = parseFloat(p.desconto) || 0;
+
+                    let pVitrine = (custo * (1 + (margem / 100))) / (1 - (desc / 100));
+
+                    totalPecas += qtd;
+                    custoTotal += (custo * qtd);
+                    valorVendaTotal += (pVitrine * qtd); 
+                }
+            });
+
+            let lucroProjetado = valorVendaTotal - custoTotal;
+
+            document.getElementById('resumo-estoque-pecas').textContent = totalPecas;
+            document.getElementById('resumo-estoque-custo').textContent = fmtMoeda(custoTotal);
+            document.getElementById('resumo-estoque-venda').textContent = fmtMoeda(valorVendaTotal);
+            document.getElementById('resumo-estoque-lucro').textContent = fmtMoeda(lucroProjetado);
+
+            document.getElementById('modal-resumo-estoque').classList.remove('hidden-screen');
+        }
+
+        function fecharResumoEstoque() {
+            document.getElementById('modal-resumo-estoque').classList.add('hidden-screen');
+        }
+
         // --- RELATÓRIOS E EXPORTAÇÃO EXCEL ---
         function renderRelatorios() {
             const hoje = new Date();
             const mes = hoje.getMonth(), ano = hoje.getFullYear();
             document.getElementById('titulo-mes').textContent = hoje.toLocaleString('pt-BR', { month: 'long', year: 'numeric' });
 
-            const vendasAVista = dbVendas.filter(v => v.status === 'pago' && new Date(v.data).getMonth() === mes);
-            const parcelasPagas = dbParcelas.filter(p => p.status === 'pago' && new Date(p.vencimento).getMonth() === mes);
+            const vendasAVista = dbVendas.filter(v => v.status === 'pago' && new Date(v.data).getMonth() === mes && new Date(v.data).getFullYear() === ano);
+            const parcelasPagas = dbParcelas.filter(p => p.status === 'pago' && new Date(p.vencimento).getMonth() === mes && new Date(p.vencimento).getFullYear() === ano);
+            
             const totalRecebido = vendasAVista.reduce((a, b) => a + b.valor, 0) + parcelasPagas.reduce((a, b) => a + b.valor, 0);
-            const lucroReal = vendasAVista.reduce((a, b) => a + b.lucro, 0) + parcelasPagas.reduce((a, b) => a + (b.valor - b.custoBase), 0);
+            const lucroBruto = vendasAVista.reduce((a, b) => a + b.lucro, 0) + parcelasPagas.reduce((a, b) => a + (b.valor - b.custoBase), 0);
             const totalPendente = dbParcelas.filter(p => p.status === 'pendente').reduce((a, b) => a + b.valor, 0);
 
             document.getElementById('resumo-recebido').textContent = fmtMoeda(totalRecebido);
             document.getElementById('resumo-pendente').textContent = fmtMoeda(totalPendente);
-            document.getElementById('resumo-lucro-real').textContent = fmtMoeda(lucroReal);
+            document.getElementById('resumo-lucro-real').textContent = fmtMoeda(lucroBruto); // Apenas lucro bruto aqui, o líquido vai pras Despesas
 
             const prox = dbParcelas.filter(p => {
                 if(p.status !== 'pendente') return false;
                 const d = new Date(p.vencimento), diff = (d - hoje) / (1000 * 3600 * 24);
-                return diff <= 3;
+                return diff <= 3 && diff >= -30; // Evita mostrar muito antigos no alerta de próximos
             });
+            
             const alertaBox = document.getElementById('alertas-vencimento');
             alertaBox.classList.toggle('hidden-screen', prox.length === 0);
             const alertaList = document.getElementById('lista-alertas-vencimento'); alertaList.innerHTML = '';
@@ -1156,7 +1362,7 @@
                 "Método Pgto": v.metodo || 'Dinheiro',
                 "Canal de Venda": v.canal || 'Loja Física',
                 "Valor Total (R$)": v.valor.toFixed(2).replace('.', ','), 
-                "Lucro (R$)": v.lucro.toFixed(2).replace('.', ',')
+                "Lucro Bruto (R$)": v.lucro.toFixed(2).replace('.', ',')
             }));
 
             const wb = XLSX.utils.book_new();
@@ -1185,6 +1391,109 @@
                 console.error(e);
             }
         }
+
+        // --- DESPESAS E PONTO DE EQUILÍBRIO ---
+        function renderDespesas() {
+            const hoje = new Date();
+            const mes = hoje.getMonth(), ano = hoje.getFullYear();
+            document.getElementById('titulo-mes-despesas').textContent = hoje.toLocaleString('pt-BR', { month: 'long', year: 'numeric' });
+
+            // 1. Calcula o Lucro Operacional do Mês (Vendas à Vista + Parcelas Pagas)
+            const vendasAVista = dbVendas.filter(v => v.status === 'pago' && new Date(v.data).getMonth() === mes && new Date(v.data).getFullYear() === ano);
+            const parcelasPagas = dbParcelas.filter(p => p.status === 'pago' && new Date(p.vencimento).getMonth() === mes && new Date(p.vencimento).getFullYear() === ano);
+            const lucroBruto = vendasAVista.reduce((a, b) => a + b.lucro, 0) + parcelasPagas.reduce((a, b) => a + (b.valor - b.custoBase), 0);
+
+            // 2. Calcula as Despesas do Mês
+            const despesasMes = dbDespesas.filter(d => {
+                const dataD = new Date(d.data);
+                return dataD.getMonth() === mes && dataD.getFullYear() === ano;
+            });
+            const totalDespesas = despesasMes.reduce((a, b) => a + b.valor, 0);
+
+            // 3. Resultado Final
+            const lucroLiquidoFinal = lucroBruto - totalDespesas;
+
+            document.getElementById('despesas-lucro-bruto').textContent = fmtMoeda(lucroBruto);
+            document.getElementById('despesas-total').textContent = fmtMoeda(totalDespesas);
+            
+            const elLucroLiquido = document.getElementById('despesas-lucro-liquido');
+            elLucroLiquido.textContent = fmtMoeda(lucroLiquidoFinal);
+            elLucroLiquido.className = `text-2xl font-black ${lucroLiquidoFinal >= 0 ? 'text-blue-500' : 'text-red-500'}`;
+
+            // 4. Lógica da Barra Gauge do Ponto de Equilíbrio
+            const barra = document.getElementById('barra-equilibrio');
+            const statusEq = document.getElementById('status-equilibrio');
+            
+            if (totalDespesas === 0) {
+                barra.style.width = lucroBruto > 0 ? '100%' : '0%';
+                barra.className = `h-full transition-all duration-500 ${lucroBruto > 0 ? 'bg-blue-500' : 'bg-slate-300'}`;
+                statusEq.innerHTML = lucroBruto > 0 ? '<span class="text-blue-500 font-bold">Excelente! Tudo é lucro puro.</span>' : '<span class="text-slate-400">Nenhuma despesa ou venda registrada.</span>';
+            } else {
+                let pct = (lucroBruto / totalDespesas) * 100;
+                if (pct > 100) pct = 100;
+                barra.style.width = pct + '%';
+                
+                if (lucroBruto >= totalDespesas) {
+                    barra.className = 'h-full transition-all duration-500 bg-blue-500';
+                    statusEq.innerHTML = `<span class="text-blue-500 font-bold">Ponto de Equilíbrio Atingido! <i class="fas fa-check-circle"></i></span>`;
+                } else {
+                    barra.className = 'h-full transition-all duration-500 bg-red-500';
+                    const falta = totalDespesas - lucroBruto;
+                    statusEq.innerHTML = `<span class="text-red-500 font-bold">Faltam ${fmtMoeda(falta)} para o empate.</span>`;
+                }
+            }
+
+            // 5. Lista de Despesas
+            const list = document.getElementById('lista-despesas');
+            list.innerHTML = '';
+            if (despesasMes.length === 0) {
+                document.getElementById('msg-vazia-despesas').classList.remove('hidden-screen');
+            } else {
+                document.getElementById('msg-vazia-despesas').classList.add('hidden-screen');
+                despesasMes.slice().reverse().forEach(d => {
+                    list.innerHTML += `
+                        <div class="bg-white p-4 rounded-2xl border border-slate-100 flex justify-between items-center shadow-sm">
+                            <div>
+                                <p class="font-bold text-slate-800 text-sm">${d.descricao}</p>
+                                <p class="text-[10px] text-slate-400 uppercase">${fmtDataHora(d.data)}</p>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <span class="font-black text-red-500">- ${fmtMoeda(d.valor)}</span>
+                                <button onclick="excluirDespesa('${d.id}')" class="text-slate-200 hover:text-red-500 transition p-2"><i class="fas fa-trash-alt"></i></button>
+                            </div>
+                        </div>`;
+                });
+            }
+        }
+
+        function salvarNovaDespesa() {
+            const desc = document.getElementById('add-desp-desc').value;
+            const valor = parseFloat(document.getElementById('add-desp-valor').value);
+            
+            if (!desc || isNaN(valor) || valor <= 0) return alert("Preencha a descrição e um valor válido.");
+            
+            dbDespesas.push({
+                id: guid(),
+                descricao: desc,
+                valor: valor,
+                data: new Date().toISOString()
+            });
+            
+            saveDB();
+            document.getElementById('add-desp-desc').value = '';
+            document.getElementById('add-desp-valor').value = '';
+            renderDespesas();
+            showToast("Despesa registrada!");
+        }
+
+        function excluirDespesa(id) {
+            openModalConfirm("Excluir Despesa?", "Esse gasto será removido dos seus registros.", () => {
+                dbDespesas = dbDespesas.filter(d => d.id !== id);
+                saveDB();
+                renderDespesas();
+            });
+        }
+
 
         // --- LÓGICA DE GRÁFICOS ---
         function renderGraficos() {
@@ -1277,7 +1586,7 @@
                                 borderRadius: 4
                             },
                             {
-                                label: 'Lucro (R$)',
+                                label: 'Lucro Bruto (R$)',
                                 data: dataLucro,
                                 backgroundColor: '#e11d48', // Brand
                                 borderRadius: 4
@@ -1328,7 +1637,6 @@
             } else if (tipo === 'metodo_pagamento') {
                 const agrupado = {};
                 vendasFiltradas.forEach(v => {
-                    // Extrai o método base para agrupar (ex: agrupa todos os Carnês juntos independente de ser 2x ou 3x)
                     let met = v.metodo || 'Dinheiro';
                     if(met.includes('Carnê')) met = 'Carnê (Parcelado)';
                     
@@ -1410,6 +1718,7 @@
         }
         function fecharModalConfirm() { document.getElementById('modal-confirmacao').classList.add('hidden-screen'); }
 
+        // Inicialização
         renderCategorias();
     </script>
 </body>
