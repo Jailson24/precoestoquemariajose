@@ -123,7 +123,9 @@
     <div id="screen-vendas" class="max-w-4xl mx-auto hidden-screen">
         <div class="flex items-center justify-between mb-6 bg-white p-5 rounded-3xl shadow-sm border border-brand-100">
             <div><h1 class="text-2xl font-bold text-brand-900">Financeiro</h1><p id="titulo-mes" class="text-sm text-brand-600 capitalize">Mês Atual</p></div>
-            <div class="w-12 h-12 bg-brand-100 rounded-full flex items-center justify-center text-brand-600 text-xl"><i class="fas fa-list-alt"></i></div>
+            <button onclick="abrirModalGerenciarParcelas()" class="bg-orange-500 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-md active:scale-95 flex items-center gap-2">
+                <i class="fas fa-hand-holding-usd"></i> Ver Parcelas
+            </button>
         </div>
 
         <!-- Alertas de Parcelas a Vencer -->
@@ -136,12 +138,12 @@
             <div class="bg-white p-5 rounded-3xl border border-brand-100 shadow-sm">
                 <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Recebido (Mês)</p>
                 <p id="resumo-recebido" class="text-2xl font-black text-emerald-600">R$ 0,00</p>
-                <p class="text-[10px] text-slate-400">À vista + Parcelas pagas</p>
+                <p class="text-[10px] text-slate-400">À vista + Entradas e Pagamentos</p>
             </div>
             <div class="bg-white p-5 rounded-3xl border border-brand-100 shadow-sm">
                 <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">A Receber (Total)</p>
                 <p id="resumo-pendente" class="text-2xl font-black text-orange-500">R$ 0,00</p>
-                <p class="text-[10px] text-slate-400">Vendas parceladas em aberto</p>
+                <p class="text-[10px] text-slate-400">Parcelas pendentes em aberto</p>
             </div>
             <div class="bg-brand-600 p-5 rounded-3xl shadow-md text-white">
                 <p class="text-[10px] font-bold text-brand-200 uppercase tracking-widest mb-1">Lucro das Vendas</p>
@@ -259,7 +261,22 @@
 
     <!-- ================== MODAIS ================== -->
 
-    <!-- Modal Alertas Inteligência Estoque (NOVO) -->
+    <!-- Modal Gerenciar Todas Parcelas (NOVO) -->
+    <div id="modal-gerenciar-parcelas" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[200] flex items-center justify-center hidden-screen p-4">
+        <div class="bg-white rounded-3xl p-6 w-full max-w-lg shadow-2xl max-h-[90vh] flex flex-col">
+            <div class="flex justify-between items-center mb-4 border-b border-slate-100 pb-4">
+                <h3 class="text-xl font-bold text-brand-900 flex items-center gap-2"><i class="fas fa-hand-holding-usd text-orange-500"></i> Contas a Receber</h3>
+                <button onclick="fecharModalGerenciarParcelas()" class="w-10 h-10 bg-slate-100 text-slate-500 rounded-full hover:bg-slate-200 active:scale-95"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="overflow-y-auto no-scrollbar flex-1 pr-2">
+                <div id="lista-todas-parcelas" class="flex flex-col gap-2">
+                    <!-- Parcelas Injetadas Via JS -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Alertas Inteligência Estoque -->
     <div id="modal-alertas-estoque" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[200] flex items-center justify-center hidden-screen p-4">
         <div class="bg-white rounded-3xl p-6 w-full max-w-lg shadow-2xl max-h-[90vh] flex flex-col">
             <div class="flex justify-between items-center mb-4">
@@ -336,7 +353,7 @@
             <div class="flex flex-col gap-4 max-h-[80vh] overflow-y-auto no-scrollbar">
                 
                 <div class="p-4 bg-brand-50 rounded-2xl border border-brand-100 flex justify-between items-center">
-                    <span class="text-sm text-brand-700 font-bold">Total:</span>
+                    <span class="text-sm text-brand-700 font-bold">Total da Compra:</span>
                     <span class="text-2xl font-black text-brand-600" id="checkout-total-pgto">R$ 0,00</span>
                 </div>
                 
@@ -372,17 +389,30 @@
                     </div>
                 </div>
                 
-                <!-- Box Cartão de Crédito -->
+                <!-- Box Cartão de Crédito (COM JUROS) -->
                 <div id="box-parcelas-cartao" class="hidden-screen border-t border-slate-100 pt-3">
-                    <div>
-                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Parcelamento do Cartão</label>
-                        <select id="checkout-cartao-parcelas" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none text-sm font-bold text-slate-700">
-                            <option value="1">1x (À Vista)</option>
-                            <option value="2">2x</option><option value="3">3x</option><option value="4">4x</option>
-                            <option value="5">5x</option><option value="6">6x</option><option value="7">7x</option>
-                            <option value="8">8x</option><option value="9">9x</option><option value="10">10x</option>
-                            <option value="11">11x</option><option value="12">12x</option>
-                        </select>
+                    <div class="grid grid-cols-2 gap-3 mb-3">
+                        <div>
+                            <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Parcelamento</label>
+                            <select id="checkout-cartao-parcelas" onchange="calcularCartao()" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none text-sm font-bold text-slate-700">
+                                <option value="1">1x (À Vista)</option>
+                                <option value="2">2x</option><option value="3">3x</option><option value="4">4x</option>
+                                <option value="5">5x</option><option value="6">6x</option><option value="7">7x</option>
+                                <option value="8">8x</option><option value="9">9x</option><option value="10">10x</option>
+                                <option value="11">11x</option><option value="12">12x</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Juros (%)</label>
+                            <input type="number" id="checkout-cartao-juros" value="0" min="0" step="0.1" oninput="calcularCartao()" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none text-sm font-bold text-slate-700" placeholder="Ex: 5.5">
+                        </div>
+                    </div>
+                    <div class="p-3 bg-brand-50 rounded-xl border border-brand-100 flex justify-between items-center mb-1">
+                        <span class="text-xs text-brand-700 font-bold">Total com Juros:</span>
+                        <span class="text-lg font-black text-brand-600" id="checkout-cartao-total-juros">R$ 0,00</span>
+                    </div>
+                    <div class="text-right">
+                        <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest" id="checkout-cartao-val-cada">1x de R$ 0,00</span>
                     </div>
                 </div>
 
@@ -1060,8 +1090,13 @@
             document.getElementById('checkout-valor-recebido').value = '';
             document.getElementById('checkout-troco').textContent = 'R$ 0,00';
             document.getElementById('checkout-troco').classList.replace('text-red-500', 'text-emerald-600');
-            document.getElementById('checkout-cartao-parcelas').value = '1';
             
+            // Reset Cartão
+            document.getElementById('checkout-cartao-parcelas').value = '1';
+            document.getElementById('checkout-cartao-juros').value = '';
+            calcularCartao();
+            
+            // Reset Carnê
             document.getElementById('checkout-carne-parcelas').value = 1;
             document.getElementById('checkout-carne-data').value = new Date().toISOString().split('T')[0];
 
@@ -1087,6 +1122,7 @@
                 calcularTroco();
             } else if (metodo === 'Cartão de Crédito') {
                 boxCartao.classList.remove('hidden-screen');
+                calcularCartao();
             } else if (metodo === 'Carnê (Parcelado)') {
                 if(dbClientes.length === 0) {
                     alert("Cadastre um cliente primeiro na aba 'Clientes' para vender no carnê.");
@@ -1115,6 +1151,16 @@
             }
         }
 
+        function calcularCartao() {
+            let n = parseInt(document.getElementById('checkout-cartao-parcelas').value) || 1;
+            let jurosPct = parseFloat(document.getElementById('checkout-cartao-juros').value) || 0;
+            
+            let totalCartao = totalCheckoutAtual * (1 + (jurosPct / 100));
+
+            document.getElementById('checkout-cartao-total-juros').textContent = fmtMoeda(totalCartao);
+            document.getElementById('checkout-cartao-val-cada').textContent = `${n}x de ${fmtMoeda(totalCartao / n)}`;
+        }
+
         function calcularCarne() {
             let n = parseInt(document.getElementById('checkout-carne-parcelas').value);
             if (isNaN(n) || n < 1) n = 1;
@@ -1126,19 +1172,19 @@
             abrirCarrinho(); 
         }
 
-        // ========================== CÓDIGO CORRIGIDO AQUI ==========================
         function confirmarVenda() {
             let metodo = document.getElementById('checkout-metodo-pgto').value;
             const canal = document.getElementById('checkout-canal-pgto').value;
             const idCompra = guid();
             const dataIso = new Date().toISOString();
             
-            // Variáveis globais para lidar com QUALQUER parcelamento (Cartão ou Carnê)
+            // Variáveis globais para parcelamento
             let isParcelado = false;
             let nParc = 1;
             let dataInic = new Date();
             let cid = null;
-            let cnome = "Cliente Avulso"; // Nome genérico se não for Carnê
+            let cnome = "Cliente Avulso";
+            let totalFinalCompra = totalCheckoutAtual;
 
             if (metodo === 'Dinheiro') {
                 const recebido = parseFloat(document.getElementById('checkout-valor-recebido').value) || 0;
@@ -1147,15 +1193,17 @@
                 }
             } else if (metodo === 'Cartão de Crédito') {
                 const parcelas = parseInt(document.getElementById('checkout-cartao-parcelas').value);
+                const jurosPct = parseFloat(document.getElementById('checkout-cartao-juros').value) || 0;
+                
+                totalFinalCompra = totalCheckoutAtual * (1 + (jurosPct / 100)); // Aplica os juros
+
                 if (parcelas > 1) {
-                    metodo = `Cartão de Crédito (${parcelas}x)`;
-                    // Se parcelou no cartão, ativa a flag de parcelamento para ir pro "A Receber"
+                    metodo = `Cartão de Crédito (${parcelas}x${jurosPct > 0 ? ' c/ Juros' : ''})`;
                     isParcelado = true;
                     nParc = parcelas;
                     cnome = "Cartão de Crédito / Avulso"; 
-                    
-                    // Cartão de crédito geralmente cai a primeira parcela daqui a 30 dias
-                    dataInic.setDate(dataInic.getDate() + 30);
+                } else if (jurosPct > 0) {
+                    metodo = `Cartão de Crédito (1x c/ Juros)`;
                 }
             } else if (metodo === 'Carnê (Parcelado)') {
                 cid = document.getElementById('checkout-sel-cliente').value;
@@ -1174,38 +1222,52 @@
                 isParcelado = true;
             }
 
-            // Lógica que agora serve tanto para Carnê quanto para Cartão (se for > 1x)
+            let multiplicadorJuros = totalFinalCompra / totalCheckoutAtual; // Para distribuir o lucro
+
             if (isParcelado) {
                 let custoTotalCompra = carrinho.reduce((sum, item) => sum + (calcularItemCarrinho(item).custoUnit * item.qtde), 0);
                 
                 for(let i = 0; i < nParc; i++) {
-                    const venc = new Date(dataInic); 
-                    venc.setMonth(venc.getMonth() + i);
+                    // A 1ª parcela sempre será dada como PAGA HOJE e com o vencimento em HOJE (Entrada / 1ª fatura)
+                    let venc = new Date(dataInic);
                     
+                    if(metodo.includes('Cartão de Crédito') && i > 0) {
+                        venc = new Date();
+                        venc.setMonth(venc.getMonth() + i);
+                    } else if (metodo.includes('Carnê') && i > 0) {
+                        venc.setMonth(venc.getMonth() + i);
+                    }
+
+                    // Forçando a primeira parcela a ser paga agora, conforme solicitado
+                    let statusParc = (i === 0) ? 'pago' : 'pendente';
+                    let dataVencParc = (i === 0) ? new Date().toISOString() : venc.toISOString();
+
                     dbParcelas.push({
                         id: guid(), vid: idCompra,
                         cid: cid, cnome: cnome, pnome: `Sacola (${carrinho.reduce((a, b) => a + b.qtde, 0)} itens)`,
-                        valor: totalCheckoutAtual / nParc, custoBase: custoTotalCompra / nParc,
-                        vencimento: venc.toISOString(), status: 'pendente'
+                        valor: totalFinalCompra / nParc, custoBase: custoTotalCompra / nParc,
+                        vencimento: dataVencParc, status: statusParc
                     });
                 }
             }
 
-            // Gerar o histórico de vendas para os itens do carrinho
+            // Gerar o histórico de vendas
             carrinho.forEach(item => {
                 const info = calcularItemCarrinho(item);
                 const custoItemGeral = info.custoUnit * item.qtde;
-                const lucroTotalItem = info.valorTotal - custoItemGeral;
+                
+                // Aplica a proporção do juros ao valor do item vendido para refletir no lucro
+                const valorFinalDoItemComJuros = info.valorTotal * multiplicadorJuros;
+                const lucroTotalItem = valorFinalDoItemComJuros - custoItemGeral;
                 
                 dbVendas.push({
                     id: guid(), idCompra: idCompra, 
                     pid: item.pid, pnome: info.nome, qtde: item.qtde,
                     cid: cid, cnome: cid ? cnome : null,
-                    valor: info.valorTotal, custo: custoItemGeral, lucro: lucroTotalItem,
+                    valor: valorFinalDoItemComJuros, custo: custoItemGeral, lucro: lucroTotalItem,
                     tipo: isParcelado ? `Parcelado` : `À Vista`, 
                     metodo: metodo,
                     canal: canal,
-                    // Se for parcelado, não pode contar como pago ainda (Isso conserta o bug do painel)
                     data: dataIso, status: isParcelado ? 'parcelado' : 'pago' 
                 });
                 modEstoque(item.pid, -item.qtde);
@@ -1215,7 +1277,6 @@
             document.getElementById('modal-checkout-pgto').classList.add('hidden-screen');
             showToast("Venda Concluída!");
         }
-        // =========================================================================
 
         // --- CLIENTES ---
         function renderClientes() {
@@ -1335,7 +1396,7 @@
             document.getElementById('modal-resumo-estoque').classList.add('hidden-screen');
         }
 
-        // --- RELATÓRIOS E EXPORTAÇÃO WHATSAPP/EMAIL ---
+        // --- RELATÓRIOS E FINANCEIRO ---
         function renderRelatorios() {
             const hoje = new Date();
             const mes = hoje.getMonth(), ano = hoje.getFullYear();
@@ -1363,9 +1424,12 @@
             const alertaList = document.getElementById('lista-alertas-vencimento'); alertaList.innerHTML = '';
             prox.forEach(p => {
                 alertaList.innerHTML += `
-                    <div onclick="baixaParcela('${p.id}')" class="bg-white border-l-4 border-red-500 p-3 rounded-xl shadow-sm flex justify-between items-center active:scale-95 cursor-pointer hover:bg-red-50">
+                    <div onclick="baixaParcela('${p.id}')" class="bg-white border-l-4 border-red-500 p-3 rounded-xl shadow-sm flex justify-between items-center active:scale-95 cursor-pointer hover:bg-red-50 transition">
                         <div><p class="text-xs font-bold text-slate-800">${p.cnome} <span class="text-slate-400 font-normal">(${p.pnome})</span></p><p class="text-[10px] text-red-500 font-bold">VENCE EM ${fmtData(p.vencimento)}</p></div>
-                        <p class="font-black text-red-600">${fmtMoeda(p.valor)}</p>
+                        <div class="flex items-center gap-3">
+                            <p class="font-black text-red-600">${fmtMoeda(p.valor)}</p>
+                            <div class="bg-emerald-500 text-white rounded p-1 text-[10px] shadow-sm"><i class="fas fa-check"></i></div>
+                        </div>
                     </div>`;
             });
 
@@ -1392,10 +1456,69 @@
             });
         }
 
+        // --- GERENCIAR PARCELAS (NOVO) ---
+        function abrirModalGerenciarParcelas() {
+            renderListaTodasParcelas();
+            document.getElementById('modal-gerenciar-parcelas').classList.remove('hidden-screen');
+        }
+
+        function fecharModalGerenciarParcelas() {
+            document.getElementById('modal-gerenciar-parcelas').classList.add('hidden-screen');
+        }
+
+        function renderListaTodasParcelas() {
+            const list = document.getElementById('lista-todas-parcelas');
+            list.innerHTML = '';
+            
+            // Ordenar por data mais antiga primeiro
+            const pendentes = dbParcelas.filter(p => p.status === 'pendente').sort((a,b) => new Date(a.vencimento) - new Date(b.vencimento));
+
+            if(pendentes.length === 0) {
+                list.innerHTML = '<p class="text-center text-slate-500 py-8 font-bold">Nenhuma parcela a receber no momento! 🎉</p>';
+                return;
+            }
+
+            pendentes.forEach(p => {
+                const hoje = new Date();
+                const v = new Date(p.vencimento);
+                const atrasado = v < hoje && v.toDateString() !== hoje.toDateString();
+
+                list.innerHTML += `
+                    <div class="bg-slate-50 p-4 rounded-xl border ${atrasado ? 'border-red-300 bg-red-50' : 'border-slate-200'} flex justify-between items-center mb-2">
+                        <div>
+                            <p class="font-bold text-sm text-slate-800">${p.cnome}</p>
+                            <p class="text-[10px] ${atrasado ? 'text-red-600 font-bold' : 'text-slate-500'} uppercase">Venc: ${fmtData(p.vencimento)} ${atrasado ? '(ATRASADO)' : ''}</p>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <span class="font-black text-orange-500">${fmtMoeda(p.valor)}</span>
+                            <button onclick="baixaParcelaModal('${p.id}')" class="bg-emerald-500 text-white px-3 py-2 rounded-lg text-xs font-bold active:scale-95 shadow-md flex gap-1 items-center"><i class="fas fa-check-circle"></i> Receber</button>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function baixaParcelaModal(id) {
+            const p = dbParcelas.find(x => x.id === id);
+            openModalConfirm("Confirmar Recebimento?", `Confirmar pagamento de ${fmtMoeda(p.valor)} de ${p.cnome}?`, () => {
+                p.status = 'pago'; 
+                // Atualizar o vencimento para a data de hoje, que foi quando pagou
+                p.vencimento = new Date().toISOString(); 
+                saveDB(); 
+                renderRelatorios(); 
+                renderListaTodasParcelas(); // Atualiza a lista do modal sem fechar ele
+                showToast("Baixa realizada com sucesso!");
+            }, 'emerald');
+        }
+
         function baixaParcela(id) {
             const p = dbParcelas.find(x => x.id === id);
             openModalConfirm("Confirmar Pagamento?", `Receber parcela de ${fmtMoeda(p.valor)} de ${p.cnome}?`, () => {
-                p.status = 'pago'; saveDB(); renderRelatorios(); showToast("Parcela paga!");
+                p.status = 'pago'; 
+                p.vencimento = new Date().toISOString(); // Define o dia do pagamento
+                saveDB(); 
+                renderRelatorios(); 
+                showToast("Parcela recebida e computada!");
             }, 'emerald');
         }
 
