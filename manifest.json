@@ -1,0 +1,17 @@
+{
+  "name": "App Vendas Maria Jose",
+  "short_name": "VendasMJ",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#f9a8d4",
+  "description": "Gestão de estoque e vendas para a Maria José",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/3081/3081559.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
