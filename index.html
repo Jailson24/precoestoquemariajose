@@ -44,7 +44,7 @@
         .toast-enter { animation: slideInDown 0.3s ease-out forwards; }
         .tab-active { color: #e11d48 !important; border-top: 2px solid #e11d48; }
         
-        /* Ocultar barra de rolagem no carrinho para visual mais limpo */
+        /* Ocultar barra de rolagem no carrinho e tabelas para visual mais limpo */
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
@@ -52,7 +52,7 @@
 <body class="p-4 md:p-8 text-slate-800 pb-32">
 
     <!-- Toast Notification -->
-    <div id="toast-container" class="fixed top-4 left-0 right-0 z-[200] flex justify-center hidden-screen pointer-events-none">
+    <div id="toast-container" class="fixed top-4 left-0 right-0 z-[500] flex justify-center hidden-screen pointer-events-none">
         <div id="toast-msg" class="bg-emerald-500 text-white px-6 py-3 rounded-full shadow-lg font-medium flex items-center gap-2 text-sm">
             <i class="fas fa-check-circle"></i> <span>Ação concluída!</span>
         </div>
@@ -128,13 +128,16 @@
             </div>
         </div>
 
+        <!-- NOVO: Exportação visualiza antes de baixar -->
         <div class="bg-white p-6 rounded-3xl border border-brand-100 shadow-sm mb-8">
             <h3 class="text-lg font-bold text-brand-900 mb-4 flex items-center gap-2"><i class="fas fa-file-excel text-emerald-600"></i> Exportar Período</h3>
             <div class="grid grid-cols-2 gap-3 mb-4">
                 <input type="date" id="exp-inicio" class="bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-sm outline-none">
                 <input type="date" id="exp-fim" class="bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-sm outline-none">
             </div>
-            <button onclick="exportarExcel()" class="w-full bg-emerald-600 text-white font-bold py-3 rounded-xl active:scale-95"><i class="fas fa-share-alt mr-2"></i> Compartilhar / Baixar Excel</button>
+            <button onclick="visualizarRelatorio()" class="w-full bg-emerald-600 text-white font-bold py-3 rounded-xl active:scale-95 flex justify-center items-center gap-2">
+                <i class="fas fa-search"></i> Visualizar Relatório
+            </button>
         </div>
 
         <h3 class="text-lg font-bold text-brand-900 mb-4 ml-2">Histórico de Vendas</h3>
@@ -144,8 +147,35 @@
 
     <!-- ================== MODAIS ================== -->
 
+    <!-- NOVO: Modal para Escolher Quantidade ao Adicionar na Sacola -->
+    <div id="modal-add-carrinho" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[150] flex items-center justify-center hidden-screen p-4 transition-all">
+        <div class="bg-white rounded-3xl p-6 w-full max-w-sm shadow-2xl flex flex-col">
+            <div class="flex justify-between items-center mb-2">
+                <h3 class="text-xl font-bold text-brand-900">Adicionar à Sacola</h3>
+                <button onclick="fecharModalAddCarrinho()" class="text-slate-400 hover:text-slate-600 active:scale-95"><i class="fas fa-times text-xl"></i></button>
+            </div>
+            
+            <p id="add-cart-pnome" class="font-bold text-slate-700 text-lg mb-1"></p>
+            <p id="add-cart-ptipo" class="text-[10px] text-brand-600 font-bold uppercase tracking-widest mb-4"></p>
+            
+            <div class="flex items-center justify-between bg-slate-50 p-4 rounded-xl border border-slate-200 mb-6">
+                <span class="font-bold text-slate-600 text-sm">Quantidade:</span>
+                <div class="flex items-center gap-3">
+                    <button onclick="modQtdModalAdd(-1)" class="w-10 h-10 bg-white border border-slate-300 rounded-lg text-slate-500 active:scale-95 shadow-sm"><i class="fas fa-minus"></i></button>
+                    <input type="number" id="add-cart-qtd" value="1" readonly class="w-10 text-center bg-transparent font-black text-2xl outline-none text-slate-800">
+                    <button onclick="modQtdModalAdd(1)" class="w-10 h-10 bg-brand-500 text-white rounded-lg active:scale-95 shadow-md shadow-brand-200"><i class="fas fa-plus"></i></button>
+                </div>
+            </div>
+            
+            <div class="flex gap-2">
+                <button onclick="fecharModalAddCarrinho()" class="flex-1 bg-slate-100 text-slate-600 font-bold py-3 rounded-xl active:scale-95">Cancelar</button>
+                <button onclick="confirmarAddCarrinho()" class="flex-1 bg-brand-600 text-white font-bold py-3 rounded-xl shadow-lg active:scale-95">Confirmar</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal Carrinho -->
-    <div id="modal-carrinho" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[150] flex items-end sm:items-center justify-center hidden-screen p-0 sm:p-4 transition-all">
+    <div id="modal-carrinho" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[150] flex items-end sm:items-center justify-center hidden-screen p-0 sm:p-4 transition-all">
         <div class="bg-white rounded-t-3xl sm:rounded-3xl p-6 w-full max-w-md shadow-2xl h-[90vh] sm:h-auto flex flex-col">
             <div class="flex justify-between items-center mb-6">
                 <h3 class="text-xl font-bold text-brand-900"><i class="fas fa-shopping-cart text-brand-500 mr-2"></i> Sacola de Compras</h3>
@@ -174,7 +204,7 @@
     </div>
 
     <!-- Modal Checkout À Vista (Com Troco) -->
-    <div id="modal-checkout-avista" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[200] flex items-center justify-center hidden-screen p-4">
+    <div id="modal-checkout-avista" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[200] flex items-center justify-center hidden-screen p-4">
         <div class="bg-white rounded-3xl p-6 w-full max-w-md shadow-2xl">
             <h3 class="text-xl font-bold text-brand-900 mb-4">Pagamento À Vista</h3>
             <div class="flex flex-col gap-4">
@@ -198,8 +228,74 @@
         </div>
     </div>
 
+    <!-- Modal Venda Parcelada -->
+    <div id="modal-parcelado" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[200] flex items-center justify-center hidden-screen p-4">
+        <div class="bg-white rounded-3xl p-6 w-full max-w-md shadow-2xl">
+            <h3 class="text-xl font-bold text-brand-900 mb-4">Finalizar no Carnê</h3>
+            <div class="flex flex-col gap-4">
+                <div>
+                    <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Selecionar Cliente</label>
+                    <select id="sel-cliente" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none font-bold text-slate-700"></select>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Nº Parcelas</label>
+                        <input type="number" id="num-parcelas" value="1" min="1" max="12" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none font-bold text-slate-700">
+                    </div>
+                    <div>
+                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">1º Vencimento</label>
+                        <input type="date" id="data-primeira" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-sm outline-none font-bold text-slate-700">
+                    </div>
+                </div>
+                <div class="p-4 bg-brand-50 rounded-2xl border border-brand-100">
+                    <p class="text-sm text-brand-700 font-medium">Valor Total: <b id="val-total-parc" class="text-lg text-brand-800">R$ 0,00</b></p>
+                    <p class="text-xs text-brand-600 mt-1">Parcelas de: <b id="val-cada-parc" class="text-sm">R$ 0,00</b></p>
+                </div>
+                <div class="flex gap-3">
+                    <button onclick="fecharModalParcelado()" class="flex-1 bg-slate-100 text-slate-600 font-bold py-3 rounded-xl active:scale-95">Voltar</button>
+                    <button onclick="confirmarVendaParcelada()" class="flex-1 bg-brand-600 text-white font-bold py-3 rounded-xl shadow-lg active:scale-95">Concluir Compra</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- NOVO: Modal Visualização do Excel antes do Download -->
+    <div id="modal-preview-relatorio" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[300] flex items-center justify-center hidden-screen p-4">
+        <div class="bg-white rounded-3xl p-6 w-full max-w-4xl shadow-2xl h-[90vh] flex flex-col">
+            <div class="flex justify-between items-center mb-2">
+                <h3 class="text-xl font-bold text-brand-900 flex items-center gap-2"><i class="fas fa-table text-emerald-600"></i> Relatório</h3>
+                <button onclick="fecharPreviewRelatorio()" class="w-10 h-10 bg-slate-100 text-slate-500 rounded-full hover:bg-slate-200 active:scale-95"><i class="fas fa-times"></i></button>
+            </div>
+            <p class="text-sm text-slate-500 mb-4">Confira os dados antes de baixar o arquivo Excel final.</p>
+            
+            <div class="flex-1 overflow-auto border border-slate-200 rounded-xl mb-4 no-scrollbar">
+                <table class="w-full text-left border-collapse text-xs whitespace-nowrap">
+                    <thead class="bg-slate-100 text-slate-600 sticky top-0 z-10 shadow-sm">
+                        <tr>
+                            <th class="p-3 border-b border-slate-200">Data</th>
+                            <th class="p-3 border-b border-slate-200">Produto</th>
+                            <th class="p-3 border-b border-slate-200 text-center">Qtd</th>
+                            <th class="p-3 border-b border-slate-200">Cliente</th>
+                            <th class="p-3 border-b border-slate-200">Pagamento</th>
+                            <th class="p-3 border-b border-slate-200 text-right">Venda</th>
+                            <th class="p-3 border-b border-slate-200 text-right">Lucro</th>
+                        </tr>
+                    </thead>
+                    <tbody id="preview-tbody" class="text-slate-700 divide-y divide-slate-100"></tbody>
+                </table>
+            </div>
+            
+            <div class="flex gap-3 mt-auto">
+                <button onclick="fecharPreviewRelatorio()" class="flex-1 bg-slate-100 text-slate-600 font-bold py-4 rounded-xl active:scale-95">Voltar</button>
+                <button onclick="baixarExcelReal()" class="flex-1 bg-emerald-600 text-white font-bold py-4 rounded-xl shadow-lg active:scale-95 flex justify-center items-center gap-2">
+                    <i class="fas fa-download"></i> Baixar Arquivo (.xlsx)
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal Cadastro Cliente -->
-    <div id="modal-cliente" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[200] flex items-center justify-center hidden-screen p-4 overflow-y-auto">
+    <div id="modal-cliente" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[200] flex items-center justify-center hidden-screen p-4 overflow-y-auto">
         <div class="bg-white rounded-3xl p-6 w-full max-w-md shadow-2xl my-auto">
             <h3 class="text-xl font-bold text-brand-900 mb-4">Novo Cliente</h3>
             <div class="flex flex-col gap-3">
@@ -219,39 +315,8 @@
         </div>
     </div>
 
-    <!-- Modal Venda Parcelada -->
-    <div id="modal-parcelado" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[200] flex items-center justify-center hidden-screen p-4">
-        <div class="bg-white rounded-3xl p-6 w-full max-w-md shadow-2xl">
-            <h3 class="text-xl font-bold text-brand-900 mb-4">Finalizar no Carnê</h3>
-            <div class="flex flex-col gap-4">
-                <div>
-                    <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Selecionar Cliente</label>
-                    <select id="sel-cliente" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none"></select>
-                </div>
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Nº Parcelas</label>
-                        <input type="number" id="num-parcelas" value="1" min="1" max="12" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none">
-                    </div>
-                    <div>
-                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">1º Vencimento</label>
-                        <input type="date" id="data-primeira" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-sm outline-none">
-                    </div>
-                </div>
-                <div class="p-4 bg-brand-50 rounded-2xl border border-brand-100">
-                    <p class="text-sm text-brand-700">Valor Total: <b id="val-total-parc">R$ 0,00</b></p>
-                    <p class="text-xs text-brand-600">Parcelas de: <b id="val-cada-parc">R$ 0,00</b></p>
-                </div>
-                <div class="flex gap-3">
-                    <button onclick="fecharModalParcelado()" class="flex-1 bg-slate-100 text-slate-600 font-bold py-3 rounded-xl">Voltar</button>
-                    <button onclick="confirmarVendaParcelada()" class="flex-1 bg-brand-600 text-white font-bold py-3 rounded-xl shadow-lg">Concluir Compra</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <!-- Modal Confirmação Geral -->
-    <div id="modal-confirmacao" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[250] flex items-center justify-center hidden-screen p-4">
+    <div id="modal-confirmacao" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[400] flex items-center justify-center hidden-screen p-4">
         <div class="bg-white rounded-3xl p-6 w-full max-w-sm shadow-xl">
             <div id="modal-confirm-icon" class="w-14 h-14 bg-red-100 text-red-500 rounded-full flex items-center justify-center text-2xl mx-auto mb-4"><i class="fas fa-exclamation-triangle"></i></div>
             <h3 id="modal-confirm-titulo" class="text-xl font-bold text-center text-slate-800 mb-2">Atenção</h3>
@@ -279,9 +344,15 @@
         let dbVendas = JSON.parse(localStorage.getItem('db_vendas_v4')) || [];
         let dbParcelas = JSON.parse(localStorage.getItem('db_parcelas_v4')) || [];
         
-        // Carrinho Volátil e Variáveis Auxiliares
+        // Variáveis Auxiliares Globais
         let carrinho = [];
         let totalCheckoutAtual = 0;
+        let relatorioTempData = []; // Armazena dados filtrados para a tabela preview
+        
+        // Vars para Modal de Add Carrinho
+        let tempAddPid = null;
+        let tempAddTipo = null;
+        let tempMaxEstoque = 0;
 
         function saveDB() {
             localStorage.setItem('db_estoque_v4', JSON.stringify(dbProdutos));
@@ -293,6 +364,7 @@
         // --- UTILITÁRIOS ---
         const fmtMoeda = v => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0);
         const fmtData = s => new Date(s).toLocaleDateString('pt-BR');
+        const fmtDataHora = s => new Date(s).toLocaleString('pt-BR');
         const showToast = m => {
             const c = document.getElementById('toast-container');
             document.getElementById('toast-msg').querySelector('span').textContent = m;
@@ -397,16 +469,16 @@
                         </div>
                     </div>
                     <div class="grid grid-cols-2 gap-2 bg-slate-50 p-3 rounded-2xl mb-3">
-                        <div><p class="text-[9px] text-slate-400 uppercase">Venda S/ Desc</p><p class="font-bold text-slate-600" id="vitrine-${p.id}">${fmtMoeda(pVitrine)}</p></div>
-                        <div><p class="text-[9px] text-brand-700 uppercase">Venda Final</p><p class="font-black text-brand-600 text-lg" id="final-${p.id}">${fmtMoeda(pFinal)}</p></div>
+                        <div><p class="text-[9px] text-brand-700 uppercase">Valor Cheio</p><p class="font-black text-brand-600 text-lg" id="vitrine-${p.id}">${fmtMoeda(pVitrine)}</p></div>
+                        <div><p class="text-[9px] text-slate-400 uppercase">Com Desconto</p><p class="font-bold text-slate-600" id="final-${p.id}">${fmtMoeda(pFinal)}</p></div>
                     </div>
                     
-                    <!-- BOTÕES ADICIONAR AO CARRINHO -->
+                    <!-- BOTÕES ADICIONAR AO CARRINHO (Agora abrem modal para quantidade) -->
                     <div class="mt-4 border-t border-slate-100 pt-3 flex gap-2">
-                        <button onclick="addAoCarrinho('${p.id}', 'cheio')" class="flex-1 bg-white border border-brand-200 text-brand-700 hover:bg-brand-50 font-bold py-3 rounded-xl transition flex justify-center items-center gap-1 active:scale-95 text-[11px] sm:text-sm">
+                        <button onclick="abrirModalAddCarrinho('${p.id}', 'cheio')" class="flex-1 bg-brand-600 hover:bg-brand-700 text-white font-bold py-3 rounded-xl shadow-md transition flex justify-center items-center gap-1 active:scale-95 text-[11px] sm:text-sm">
                             <i class="fas fa-tag"></i> Sacola (Cheio)
                         </button>
-                        <button onclick="addAoCarrinho('${p.id}', 'desc')" class="flex-1 bg-brand-600 hover:bg-brand-700 text-white font-bold py-3 rounded-xl shadow-md transition flex justify-center items-center gap-1 active:scale-95 text-[11px] sm:text-sm">
+                        <button onclick="abrirModalAddCarrinho('${p.id}', 'desc')" class="flex-1 bg-white border border-brand-200 text-brand-700 hover:bg-brand-50 font-bold py-3 rounded-xl transition flex justify-center items-center gap-1 active:scale-95 text-[11px] sm:text-sm">
                             <i class="fas fa-percent"></i> Sacola (Desc.)
                         </button>
                     </div>
@@ -470,24 +542,54 @@
             });
         }
 
-        // --- SISTEMA DE CARRINHO DE COMPRAS ---
-
-        function addAoCarrinho(pid, tipoPreco) {
+        // --- SISTEMA DE CARRINHO DE COMPRAS E QUANTIDADE ---
+        
+        function abrirModalAddCarrinho(pid, tipoPreco) {
             const p = dbProdutos.find(x => x.id === pid);
-            if (!p || parseInt(p.estoque) <= 0) return alert("Este produto não possui estoque disponível!");
+            if (!p || parseInt(p.estoque) <= 0) return alert("Sem estoque disponível para esta peça!");
             
-            const totalOfThisPidInCart = carrinho.filter(x => x.pid === pid).reduce((sum, item) => sum + item.qtde, 0);
+            // Verifica o quanto deste produto já está na sacola
+            const cartItems = carrinho.filter(x => x.pid === pid).reduce((sum, i) => sum + i.qtde, 0);
+            tempMaxEstoque = parseInt(p.estoque) - cartItems;
             
-            if (totalOfThisPidInCart + 1 > parseInt(p.estoque)) return alert("Você atingiu o limite de estoque desta peça!");
+            if(tempMaxEstoque <= 0) return alert("Todo o estoque disponível desta peça já foi colocado na sacola!");
+
+            tempAddPid = pid;
+            tempAddTipo = tipoPreco;
             
-            const cartIndex = carrinho.findIndex(x => x.pid === pid && x.tipo === tipoPreco);
+            document.getElementById('add-cart-pnome').textContent = p.nome || 'Produto S/ Nome';
+            document.getElementById('add-cart-ptipo').textContent = tipoPreco === 'cheio' ? 'Pagamento: Preço Cheio' : 'Pagamento: Com Desconto';
+            document.getElementById('add-cart-qtd').value = 1;
+            
+            document.getElementById('modal-add-carrinho').classList.remove('hidden-screen');
+        }
+
+        function modQtdModalAdd(delta) {
+            const input = document.getElementById('add-cart-qtd');
+            let val = parseInt(input.value) + delta;
+            if (val < 1) val = 1;
+            if (val > tempMaxEstoque) val = tempMaxEstoque; // Limita ao estoque livre
+            input.value = val;
+        }
+
+        function fecharModalAddCarrinho() {
+            document.getElementById('modal-add-carrinho').classList.add('hidden-screen');
+        }
+
+        function confirmarAddCarrinho() {
+            const qtd = parseInt(document.getElementById('add-cart-qtd').value);
+            if (qtd < 1 || qtd > tempMaxEstoque) return;
+            
+            const cartIndex = carrinho.findIndex(x => x.pid === tempAddPid && x.tipo === tempAddTipo);
             if (cartIndex > -1) {
-                carrinho[cartIndex].qtde++;
+                carrinho[cartIndex].qtde += qtd;
             } else {
-                carrinho.push({ pid: pid, qtde: 1, tipo: tipoPreco }); 
+                carrinho.push({ pid: tempAddPid, qtde: qtd, tipo: tempAddTipo }); 
             }
+            
             atualizarBadgeCarrinho();
-            showToast("Item na sacola!");
+            fecharModalAddCarrinho();
+            showToast("Peça adicionada à sacola!");
         }
 
         function atualizarBadgeCarrinho() {
@@ -549,7 +651,7 @@
                     <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100 flex flex-col gap-3">
                         <div class="flex justify-between items-start">
                             <h4 class="font-bold text-slate-800 text-sm w-3/4">${info.nome}</h4>
-                            <button onclick="removerDoCarrinho(${index})" class="text-red-400 p-1"><i class="fas fa-trash"></i></button>
+                            <button onclick="removerDoCarrinho(${index})" class="text-red-400 p-1 active:scale-90"><i class="fas fa-trash"></i></button>
                         </div>
                         <div class="flex items-center justify-between">
                             <div class="flex items-center gap-2 bg-white border border-slate-200 rounded-lg p-1 shadow-sm">
@@ -562,7 +664,7 @@
                                 <p class="font-bold text-brand-600">${fmtMoeda(info.valorTotal)}</p>
                             </div>
                         </div>
-                        <select onchange="modTipoPrecoCarrinho(${index}, this.value)" class="w-full bg-white border border-slate-200 text-xs rounded-lg px-2 py-2 text-slate-600 outline-none">
+                        <select onchange="modTipoPrecoCarrinho(${index}, this.value)" class="w-full bg-white border border-slate-200 text-xs rounded-lg px-2 py-2 text-slate-600 outline-none font-bold">
                             <option value="desc" ${item.tipo === 'desc' ? 'selected' : ''}>Com Desconto (${fmtMoeda(calcularItemCarrinho({...item, tipo: 'desc'}).valorUnit)} / un)</option>
                             <option value="cheio" ${item.tipo === 'cheio' ? 'selected' : ''}>Preço Cheio (${fmtMoeda(calcularItemCarrinho({...item, tipo: 'cheio'}).valorUnit)} / un)</option>
                         </select>
@@ -583,7 +685,7 @@
             let n = item.qtde + delta;
             const totalOfThisPidInCart = carrinho.filter((x, i) => x.pid === item.pid && i !== index).reduce((sum, x) => sum + x.qtde, 0);
             
-            if (n + totalOfThisPidInCart > parseInt(p.estoque)) return alert("Estoque insuficiente para adicionar mais.");
+            if (n + totalOfThisPidInCart > parseInt(p.estoque)) return alert("Estoque insuficiente para adicionar mais desta peça.");
             if (n <= 0) {
                 removerDoCarrinho(index);
             } else {
@@ -596,7 +698,7 @@
         function modTipoPrecoCarrinho(index, novoTipo) {
             if (carrinho[index]) {
                 carrinho[index].tipo = novoTipo;
-                // Mescla com outro item do mesmo produto e mesmo tipo, se houver
+                // Mescla itens idênticos se virarem o mesmo tipo
                 const existingIndex = carrinho.findIndex((x, i) => x.pid === carrinho[index].pid && x.tipo === novoTipo && i !== index);
                 if (existingIndex > -1) {
                     carrinho[existingIndex].qtde += carrinho[index].qtde;
@@ -612,21 +714,16 @@
             renderCarrinho();
         }
 
-        // --- CHECKOUT DO CARRINHO ---
+        // --- CHECKOUT DO CARRINHO (PAGAMENTO E PARCELAMENTO BLINDADO) ---
 
         function iniciarCheckoutAVista() {
             if(carrinho.length === 0) return;
-            
-            // Calcula o total da compra
             totalCheckoutAtual = carrinho.reduce((sum, item) => sum + calcularItemCarrinho(item).valorTotal, 0);
-            
-            // Prepara a tela de checkout
             document.getElementById('checkout-total-avista').textContent = fmtMoeda(totalCheckoutAtual);
             document.getElementById('checkout-valor-recebido').value = '';
             document.getElementById('checkout-troco').textContent = 'R$ 0,00';
             document.getElementById('checkout-troco').classList.replace('text-red-500', 'text-emerald-600');
             
-            // Troca os modais
             fecharCarrinho();
             document.getElementById('modal-checkout-avista').classList.remove('hidden-screen');
         }
@@ -635,9 +732,7 @@
             const recebido = parseFloat(document.getElementById('checkout-valor-recebido').value) || 0;
             const troco = recebido - totalCheckoutAtual;
             const elTroco = document.getElementById('checkout-troco');
-            
             elTroco.textContent = fmtMoeda(troco);
-            
             if (troco < 0) {
                 elTroco.classList.remove('text-emerald-600');
                 elTroco.classList.add('text-red-500');
@@ -649,15 +744,13 @@
 
         function fecharModalCheckoutAVista() {
             document.getElementById('modal-checkout-avista').classList.add('hidden-screen');
-            abrirCarrinho(); // Volta para o carrinho se cancelar
+            abrirCarrinho(); 
         }
 
         function confirmarVendaAVista() {
             const recebido = parseFloat(document.getElementById('checkout-valor-recebido').value) || 0;
-            
-            // Validação simples
             if (recebido > 0 && recebido < totalCheckoutAtual) {
-                if(!confirm("O valor recebido é menor que o total. Deseja confirmar a venda mesmo assim?")) return;
+                if(!confirm("Atenção: O valor recebido é MENOR que o total da compra. Deseja confirmar a venda mesmo assim?")) return;
             }
 
             const idCompra = guid();
@@ -667,7 +760,6 @@
                 const info = calcularItemCarrinho(item);
                 const lucroTotalItem = info.valorTotal - (info.custoUnit * item.qtde);
                 
-                // Registra Item Individual no Histórico (para o relatório saber O QUE foi vendido)
                 dbVendas.push({
                     id: guid(), idCompra: idCompra, 
                     pid: item.pid, pnome: info.nome, qtde: item.qtde,
@@ -675,11 +767,10 @@
                     tipo: `À Vista (${item.tipo === 'cheio' ? 'S/ Desc' : 'Desc'})`,
                     data: dataIso, status: 'pago'
                 });
-                modEstoque(item.pid, -item.qtde); // Baixa no estoque
+                modEstoque(item.pid, -item.qtde);
             });
 
-            saveDB(); 
-            carrinho = []; atualizarBadgeCarrinho();
+            saveDB(); carrinho = []; atualizarBadgeCarrinho();
             document.getElementById('modal-checkout-avista').classList.add('hidden-screen');
             showToast("Venda Concluída!");
         }
@@ -688,117 +779,95 @@
             if(carrinho.length === 0) return;
             if(dbClientes.length === 0) {
                 fecharCarrinho();
-                return alert("Cadastre um cliente primeiro para vender no carnê!");
+                return alert("Para vender parcelado, cadastre um cliente primeiro na aba 'Clientes'.");
             }
             
-            const total = carrinho.reduce((sum, item) => sum + calcularItemCarrinho(item).valorTotal, 0);
-            
-            const sel = document.getElementById('sel-cliente'); sel.innerHTML = '';
-            dbClientes.forEach(c => sel.innerHTML += `<option value="${c.id}">${c.nome}</option>`);
-            
-            document.getElementById('val-total-parc').textContent = fmtMoeda(total);
-            document.getElementById('data-primeira').value = new Date().toISOString().split('T')[0];
-            
-            const updateVals = () => {
-                const n = parseInt(document.getElementById('num-parcelas').value) || 1;
-                document.getElementById('val-cada-parc').textContent = fmtMoeda(total / n);
-            };
-            document.getElementById('num-parcelas').oninput = updateVals;
-            updateVals();
+            try {
+                const total = carrinho.reduce((sum, item) => sum + calcularItemCarrinho(item).valorTotal, 0);
+                
+                const sel = document.getElementById('sel-cliente'); sel.innerHTML = '';
+                dbClientes.forEach(c => sel.innerHTML += `<option value="${c.id}">${c.nome}</option>`);
+                
+                document.getElementById('val-total-parc').textContent = fmtMoeda(total);
+                document.getElementById('data-primeira').value = new Date().toISOString().split('T')[0];
+                document.getElementById('num-parcelas').value = 1;
+                
+                const updateVals = () => {
+                    let n = parseInt(document.getElementById('num-parcelas').value);
+                    if (isNaN(n) || n < 1) n = 1;
+                    document.getElementById('val-cada-parc').textContent = fmtMoeda(total / n);
+                };
+                document.getElementById('num-parcelas').oninput = updateVals;
+                updateVals();
 
-            fecharCarrinho();
-            document.getElementById('modal-parcelado').classList.remove('hidden-screen');
+                fecharCarrinho();
+                document.getElementById('modal-parcelado').classList.remove('hidden-screen');
+            } catch(e) {
+                alert("Erro ao preparar parcelamento. Verifique se os produtos e clientes são válidos.");
+                console.error(e);
+            }
         }
 
         function confirmarVendaParcelada() {
-            const cid = document.getElementById('sel-cliente').value;
-            const nParc = parseInt(document.getElementById('num-parcelas').value) || 1;
-            const dataInic = new Date(document.getElementById('data-primeira').value);
-            const cli = dbClientes.find(x => x.id === cid);
-            
-            const idCompra = guid();
-            const dataIso = new Date().toISOString();
-            let totalCompra = 0;
-            let custoTotalCompra = 0;
-
-            carrinho.forEach(item => {
-                const info = calcularItemCarrinho(item);
-                const custoItemGeral = (info.custoUnit * item.qtde);
-                const lucroTotalItem = info.valorTotal - custoItemGeral;
+            try {
+                const cid = document.getElementById('sel-cliente').value;
+                let nParc = parseInt(document.getElementById('num-parcelas').value);
+                if (isNaN(nParc) || nParc < 1) nParc = 1;
                 
-                totalCompra += info.valorTotal;
-                custoTotalCompra += custoItemGeral;
+                const dataInicString = document.getElementById('data-primeira').value;
+                if(!dataInicString) return alert("Defina a data do 1º Vencimento.");
+                const dataInic = new Date(dataInicString);
+                
+                const cli = dbClientes.find(x => x.id === cid);
+                if(!cli) return alert("Cliente inválido.");
+                
+                const idCompra = guid();
+                const dataIso = new Date().toISOString();
+                let totalCompra = 0;
+                let custoTotalCompra = 0;
 
-                dbVendas.push({
-                    id: guid(), idCompra: idCompra, 
-                    pid: item.pid, pnome: info.nome, qtde: item.qtde,
-                    cid: cid, cnome: cli.nome,
-                    valor: info.valorTotal, custo: custoItemGeral, lucro: lucroTotalItem,
-                    tipo: `Parcelado (${nParc}x)`,
-                    data: dataIso, status: 'parcelado'
-                });
-                modEstoque(item.pid, -item.qtde);
-            });
+                carrinho.forEach(item => {
+                    const info = calcularItemCarrinho(item);
+                    const custoItemGeral = (info.custoUnit * item.qtde);
+                    const lucroTotalItem = info.valorTotal - custoItemGeral;
+                    
+                    totalCompra += info.valorTotal;
+                    custoTotalCompra += custoItemGeral;
 
-            // Gera as N parcelas para o total do carrinho
-            for(let i = 0; i < nParc; i++) {
-                const venc = new Date(dataInic); venc.setMonth(venc.getMonth() + i);
-                dbParcelas.push({
-                    id: guid(), vid: idCompra, // Link com idCompra
-                    cid: cid, cnome: cli.nome, pnome: `Compra (${carrinho.length} itens)`,
-                    valor: totalCompra / nParc, custoBase: custoTotalCompra / nParc,
-                    vencimento: venc.toISOString(), status: 'pendente'
+                    dbVendas.push({
+                        id: guid(), idCompra: idCompra, 
+                        pid: item.pid, pnome: info.nome, qtde: item.qtde,
+                        cid: cid, cnome: cli.nome,
+                        valor: info.valorTotal, custo: custoItemGeral, lucro: lucroTotalItem,
+                        tipo: `Parcelado (${nParc}x)`,
+                        data: dataIso, status: 'parcelado'
+                    });
+                    modEstoque(item.pid, -item.qtde);
                 });
+
+                // Gera as parcelas atreladas à compra
+                for(let i = 0; i < nParc; i++) {
+                    const venc = new Date(dataInic); 
+                    venc.setMonth(venc.getMonth() + i);
+                    
+                    dbParcelas.push({
+                        id: guid(), vid: idCompra,
+                        cid: cid, cnome: cli.nome, pnome: `Sacola (${carrinho.reduce((a, b) => a + b.qtde, 0)} itens)`,
+                        valor: totalCompra / nParc, custoBase: custoTotalCompra / nParc,
+                        vencimento: venc.toISOString(), status: 'pendente'
+                    });
+                }
+                
+                saveDB(); carrinho = []; atualizarBadgeCarrinho();
+                fecharModalParcelado(); 
+                showToast("Carnê gerado com sucesso!");
+            } catch(e) {
+                alert("Erro ao salvar a venda parcelada.");
+                console.error(e);
             }
-            
-            saveDB(); 
-            carrinho = []; atualizarBadgeCarrinho();
-            fecharModalParcelado(); 
-            showToast("Carnê gerado com sucesso!");
         }
 
-        // --- CLIENTES ---
-        function renderClientes() {
-            const list = document.getElementById('listaClientes'); list.innerHTML = '';
-            document.getElementById('msg-vazia-clientes').classList.toggle('hidden-screen', dbClientes.length > 0);
-
-            dbClientes.forEach(c => {
-                list.innerHTML += `
-                    <div class="bg-white p-5 rounded-3xl border border-brand-100 shadow-sm flex justify-between items-center group">
-                        <div>
-                            <h3 class="font-bold text-slate-800 text-lg">${c.nome}</h3>
-                            <p class="text-xs text-slate-400"><i class="fas fa-phone mr-1"></i> ${c.tel} | <i class="fas fa-id-card mr-1"></i> ${c.cpf}</p>
-                            <p class="text-[10px] text-brand-600 font-medium mt-1 uppercase"><i class="fas fa-map-marker-alt mr-1"></i> ${c.endereco || 'Endereço não informado'}</p>
-                        </div>
-                        <button onclick="deleteCli('${c.id}')" class="text-slate-300 hover:text-red-500 p-2 opacity-0 group-hover:opacity-100 transition"><i class="fas fa-trash-alt"></i></button>
-                    </div>`;
-            });
-        }
-
-        function abrirModalCliente() { document.getElementById('modal-cliente').classList.remove('hidden-screen'); }
-        function fecharModalCliente() { document.getElementById('modal-cliente').classList.add('hidden-screen'); }
-        
-        function salvarNovoCliente() {
-            const n = document.getElementById('cli-nome').value;
-            if(!n) return alert("Preencha o nome!");
-            dbClientes.push({
-                id: guid(),
-                nome: n, cpf: document.getElementById('cli-cpf').value,
-                rg: document.getElementById('cli-rg').value, email: document.getElementById('cli-email').value,
-                tel: document.getElementById('cli-tel').value, endereco: document.getElementById('cli-endereco').value
-            });
-            saveDB(); fecharModalCliente(); renderClientes();
-            document.querySelectorAll('#modal-cliente input, #modal-cliente textarea').forEach(i => i.value = '');
-        }
-
-        function deleteCli(id) {
-            openModalConfirm("Excluir Cliente?", "Todos os dados dele serão apagados.", () => {
-                dbClientes = dbClientes.filter(c => c.id !== id);
-                saveDB(); renderClientes();
-            });
-        }
-
-        // --- RELATÓRIOS ---
+        // --- RELATÓRIOS E EXPORTAÇÃO EXCEL ---
         function renderRelatorios() {
             const hoje = new Date();
             const mes = hoje.getMonth(), ano = hoje.getFullYear();
@@ -839,7 +908,7 @@
                     <div class="bg-white p-4 rounded-2xl border border-brand-100 flex justify-between items-center shadow-sm">
                         <div>
                             <p class="font-bold text-slate-800 text-sm">${qtdeTag}${v.pnome} <span class="text-slate-400 font-normal text-[10px]">#${v.cnome || 'Balcão'}</span></p>
-                            <p class="text-[10px] text-brand-600 font-bold uppercase mb-2">${v.tipo} • ${fmtData(v.data)}</p>
+                            <p class="text-[10px] text-brand-600 font-bold uppercase mb-2">${v.tipo} • ${fmtDataHora(v.data)}</p>
                             <div class="flex gap-2">
                                 <span class="text-[10px] bg-emerald-50 text-emerald-600 px-2 py-1 rounded-md font-bold">Venda: ${fmtMoeda(v.valor)}</span>
                                 <span class="text-[10px] bg-brand-50 text-brand-600 px-2 py-1 rounded-md font-bold">Lucro: ${fmtMoeda(v.lucro)}</span>
@@ -850,91 +919,85 @@
             });
         }
 
-        function baixaParcela(id) {
-            const p = dbParcelas.find(x => x.id === id);
-            openModalConfirm("Confirmar Pagamento?", `Receber parcela de ${fmtMoeda(p.valor)} de ${p.cnome}?`, () => {
-                p.status = 'pago'; saveDB(); renderRelatorios(); showToast("Parcela paga!");
-            }, 'emerald');
-        }
-
-        // ESTORNO DE COMPRA COMPLETA
-        function deleteVenda(id) {
-            const v = dbVendas.find(x => x.id === id);
-            if(!v) return;
-
-            const isCart = !!v.idCompra;
-            const titulo = isCart ? "Estornar Sacola Completa?" : "Estornar Venda?";
-            const msg = isCart 
-                ? "Esta peça faz parte de uma compra maior/carnê. O estorno cancelará TODA A COMPRA e devolverá TODAS as peças ao estoque." 
-                : "A venda será apagada e a peça volta ao estoque.";
-
-            openModalConfirm(titulo, msg, () => {
-                if (isCart) {
-                    const itensDaCompra = dbVendas.filter(x => x.idCompra === v.idCompra);
-                    itensDaCompra.forEach(item => { modEstoque(item.pid, item.qtde || 1); });
-                    dbVendas = dbVendas.filter(x => x.idCompra !== v.idCompra);
-                    dbParcelas = dbParcelas.filter(x => x.vid !== v.idCompra);
-                } else {
-                    modEstoque(v.pid, v.qtde || 1);
-                    dbVendas = dbVendas.filter(x => x.id !== id);
-                    dbParcelas = dbParcelas.filter(x => x.vid !== id);
-                }
-                saveDB(); renderRelatorios(); showToast("Estorno realizado!");
-            });
-        }
-
-        // --- EXPORTAR EXCEL ---
-        function exportarExcel() {
+        // --- PREVIEW E DOWNLOAD DO EXCEL (FORMATO BASE64 ROBUSTO PARA APK) ---
+        function visualizarRelatorio() {
             const ini = new Date(document.getElementById('exp-inicio').value);
             const fim = new Date(document.getElementById('exp-fim').value); 
             fim.setHours(23,59,59);
             
-            if(isNaN(ini) || isNaN(fim)) return alert("Selecione Datas Válidas.");
+            if(isNaN(ini) || isNaN(fim)) return alert("Selecione a Data Inicial e a Data Final primeiro.");
 
-            const filt = dbVendas.filter(v => { const d = new Date(v.data); return d >= ini && d <= fim; });
-            if (filt.length === 0) return alert("Nenhuma venda no período.");
+            relatorioTempData = dbVendas.filter(v => { const d = new Date(v.data); return d >= ini && d <= fim; });
+            
+            if (relatorioTempData.length === 0) return alert("Nenhuma venda encontrada nesse período.");
 
-            const data = filt.map(v => ({
-                "Data": fmtData(v.data), 
+            const tbody = document.getElementById('preview-tbody');
+            tbody.innerHTML = '';
+            
+            relatorioTempData.forEach(v => {
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-50 transition">
+                        <td class="p-3 border-b border-slate-100">${fmtData(v.data)}</td>
+                        <td class="p-3 border-b border-slate-100 font-bold">${v.pnome}</td>
+                        <td class="p-3 border-b border-slate-100 text-center">${v.qtde || 1}</td>
+                        <td class="p-3 border-b border-slate-100">${v.cnome || '-'}</td>
+                        <td class="p-3 border-b border-slate-100 text-[10px]">${v.tipo}</td>
+                        <td class="p-3 border-b border-slate-100 text-right text-emerald-600 font-bold">${fmtMoeda(v.valor)}</td>
+                        <td class="p-3 border-b border-slate-100 text-right text-brand-600">${fmtMoeda(v.lucro)}</td>
+                    </tr>
+                `;
+            });
+
+            document.getElementById('modal-preview-relatorio').classList.remove('hidden-screen');
+        }
+
+        function fecharPreviewRelatorio() {
+            document.getElementById('modal-preview-relatorio').classList.add('hidden-screen');
+        }
+
+        function baixarExcelReal() {
+            if (!relatorioTempData || relatorioTempData.length === 0) return;
+
+            const data = relatorioTempData.map(v => ({
+                "Data": fmtDataHora(v.data), 
                 "Produto": v.pnome,
                 "Qtde": v.qtde || 1,
                 "Cliente": v.cnome || "Balcão",
-                "Valor Total": v.valor.toFixed(2), 
-                "Lucro": v.lucro.toFixed(2), 
+                "Valor Total": v.valor.toFixed(2).replace('.', ','), 
+                "Lucro": v.lucro.toFixed(2).replace('.', ','), 
                 "Pagamento": v.tipo
             }));
 
             const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(data), "Relatorio");
-            const nomeArq = "Relatorio_Vendas.xlsx";
+            const ws = XLSX.utils.json_to_sheet(data);
+            
+            // Ajusta a largura das colunas do Excel para ficar mais elegante
+            ws['!cols'] = [{ wch: 18 }, { wch: 25 }, { wch: 6 }, { wch: 20 }, { wch: 12 }, { wch: 12 }, { wch: 18 }];
+            
+            XLSX.utils.book_append_sheet(wb, ws, "Relatório");
+            const nomeArq = `Relatorio_Estoque_${Date.now()}.xlsx`;
 
             try {
-                const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
-                const blob = new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-                const file = new File([blob], nomeArq, { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-
-                if (navigator.share) {
-                    navigator.share({ title: 'Relatório', files: [file] })
-                    .then(() => showToast("Enviado!"))
-                    .catch(() => forcarDownloadAndroid(blob, nomeArq));
-                } else {
-                    forcarDownloadAndroid(blob, nomeArq);
-                }
+                // MÉTODO BASE64: À prova de falhas para Android WebViews (APKs)
+                const b64 = XLSX.write(wb, { bookType: 'xlsx', type: 'base64' });
+                const url = "data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64," + b64;
+                
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = nomeArq;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                
+                showToast("Download Concluído!");
+                fecharPreviewRelatorio();
             } catch(e) {
-                alert("Erro ao exportar. Verifique permissões.");
+                alert("Erro ao forçar download nativo no aparelho.");
+                console.error(e);
             }
         }
 
-        function forcarDownloadAndroid(blob, nomeArq) {
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.style.display = 'none'; a.href = url; a.download = nomeArq;
-            document.body.appendChild(a); a.click();
-            window.URL.revokeObjectURL(url); document.body.removeChild(a);
-            showToast("Verifique sua pasta de Downloads!");
-        }
-
-        // --- MODAL CONFIRMAÇÃO GLOBAL ---
+        // --- MODAL CONFIRMAÇÃO GERAL E ESTORNO ---
         function openModalConfirm(t, tx, cb, color = 'red') {
             document.getElementById('modal-confirm-titulo').textContent = t;
             document.getElementById('modal-confirm-texto').textContent = tx;
