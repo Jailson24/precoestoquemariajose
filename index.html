@@ -12,6 +12,10 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- FIREBASE COMPAT -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
     
     <script>
         tailwind.config = {
@@ -32,12 +36,13 @@
         body { font-family: 'Inter', sans-serif; background-color: #fff1f2; -webkit-tap-highlight-color: transparent; }
         .alert-low-stock { background-color: #fee2e2 !important; border-color: #fca5a5 !important; }
         .alert-low-stock span.estoque-numero, .alert-low-stock input { color: #991b1b !important; }
+        .alert-parado { background-color: #fff7ed !important; border-color: #fdba74 !important; }
+        .is-draft { border: 2px dashed #3b82f6 !important; background-color: #eff6ff !important; }
         input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
         .hidden-screen { display: none !important; }
         @keyframes slideInDown { from { transform: translateY(-100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
         .toast-enter { animation: slideInDown 0.3s ease-out forwards; }
         .tab-active { color: #e11d48 !important; border-top: 2px solid #e11d48; }
-        
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
@@ -57,13 +62,15 @@
         <span id="cart-badge" class="absolute -top-1 -right-1 bg-red-500 text-white text-[12px] font-black w-6 h-6 rounded-full flex items-center justify-center border-2 border-white">0</span>
     </button>
 
-    <!-- ================== TELAS DE ESTOQUE (CATEGORIAS E PRODUTOS) ================== -->
+    <!-- ================== TELAS DE ESTOQUE ================== -->
     <div id="screen-estoque">
         <div id="tela-categorias" class="max-w-4xl mx-auto">
             <div class="flex items-center justify-between mb-6 bg-white p-5 rounded-3xl shadow-sm border border-brand-100">
                 <div><h1 class="text-2xl font-bold text-brand-900">Meu Estoque</h1><p class="text-sm text-brand-600">Selecione uma categoria</p></div>
                 <div class="flex gap-2">
-                    <button onclick="abrirResumoEstoque()" class="w-12 h-12 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 rounded-2xl flex items-center justify-center text-xl transition active:scale-95 shadow-sm" title="Resumo do Estoque"><i class="fas fa-clipboard-list"></i></button>
+                    <button onclick="abrirResumoEstoque()" class="w-12 h-12 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 rounded-2xl flex items-center justify-center text-xl transition active:scale-95 shadow-sm" title="Resumo do Estoque">
+                        <i class="fas fa-clipboard-list"></i>
+                    </button>
                     <div class="w-12 h-12 bg-brand-100 rounded-2xl flex items-center justify-center text-brand-600 text-xl"><i class="fas fa-gem"></i></div>
                 </div>
             </div>
@@ -73,9 +80,7 @@
 
             <!-- Dashboard de Inteligência do Estoque -->
             <h3 class="text-lg font-bold text-brand-900 mb-4 ml-2 mt-4">Inteligência de Estoque</h3>
-            <div id="cards-estoque-inteligente" class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-                <!-- Injetado via JS -->
-            </div>
+            <div id="cards-estoque-inteligente" class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8"></div>
         </div>
 
         <div id="tela-produtos" class="max-w-4xl mx-auto hidden-screen">
@@ -93,7 +98,7 @@
 
     <!-- ================== TELA DE CLIENTES ================== -->
     <div id="screen-clientes" class="max-w-4xl mx-auto hidden-screen">
-        <div class="flex items-center justify-between mb-6 bg-white p-5 rounded-3xl shadow-sm border border-brand-100">
+        <div class="flex items-center justify-between mb-6 bg-white p-5 rounded-3 shadow-sm border border-brand-100">
             <div><h1 class="text-2xl font-bold text-brand-900">Clientes</h1><p class="text-sm text-brand-600">Gestão de contatos</p></div>
             <button onclick="abrirModalCliente()" class="w-12 h-12 bg-brand-600 text-white rounded-2xl shadow-lg flex items-center justify-center text-xl active:scale-95"><i class="fas fa-user-plus"></i></button>
         </div>
@@ -120,7 +125,6 @@
             </button>
         </div>
 
-        <!-- Alertas de Parcelas a Vencer -->
         <div id="alertas-vencimento" class="mb-6 hidden-screen">
             <h3 class="text-sm font-bold text-red-600 mb-3 ml-2 flex items-center gap-2"><i class="fas fa-bell animate-bounce"></i> ATENÇÃO: PARCELAS A VENCER (PRÓX. 3 DIAS)</h3>
             <div id="lista-alertas-vencimento" class="flex flex-col gap-2"></div>
@@ -144,7 +148,6 @@
             </div>
         </div>
 
-        <!-- Exportação -->
         <div class="bg-white p-6 rounded-3xl border border-brand-100 shadow-sm mb-8">
             <h3 class="text-lg font-bold text-brand-900 mb-4 flex items-center gap-2"><i class="fas fa-paper-plane text-emerald-600"></i> Exportar e Enviar Período</h3>
             <div class="grid grid-cols-2 gap-3 mb-4">
@@ -168,10 +171,8 @@
             <div class="w-12 h-12 bg-brand-100 rounded-full flex items-center justify-center text-brand-600 text-xl"><i class="fas fa-wallet"></i></div>
         </div>
 
-        <!-- Dashboard Ponto de Equilíbrio -->
         <div class="bg-white p-6 rounded-3xl border border-brand-100 shadow-sm mb-6">
             <h3 class="text-lg font-bold text-slate-800 mb-5 flex items-center gap-2"><i class="fas fa-balance-scale text-brand-600"></i> Ponto de Equilíbrio</h3>
-            
             <div class="flex justify-between items-end mb-2">
                 <div>
                     <p class="text-[10px] font-bold text-slate-400 uppercase">Lucro Bruto (Mês)</p>
@@ -182,25 +183,20 @@
                     <p id="despesas-total" class="text-xl font-bold text-red-500">R$ 0,00</p>
                 </div>
             </div>
-
-            <!-- Barra de Progresso (Gauge) -->
             <div class="w-full bg-slate-100 h-6 rounded-full overflow-hidden border border-slate-200 relative mb-3">
                 <div id="barra-equilibrio" class="h-full bg-red-500 transition-all duration-500" style="width: 0%;"></div>
             </div>
-            
             <div class="text-center mb-6" id="status-equilibrio"></div>
-
             <div class="p-4 bg-slate-50 rounded-2xl border border-slate-200 flex justify-between items-center">
                 <span class="text-sm text-slate-600 font-bold uppercase tracking-wider">Lucro Líquido Final:</span>
                 <span class="text-2xl font-black text-slate-400" id="despesas-lucro-liquido">R$ 0,00</span>
             </div>
         </div>
 
-        <!-- Formulário Adicionar Despesa -->
         <div class="bg-white p-5 rounded-3xl border border-brand-100 shadow-sm mb-6">
             <h3 class="text-sm font-bold text-slate-800 mb-3">Registrar Gasto</h3>
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <input type="text" id="add-desp-desc" placeholder="Ex: Luz, Aluguel, Embalagem" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none text-sm font-bold text-slate-700 sm:col-span-2">
+                <input type="text" id="add-desp-desc" placeholder="Ex: Luz, Aluguel" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none text-sm font-bold text-slate-700 sm:col-span-2">
                 <div class="flex gap-2">
                     <input type="number" id="add-desp-valor" step="0.01" placeholder="Valor (R$)" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none text-sm font-bold text-slate-700">
                     <button onclick="salvarNovaDespesa()" class="w-14 bg-red-500 text-white rounded-xl shadow-md flex items-center justify-center active:scale-95"><i class="fas fa-plus"></i></button>
@@ -213,7 +209,7 @@
         <div id="msg-vazia-despesas" class="text-center py-10 bg-white rounded-3xl border border-brand-100 hidden-screen"><p class="text-slate-400">Nenhuma despesa registrada este mês.</p></div>
     </div>
 
-    <!-- ================== NOVA TELA: GRÁFICOS ================== -->
+    <!-- ================== TELA DE GRÁFICOS ================== -->
     <div id="screen-graficos" class="max-w-4xl mx-auto hidden-screen">
         <div class="flex items-center justify-between mb-6 bg-white p-5 rounded-3xl shadow-sm border border-brand-100">
             <div><h1 class="text-2xl font-bold text-brand-900">Análise Gráfica</h1><p class="text-sm text-brand-600">Visualize seus resultados</p></div>
@@ -246,23 +242,21 @@
             <div class="relative h-72 md:h-96 w-full"><canvas id="meuGrafico"></canvas></div>
             <div id="msg-vazia-grafico" class="text-center py-10 hidden-screen absolute inset-0 flex flex-col items-center justify-center bg-white z-10 rounded-2xl">
                 <i class="fas fa-chart-bar text-4xl text-slate-300 mb-3"></i>
-                <p class="text-slate-500 font-bold">Sem dados suficientes para este período.</p>
+                <p class="text-slate-500 font-bold">Sem dados suficientes.</p>
             </div>
         </div>
     </div>
 
     <!-- ================== MODAIS ================== -->
 
-    <!-- Modal Gerenciar Estornos -->
-    <div id="modal-estorno" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[200] flex items-center justify-center hidden-screen p-4">
-        <div class="bg-white rounded-3xl p-6 w-full max-w-lg shadow-2xl flex flex-col max-h-[90vh]">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="text-xl font-bold text-brand-900 flex items-center gap-2"><i class="fas fa-undo-alt text-orange-500"></i> Opções de Estorno</h3>
-                <button onclick="fecharModalEstorno()" class="w-10 h-10 bg-slate-100 text-slate-500 rounded-full hover:bg-slate-200 active:scale-95"><i class="fas fa-times"></i></button>
+    <!-- Modal Opções de Estorno -->
+    <div id="modal-opcoes-estorno" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[300] flex items-center justify-center hidden-screen p-4">
+        <div class="bg-white rounded-3xl p-6 w-full max-w-md shadow-xl max-h-[90vh] flex flex-col">
+            <div class="flex justify-between items-center mb-4 border-b border-slate-100 pb-3">
+                <h3 class="text-lg font-bold text-slate-800"><i class="fas fa-undo-alt text-orange-500 mr-2"></i> Opções de Estorno</h3>
+                <button onclick="fecharModalEstorno()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times"></i></button>
             </div>
-            <div id="estorno-content" class="overflow-y-auto pr-2 no-scrollbar">
-                <!-- Injetado via JS -->
-            </div>
+            <div id="estorno-content" class="overflow-y-auto pr-2 no-scrollbar"></div>
         </div>
     </div>
 
@@ -274,9 +268,7 @@
                 <button onclick="fecharModalGerenciarParcelas()" class="w-10 h-10 bg-slate-100 text-slate-500 rounded-full hover:bg-slate-200 active:scale-95"><i class="fas fa-times"></i></button>
             </div>
             <div class="overflow-y-auto no-scrollbar flex-1 pr-2">
-                <div id="lista-todas-parcelas" class="flex flex-col gap-2">
-                    <!-- Parcelas Injetadas Via JS -->
-                </div>
+                <div id="lista-todas-parcelas" class="flex flex-col gap-2"></div>
             </div>
         </div>
     </div>
@@ -332,11 +324,7 @@
                 <h3 class="text-xl font-bold text-brand-900"><i class="fas fa-shopping-cart text-brand-500 mr-2"></i> Sacola de Compras</h3>
                 <button onclick="fecharCarrinho()" class="w-10 h-10 bg-slate-100 text-slate-500 rounded-full hover:bg-slate-200 active:scale-95"><i class="fas fa-times"></i></button>
             </div>
-            
-            <div id="lista-carrinho" class="flex-1 overflow-y-auto no-scrollbar flex flex-col gap-4 mb-4">
-                <!-- Itens inseridos via JS -->
-            </div>
-            
+            <div id="lista-carrinho" class="flex-1 overflow-y-auto no-scrollbar flex flex-col gap-4 mb-4"></div>
             <div class="border-t border-slate-100 pt-4">
                 <div class="flex justify-between items-end mb-5">
                     <span class="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Total a Pagar</span>
@@ -394,7 +382,7 @@
                     </div>
                 </div>
                 
-                <!-- Box Cartão de Crédito (COM JUROS) -->
+                <!-- Box Cartão de Crédito -->
                 <div id="box-parcelas-cartao" class="hidden-screen border-t border-slate-100 pt-3">
                     <div class="grid grid-cols-2 gap-3 mb-3">
                         <div>
@@ -409,7 +397,7 @@
                         </div>
                         <div>
                             <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Juros (%)</label>
-                            <input type="number" id="checkout-cartao-juros" value="0" min="0" step="0.1" oninput="calcularCartao()" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none text-sm font-bold text-slate-700" placeholder="Ex: 5.5">
+                            <input type="number" id="checkout-cartao-juros" value="0" min="0" step="0.1" oninput="calcularCartao()" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none text-sm font-bold text-slate-700">
                         </div>
                     </div>
                     <div class="p-3 bg-brand-50 rounded-xl border border-brand-100 flex justify-between items-center mb-1">
@@ -421,7 +409,7 @@
                     </div>
                 </div>
 
-                <!-- Box Carnê (COM JUROS E ENTRADA) -->
+                <!-- Box Carnê -->
                 <div id="box-carne" class="hidden-screen border-t border-slate-100 pt-3">
                     <div class="mb-3">
                         <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Selecionar Cliente</label>
@@ -429,27 +417,27 @@
                     </div>
                     
                     <div class="mb-3">
-                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Valor de Entrada / Pago Hoje (Opcional - R$)</label>
-                        <input type="number" id="checkout-carne-entrada" placeholder="0.00" oninput="calcularCarne()" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none text-sm font-bold text-slate-700">
+                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Entrada / Pago Hoje (R$)</label>
+                        <input type="number" id="checkout-carne-entrada" step="0.01" oninput="calcularCarne()" class="w-full bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl px-4 py-3 outline-none text-sm font-black" placeholder="0.00">
                     </div>
 
                     <div class="grid grid-cols-2 gap-3 mb-3">
                         <div>
-                            <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Parcelas (Saldo)</label>
+                            <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Nº Parcelas (Saldo)</label>
                             <input type="number" id="checkout-carne-parcelas" value="1" min="1" max="12" oninput="calcularCarne()" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none text-sm font-bold text-slate-700">
                         </div>
                         <div>
-                            <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Juros (Sobre o Saldo %)</label>
-                            <input type="number" id="checkout-carne-juros" value="0" min="0" step="0.1" oninput="calcularCarne()" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none text-sm font-bold text-slate-700" placeholder="Ex: 5.5">
+                            <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Juros sobre saldo (%)</label>
+                            <input type="number" id="checkout-carne-juros" value="0" min="0" step="0.1" oninput="calcularCarne()" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none text-sm font-bold text-slate-700">
                         </div>
                     </div>
                     <div class="mb-3">
-                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Data do 1º Vencimento</label>
+                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">1º Vencimento (Parcelas)</label>
                         <input type="date" id="checkout-carne-data" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-sm outline-none font-bold text-slate-700">
                     </div>
                     
                     <div class="p-3 bg-brand-50 rounded-xl border border-brand-100 flex justify-between items-center mb-1">
-                        <span class="text-xs text-brand-700 font-bold">Total Final (Entrada + Saldo c/ Juros):</span>
+                        <span class="text-xs text-brand-700 font-bold">Total Final (Entrada+Saldo):</span>
                         <span class="text-lg font-black text-brand-600" id="checkout-carne-total-juros">R$ 0,00</span>
                     </div>
                     <div class="text-right">
@@ -504,8 +492,7 @@
         </div>
     </div>
 
-    <!-- Modais de Cadastro -->
-    <!-- Modal Cadastro Cliente -->
+    <!-- Modais de Cadastro (Cliente, Fornecedor) -->
     <div id="modal-cliente" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[200] flex items-center justify-center hidden-screen p-4 overflow-y-auto">
         <div class="bg-white rounded-3xl p-6 w-full max-w-md shadow-2xl my-auto">
             <h3 class="text-xl font-bold text-brand-900 mb-4">Novo Cliente</h3>
@@ -526,7 +513,6 @@
         </div>
     </div>
 
-    <!-- Modal Cadastro Fornecedor -->
     <div id="modal-fornecedor" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[200] flex items-center justify-center hidden-screen p-4 overflow-y-auto">
         <div class="bg-white rounded-3xl p-6 w-full max-w-md shadow-2xl my-auto">
             <h3 class="text-xl font-bold text-brand-900 mb-4">Novo Fornecedor</h3>
@@ -538,7 +524,7 @@
                     <input type="tel" id="forn-tel" placeholder="Telefone / Whats" class="bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none text-slate-700">
                 </div>
                 <input type="email" id="forn-email" placeholder="E-mail" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none text-slate-700">
-                <textarea id="forn-detalhes" placeholder="Observações / Produtos Fornecidos" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none h-20 text-slate-700"></textarea>
+                <textarea id="forn-detalhes" placeholder="Observações" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none h-20 text-slate-700"></textarea>
                 <div class="flex gap-3 mt-2">
                     <button onclick="fecharModalFornecedor()" class="flex-1 bg-slate-100 text-slate-600 font-bold py-3 rounded-xl">Cancelar</button>
                     <button onclick="salvarNovoFornecedor()" class="flex-1 bg-brand-600 text-white font-bold py-3 rounded-xl shadow-lg">Salvar</button>
@@ -605,82 +591,95 @@
         </div>
     </nav>
 
+    <!-- SCRIPTS E FIREBASE -->
     <script>
-        // --- BANCO DE DADOS LOCAL ---
-        let dbProdutos = JSON.parse(localStorage.getItem('db_estoque_v4')) || [];
-        let dbClientes = JSON.parse(localStorage.getItem('db_clientes_v4')) || [];
-        let dbVendas = JSON.parse(localStorage.getItem('db_vendas_v4')) || [];
-        let dbParcelas = JSON.parse(localStorage.getItem('db_parcelas_v4')) || [];
-        let dbDespesas = JSON.parse(localStorage.getItem('db_despesas_v4')) || [];
-        let dbFornecedores = JSON.parse(localStorage.getItem('db_fornecedores_v4')) || [];
+        var dbProdutos = [];
+        var dbClientes = [];
+        var dbVendas = [];
+        var dbParcelas = [];
+        var dbDespesas = [];
+        var dbFornecedores = [];
         
         let carrinho = [];
         let totalCheckoutAtual = 0;
         let relatorioTempData = [];
-        
         let tempAddPid = null;
         let tempAddTipo = null;
         let tempMaxEstoque = 0;
-        
         let graficoInstancia = null;
         let filtroClienteIdAtual = null;
         let compraAtualEstorno = null;
 
-        function saveDB() {
-            localStorage.setItem('db_estoque_v4', JSON.stringify(dbProdutos));
-            localStorage.setItem('db_clientes_v4', JSON.stringify(dbClientes));
-            localStorage.setItem('db_vendas_v4', JSON.stringify(dbVendas));
-            localStorage.setItem('db_parcelas_v4', JSON.stringify(dbParcelas));
-            localStorage.setItem('db_despesas_v4', JSON.stringify(dbDespesas));
-            localStorage.setItem('db_fornecedores_v4', JSON.stringify(dbFornecedores));
-            if (typeof verificarAlertasVencimento === 'function') verificarAlertasVencimento(false);
+        // ================= CONEXÃO FIREBASE =================
+        const firebaseConfig = {
+            apiKey: "AIzaSyCFo6uzup9jpuVQ0DdqGSCqVsZTONYlHeA",
+            authDomain: "appvendasmariajose.firebaseapp.com",
+            projectId: "appvendasmariajose",
+            storageBucket: "appvendasmariajose.firebasestorage.app",
+            messagingSenderId: "404971624075",
+            appId: "1:404971624075:web:81ada0e7235fc5c3ebe68e"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        // ATIVAÇÃO DE PERSISTÊNCIA OFFLINE
+        db.enablePersistence().catch((err) => {
+            if (err.code == 'failed-precondition') {
+                console.warn("Múltiplas abas abertas. Persistência desativada.");
+            } else if (err.code == 'unimplemented') {
+                console.warn("Navegador não suporta persistência.");
+            }
+        });
+
+        async function inicializarApp() {
+            try {
+                const doc = await db.collection("loja_mariajose").doc("dados_principais").get();
+                if(doc.exists) {
+                    const dados = doc.data();
+                    dbProdutos = dados.produtos || [];
+                    dbClientes = dados.clientes || [];
+                    dbVendas = dados.vendas || [];
+                    dbParcelas = dados.parcelas || [];
+                    dbDespesas = dados.despesas || [];
+                    dbFornecedores = dados.fornecedores || [];
+                }
+                renderCategorias();
+                verificarAlertasVencimento(true);
+                verificarBaixasAutomaticas();
+            } catch(e) {
+                console.error("Erro no carregamento:", e);
+                renderCategorias();
+            }
+        }
+
+        async function saveDB() {
+            try {
+                await db.collection("loja_mariajose").doc("dados_principais").set({
+                    produtos: dbProdutos,
+                    clientes: dbClientes,
+                    vendas: dbVendas,
+                    parcelas: dbParcelas,
+                    despesas: dbDespesas,
+                    fornecedores: dbFornecedores
+                });
+            } catch(e) {
+                console.warn("Salvando offline. Sincronização pendente.");
+            }
         }
 
         // --- UTILITÁRIOS ---
         const fmtMoeda = v => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0);
         const fmtData = s => new Date(s).toLocaleDateString('pt-BR');
         const fmtDataHora = s => new Date(s).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
+        const guid = () => Date.now().toString() + Math.random().toString(36).substr(2, 5);
         const showToast = m => {
             const c = document.getElementById('toast-container');
             document.getElementById('toast-msg').querySelector('span').textContent = m;
-            c.classList.remove('hidden-screen'); c.classList.add('toast-enter');
+            c.classList.remove('hidden-screen'); 
+            c.classList.add('toast-enter');
             setTimeout(() => c.classList.add('hidden-screen'), 3000);
         };
-        const guid = () => Date.now().toString() + Math.random().toString(36).substr(2, 5);
-
-        // --- VERIFICAÇÃO AUTOMÁTICA DE CARTÃO ---
-        function verificarBaixasAutomaticas() {
-            let houveBaixa = false;
-            let valorTotalBaixado = 0;
-            const hoje = new Date();
-            hoje.setHours(0,0,0,0);
-            
-            dbParcelas.forEach(p => {
-                if (p.status === 'pendente') {
-                    const venda = dbVendas.find(v => v.idCompra === p.vid || v.id === p.vid); // check idCompra or id
-                    if (venda && venda.metodo && venda.metodo.includes('Cartão de Crédito')) {
-                        const venc = new Date(p.vencimento);
-                        venc.setHours(0,0,0,0);
-                        
-                        if (hoje >= venc) {
-                            p.status = 'pago';
-                            houveBaixa = true;
-                            valorTotalBaixado += p.valor;
-                        }
-                    }
-                }
-            });
-
-            if (houveBaixa) {
-                saveDB();
-                if (!document.getElementById('screen-vendas').classList.contains('hidden-screen')) {
-                    renderRelatorios();
-                }
-                setTimeout(() => {
-                    showToast(`Cartão: ${fmtMoeda(valorTotalBaixado)} creditado automaticamente aos recebidos!`);
-                }, 500);
-            }
-        }
 
         // --- NAVEGAÇÃO ---
         let currentCat = '';
@@ -693,11 +692,7 @@
 
             if (screen === 'estoque') renderCategorias();
             if (screen === 'clientes') renderClientes();
-            if (screen === 'fornecedores') renderFornecedores();
-            if (screen === 'vendas') {
-                verificarBaixasAutomaticas();
-                renderRelatorios();
-            }
+            if (screen === 'vendas') { verificarBaixasAutomaticas(); renderRelatorios(); }
             if (screen === 'graficos') renderGraficos();
             if (screen === 'despesas') renderDespesas();
         }
@@ -705,8 +700,7 @@
         // --- INTELIGÊNCIA DE ESTOQUE ---
         function analisarEstoqueInteligente() {
             const hoje = new Date();
-            const trintaDias = new Date(hoje.getTime() - (30 * 24 * 60 * 60 * 1000));
-
+            const trintaDias = 30 * 24 * 60 * 60 * 1000;
             let totalValorEstoque = 0;
             let produtosAnalisados = [];
 
@@ -717,13 +711,9 @@
                 let desc = parseFloat(p.desconto) || 0;
                 let pVitrine = (custo * (1 + (margem / 100))) / (1 - (desc / 100));
 
-                if (estoqueAtual > 0) {
-                    totalValorEstoque += (pVitrine * estoqueAtual);
-                }
+                if (estoqueAtual > 0) totalValorEstoque += (pVitrine * estoqueAtual);
 
                 let vendasDesteProduto = dbVendas.filter(v => v.pid === p.id);
-                let qtdVendida = vendasDesteProduto.reduce((sum, v) => sum + (v.qtde || 1), 0);
-
                 let ultimaVendaStr = null;
                 if (vendasDesteProduto.length > 0) {
                     let vendasOrdenadas = [...vendasDesteProduto].sort((a, b) => new Date(b.data) - new Date(a.data));
@@ -732,88 +722,39 @@
 
                 let parado = false;
                 if (estoqueAtual > 0) {
-                    // Produtos antigos sem data de cadastro assumem data zerada (antiga)
                     let dataCad = p.dataCadastro ? new Date(p.dataCadastro) : new Date(0);
-                    
                     if (!ultimaVendaStr) {
-                        // Nunca vendido: Só é parado se foi CADASTRADO há mais de 30 dias
-                        if (dataCad < trintaDias) parado = true;
+                        if (hoje - dataCad > trintaDias) parado = true;
                     } else {
-                        // Já vendido: Só é parado se a ÚLTIMA VENDA foi há mais de 30 dias
-                        if (new Date(ultimaVendaStr) < trintaDias) parado = true;
+                        if (hoje - new Date(ultimaVendaStr) > trintaDias) parado = true;
                     }
                 }
-
-                produtosAnalisados.push({
-                    ...p, qtdVendida, ultimaVendaStr, parado, estoqueAtual
-                });
+                produtosAnalisados.push({ ...p, parado, estoqueAtual });
             });
-
             return { totalValorEstoque, produtosAnalisados };
         }
 
         function renderInteligenciaEstoque() {
             const container = document.getElementById('cards-estoque-inteligente');
             if(!container) return;
-
             const { totalValorEstoque, produtosAnalisados } = analisarEstoqueInteligente();
             const itensParados = produtosAnalisados.filter(p => p.parado);
             
-            const menosVendidos = [...produtosAnalisados]
-                .filter(p => p.estoqueAtual > 0)
-                .sort((a, b) => a.qtdVendida - b.qtdVendida)
-                .slice(0, 3);
-
             container.innerHTML = `
                 <div class="bg-white p-4 rounded-2xl border border-brand-100 shadow-sm flex items-center justify-between">
-                    <div>
-                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Valor em Estoque</p>
-                        <p class="text-xl font-black text-emerald-600">${fmtMoeda(totalValorEstoque)}</p>
-                    </div>
-                    <div class="w-10 h-10 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center shrink-0 ml-2"><i class="fas fa-dollar-sign"></i></div>
+                    <div><p class="text-[10px] font-bold text-slate-400 uppercase">Valor em Estoque</p><p class="text-xl font-black text-emerald-600">${fmtMoeda(totalValorEstoque)}</p></div>
+                    <div class="w-10 h-10 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center"><i class="fas fa-dollar-sign"></i></div>
                 </div>
-
-                <div onclick="document.getElementById('modal-alertas-estoque').classList.remove('hidden-screen')" class="bg-white p-4 rounded-2xl border border-brand-100 shadow-sm flex items-center justify-between cursor-pointer active:scale-95 transition ${itensParados.length > 0 ? 'border-orange-200 bg-orange-50' : ''}">
-                    <div>
-                        <p class="text-[10px] font-bold ${itensParados.length > 0 ? 'text-orange-500' : 'text-slate-400'} uppercase tracking-widest">Itens Parados</p>
-                        <p class="text-xl font-black ${itensParados.length > 0 ? 'text-orange-600' : 'text-slate-800'}">${itensParados.length}</p>
-                    </div>
-                    <div class="w-10 h-10 ${itensParados.length > 0 ? 'bg-orange-100 text-orange-600' : 'bg-slate-100 text-slate-500'} rounded-xl flex items-center justify-center shrink-0 ml-2"><i class="fas fa-clock"></i></div>
-                </div>
-
-                <div onclick="document.getElementById('modal-alertas-estoque').classList.remove('hidden-screen')" class="bg-white p-4 rounded-2xl border border-brand-100 shadow-sm flex items-center justify-between cursor-pointer active:scale-95 transition">
-                    <div>
-                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Menos Vendidos</p>
-                        <p class="text-sm font-bold text-slate-800 line-clamp-2 leading-tight mt-1">${menosVendidos.length > 0 ? menosVendidos.map(m => m.nome || 'S/N').join(', ') : 'Nenhum'}</p>
-                    </div>
-                    <div class="w-10 h-10 bg-blue-50 text-blue-500 rounded-xl flex items-center justify-center shrink-0 ml-2"><i class="fas fa-arrow-down"></i></div>
+                <div onclick="document.getElementById('modal-alertas-estoque').classList.remove('hidden-screen')" class="bg-white p-4 rounded-2xl border border-brand-100 shadow-sm flex items-center justify-between cursor-pointer ${itensParados.length > 0 ? 'border-orange-200 bg-orange-50' : ''}">
+                    <div><p class="text-[10px] font-bold ${itensParados.length > 0 ? 'text-orange-500' : 'text-slate-400'} uppercase">Itens Parados</p><p class="text-xl font-black ${itensParados.length > 0 ? 'text-orange-600' : 'text-slate-800'}">${itensParados.length}</p></div>
+                    <div class="w-10 h-10 ${itensParados.length > 0 ? 'bg-orange-100 text-orange-600' : 'bg-slate-100 text-slate-500'} rounded-xl flex items-center justify-center"><i class="fas fa-clock"></i></div>
                 </div>
             `;
-
             const listParados = document.getElementById('lista-modal-parados');
-            listParados.innerHTML = itensParados.length > 0 ? itensParados.map(p => `
-                <div class="flex justify-between items-center bg-orange-50 p-3 rounded-xl border border-orange-100">
-                    <div>
-                        <p class="font-bold text-sm text-slate-800">${p.nome || 'Produto sem nome'}</p>
-                        <p class="text-[10px] text-orange-600 font-medium">Estoque: ${p.estoqueAtual} un | Últ. Venda: ${p.ultimaVendaStr ? fmtData(p.ultimaVendaStr) : 'Nunca'}</p>
-                    </div>
-                    <button onclick="document.getElementById('modal-alertas-estoque').classList.add('hidden-screen'); abrirCategoria('${p.categoria}', 'Verificando')" class="text-orange-600 text-xs font-bold underline">Ver</button>
-                </div>
-            `).join('') : '<p class="text-xs text-slate-500">Nenhum item parado no estoque.</p>';
-
-            const listMenosVendidos = document.getElementById('lista-modal-menos-vendidos');
-            listMenosVendidos.innerHTML = menosVendidos.length > 0 ? menosVendidos.map(p => `
-                <div class="flex justify-between items-center bg-slate-50 p-3 rounded-xl border border-slate-100">
-                    <div>
-                        <p class="font-bold text-sm text-slate-800">${p.nome || 'Produto sem nome'}</p>
-                        <p class="text-[10px] text-slate-500 font-medium">Vendas totais: ${p.qtdVendida} un</p>
-                    </div>
-                    <button onclick="document.getElementById('modal-alertas-estoque').classList.add('hidden-screen'); abrirCategoria('${p.categoria}', 'Verificando')" class="text-brand-600 text-xs font-bold underline">Ver</button>
-                </div>
-            `).join('') : '<p class="text-xs text-slate-500">Sem dados suficientes.</p>';
+            listParados.innerHTML = itensParados.length > 0 ? itensParados.map(p => `<div class="bg-orange-50 p-3 rounded-xl border border-orange-100 flex justify-between items-center"><div><p class="font-bold text-sm text-slate-800">${p.nome || 'S/N'}</p><p class="text-[10px] text-orange-600">Sem giro há mais de 30 dias.</p></div><button onclick="document.getElementById('modal-alertas-estoque').classList.add('hidden-screen'); abrirCategoria('${p.categoria}', 'Verificando')" class="text-orange-600 text-xs font-bold underline">Ver</button></div>`).join('') : '<p class="text-xs text-slate-500">Nenhum item parado.</p>';
         }
 
-        // --- CATEGORIAS & PRODUTOS ---
+        // --- CATEGORIAS E PRODUTOS ---
         const categoriasInfo = [
             { id: 'vestidos', nome: 'Vestidos', icone: 'fa-female' }, { id: 'blusas', nome: 'Blusas', icone: 'fa-tshirt' },
             { id: 'calcas', nome: 'Calças', icone: 'fa-socks' }, { id: 'saias', nome: 'Saias', icone: 'fa-vest' },
@@ -824,23 +765,15 @@
             const grid = document.getElementById('grid-categorias'); grid.innerHTML = '';
             document.getElementById('tela-categorias').classList.remove('hidden-screen');
             document.getElementById('tela-produtos').classList.add('hidden-screen');
-            currentCat = '';
-
             renderInteligenciaEstoque();
-
             categoriasInfo.forEach(cat => {
                 const count = dbProdutos.filter(p => p.categoria === cat.id).length;
-                grid.innerHTML += `
-                    <div onclick="abrirCategoria('${cat.id}', '${cat.nome}')" class="bg-white p-5 rounded-3xl border border-brand-100 flex flex-col items-center gap-2 active:scale-95 transition cursor-pointer">
-                        <div class="w-14 h-14 bg-brand-50 text-brand-500 rounded-full flex items-center justify-center text-xl"><i class="fas ${cat.icone}"></i></div>
-                        <div class="text-center"><h3 class="font-bold text-sm text-slate-800">${cat.nome}</h3><p class="text-[10px] text-brand-600 uppercase font-bold">${count} Itens</p></div>
-                    </div>`;
+                grid.innerHTML += `<div onclick="abrirCategoria('${cat.id}', '${cat.nome}')" class="bg-white p-5 rounded-3xl border border-brand-100 flex flex-col items-center gap-2 cursor-pointer active:scale-95 transition"><div class="w-14 h-14 bg-brand-50 text-brand-500 rounded-full flex items-center justify-center text-xl"><i class="fas ${cat.icone}"></i></div><div class="text-center"><h3 class="font-bold text-sm text-slate-800">${cat.nome}</h3><p class="text-[10px] text-brand-600 uppercase font-bold">${count} Itens</p></div></div>`;
             });
         }
 
         function abrirCategoria(id, nome) {
-            currentCat = id;
-            document.getElementById('titulo-categoria').textContent = nome;
+            currentCat = id; document.getElementById('titulo-categoria').textContent = nome;
             document.getElementById('tela-categorias').classList.add('hidden-screen');
             document.getElementById('tela-produtos').classList.remove('hidden-screen');
             renderProdutos();
@@ -852,7 +785,6 @@
             const list = document.getElementById('listaProdutos'); list.innerHTML = '';
             const filtered = dbProdutos.filter(p => p.categoria === currentCat);
             document.getElementById('msg-vazia-produtos').classList.toggle('hidden-screen', filtered.length > 0);
-
             const { produtosAnalisados } = analisarEstoqueInteligente();
 
             filtered.slice().reverse().forEach(p => {
@@ -863,17 +795,33 @@
                 const pFinal = pVitrine * (1 - (desc / 100));
 
                 const analise = produtosAnalisados.find(x => x.id === p.id);
-                const badgeParado = (analise && analise.parado) ? `<span class="bg-orange-100 text-orange-700 text-[9px] px-2 py-0.5 rounded-md font-black ml-2 uppercase border border-orange-200" title="Sem vendas há mais de 30 dias"><i class="fas fa-clock"></i> Parado</span>` : '';
+                const badgeParado = (analise && analise.parado) ? `<span class="bg-orange-100 text-orange-700 text-[9px] px-2 py-0.5 rounded-md font-black ml-2 border border-orange-200 uppercase"><i class="fas fa-clock"></i> Parado</span>` : '';
 
                 const div = document.createElement('div');
                 div.id = `card-${p.id}`;
-                // Removida a classe vermelha do parado para não confundir com o estoque baixo
-                div.className = `bg-white p-5 rounded-3xl border border-brand-100 shadow-sm ${parseInt(p.estoque) <= 3 ? 'alert-low-stock' : ''}`;
+                div.className = `bg-white p-5 rounded-3xl border border-brand-100 shadow-sm ${p.isDraft ? 'is-draft' : ''} ${parseInt(p.estoque) <= 3 ? 'alert-low-stock' : ''} ${analise && analise.parado ? 'alert-parado' : ''}`;
+                
+                let footerHtml = '';
+                if (p.isDraft) {
+                    footerHtml = `
+                        <button onclick="salvarNovoItemNoEstoque('${p.id}')" class="flex-1 bg-emerald-600 text-white font-bold py-3 rounded-xl shadow-md flex justify-center items-center gap-2 active:scale-95 transition">
+                            <i class="fas fa-check-circle"></i> Confirmar Cadastro
+                        </button>
+                    `;
+                } else {
+                    footerHtml = `
+                        <button onclick="abrirModalAddCarrinho('${p.id}', 'cheio')" class="flex-1 bg-brand-600 text-white font-bold py-3 rounded-xl shadow-md flex justify-center items-center gap-1 active:scale-95 text-[11px] sm:text-sm"><i class="fas fa-tag"></i> Sacola (Cheio)</button>
+                        <button onclick="abrirModalAddCarrinho('${p.id}', 'desc')" class="flex-1 bg-white border border-brand-200 text-brand-700 font-bold py-3 rounded-xl flex justify-center items-center gap-1 active:scale-95 text-[11px] sm:text-sm"><i class="fas fa-percent"></i> Sacola (Desc.)</button>
+                    `;
+                }
+
                 div.innerHTML = `
                     <div class="flex justify-between items-start border-b border-slate-50 pb-3 mb-3">
                         <div class="w-full">
-                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center mb-1">Nome do Produto ${badgeParado}</span>
-                            <input type="text" value="${p.nome}" onchange="updateProd('${p.id}', 'nome', this.value)" class="w-full bg-transparent font-bold text-slate-800 border-none p-0 outline-none placeholder-slate-300" placeholder="Ex: Vestido Floral">
+                            <span class="text-[10px] font-bold text-slate-400 uppercase flex items-center mb-1">
+                                ${p.isDraft ? '<span class="text-blue-500 mr-2">[NOVO ITEM - PREENCHA]</span>' : 'Nome do Produto'} ${badgeParado}
+                            </span>
+                            <input type="text" value="${p.nome}" onchange="updateProd('${p.id}', 'nome', this.value)" class="w-full bg-transparent font-bold text-slate-800 border-none p-0 outline-none" placeholder="Ex: Vestido Floral">
                         </div>
                         <button onclick="deleteProd('${p.id}')" class="text-slate-300 hover:text-red-500 p-2"><i class="fas fa-trash"></i></button>
                     </div>
@@ -903,14 +851,8 @@
                         <div><p class="text-[9px] text-brand-700 uppercase">Valor Cheio</p><p class="font-black text-brand-600 text-lg" id="vitrine-${p.id}">${fmtMoeda(pVitrine)}</p></div>
                         <div><p class="text-[9px] text-slate-400 uppercase">Com Desconto</p><p class="font-bold text-slate-600" id="final-${p.id}">${fmtMoeda(pFinal)}</p></div>
                     </div>
-                    
                     <div class="mt-4 border-t border-slate-100 pt-3 flex gap-2">
-                        <button onclick="abrirModalAddCarrinho('${p.id}', 'cheio')" class="flex-1 bg-brand-600 hover:bg-brand-700 text-white font-bold py-3 rounded-xl shadow-md transition flex justify-center items-center gap-1 active:scale-95 text-[11px] sm:text-sm">
-                            <i class="fas fa-tag"></i> Sacola (Cheio)
-                        </button>
-                        <button onclick="abrirModalAddCarrinho('${p.id}', 'desc')" class="flex-1 bg-white border border-brand-200 text-brand-700 hover:bg-brand-50 font-bold py-3 rounded-xl transition flex justify-center items-center gap-1 active:scale-95 text-[11px] sm:text-sm">
-                            <i class="fas fa-percent"></i> Sacola (Desc.)
-                        </button>
+                        ${footerHtml}
                     </div>
                 `;
                 list.appendChild(div);
@@ -918,1323 +860,392 @@
         }
 
         function adicionarProduto() {
-            dbProdutos.push({ id: guid(), categoria: currentCat, nome: '', estoque: '0', custo: '', margem: '', desconto: '', dataCadastro: new Date().toISOString() });
-            saveDB(); renderProdutos();
+            dbProdutos.push({ 
+                id: guid(), categoria: currentCat, nome: '', estoque: '0', custo: '', margem: '', desconto: '', 
+                dataCadastro: new Date().toISOString(), isDraft: true 
+            });
+            renderProdutos();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function salvarNovoItemNoEstoque(id) {
+            const p = dbProdutos.find(x => x.id === id);
+            if (!p.nome) return alert("Por favor, digite o nome.");
+            openModalConfirm("Confirmar Cadastro?", `Salvar "${p.nome}" no estoque?`, () => {
+                delete p.isDraft;
+                saveDB();
+                renderProdutos();
+                showToast("Novo item adicionado ao estoque! 📦");
+            }, 'emerald');
         }
 
         function updateProd(id, field, val) {
             const idx = dbProdutos.findIndex(p => p.id === id);
             if (idx > -1) { 
                 dbProdutos[idx][field] = val; 
-                saveDB(); 
-                
-                const p = dbProdutos[idx];
-                const custo = parseFloat(p.custo) || 0;
-                const margem = parseFloat(p.margem) || 0;
-                const desc = parseFloat(p.desconto) || 0;
-                const pVitrine = (custo * (1 + (margem / 100))) / (1 - (desc / 100));
-                const pFinal = pVitrine * (1 - (desc / 100));
-
-                const elVitrine = document.getElementById(`vitrine-${id}`);
-                const elFinal = document.getElementById(`final-${id}`);
-                if (elVitrine) elVitrine.textContent = fmtMoeda(pVitrine);
-                if (elFinal) elFinal.textContent = fmtMoeda(pFinal);
-                
-                if (carrinho.find(x => x.pid === id)) renderCarrinho();
+                if (!dbProdutos[idx].isDraft) saveDB(); 
             }
         }
 
+        // FUNÇÃO ATUALIZADA: AGORA SOLICITA CONFIRMAÇÃO E NOTIFICA (REQUISITADO)
         function modEstoque(id, delta) {
             const idx = dbProdutos.findIndex(p => p.id === id);
             if (idx > -1) {
-                let n = (parseInt(dbProdutos[idx].estoque) || 0) + delta;
-                n = Math.max(0, n);
-                dbProdutos[idx].estoque = n.toString();
-                saveDB(); 
+                const p = dbProdutos[idx];
+                const novaQtd = Math.max(0, (parseInt(p.estoque) || 0) + delta);
                 
-                const elEstoque = document.getElementById(`estoque-${id}`);
-                if(elEstoque) elEstoque.textContent = n;
-
-                const card = document.getElementById(`card-${id}`);
-                if(card) {
-                    if (n <= 3) card.classList.add('alert-low-stock');
-                    else card.classList.remove('alert-low-stock');
+                // Se for um item novo (rascunho), altera direto sem perguntar
+                if (p.isDraft) {
+                    p.estoque = novaQtd.toString();
+                    renderProdutos();
+                    return;
                 }
+
+                // Se já estiver no estoque, pede confirmação
+                openModalConfirm("Alterar Quantidade?", `Deseja mudar o estoque de "${p.nome || 'Produto'}" para ${novaQtd} unidades?`, () => {
+                    p.estoque = novaQtd.toString();
+                    saveDB();
+                    renderProdutos();
+                    showToast("Quantidade atualizada e salva na nuvem! 📦");
+                }, 'emerald');
             }
         }
 
         function deleteProd(id) {
-            openModalConfirm("Excluir Produto?", "Deseja remover permanentemente este item?", () => {
+            openModalConfirm("Excluir Produto?", "Remover permanentemente este item?", () => {
                 dbProdutos = dbProdutos.filter(p => p.id !== id);
                 carrinho = carrinho.filter(c => c.pid !== id);
-                atualizarBadgeCarrinho();
-                saveDB(); renderProdutos();
+                atualizarBadgeCarrinho(); saveDB(); renderProdutos();
             });
         }
 
-        // --- SISTEMA DE CARRINHO DE COMPRAS E QUANTIDADE ---
+        // --- CARRINHO E CHECKOUT ---
         function abrirModalAddCarrinho(pid, tipoPreco) {
             const p = dbProdutos.find(x => x.id === pid);
-            if (!p || parseInt(p.estoque) <= 0) return alert("Sem estoque disponível para esta peça!");
-            
-            const cartItems = carrinho.filter(x => x.pid === pid).reduce((sum, i) => sum + i.qtde, 0);
-            tempMaxEstoque = parseInt(p.estoque) - cartItems;
-            
-            if(tempMaxEstoque <= 0) return alert("Todo o estoque disponível desta peça já foi colocado na sacola!");
-
-            tempAddPid = pid;
-            tempAddTipo = tipoPreco;
-            
-            document.getElementById('add-cart-pnome').textContent = p.nome || 'Produto S/ Nome';
-            document.getElementById('add-cart-ptipo').textContent = tipoPreco === 'cheio' ? 'Pagamento: Preço Cheio' : 'Pagamento: Com Desconto';
+            if (!p || parseInt(p.estoque) <= 0) return alert("Sem estoque!");
+            tempMaxEstoque = parseInt(p.estoque) - carrinho.filter(x => x.pid === pid).reduce((sum, i) => sum + i.qtde, 0);
+            if(tempMaxEstoque <= 0) return alert("Indisponível!");
+            tempAddPid = pid; tempAddTipo = tipoPreco;
+            document.getElementById('add-cart-pnome').textContent = p.nome || 'S/N';
+            document.getElementById('add-cart-ptipo').textContent = tipoPreco === 'cheio' ? 'Preço Cheio' : 'Com Desconto';
             document.getElementById('add-cart-qtd').value = 1;
-            
             document.getElementById('modal-add-carrinho').classList.remove('hidden-screen');
         }
 
         function modQtdModalAdd(delta) {
             const input = document.getElementById('add-cart-qtd');
             let val = parseInt(input.value) + delta;
-            if (val < 1) val = 1;
-            if (val > tempMaxEstoque) val = tempMaxEstoque;
-            input.value = val;
-        }
-
-        function fecharModalAddCarrinho() {
-            document.getElementById('modal-add-carrinho').classList.add('hidden-screen');
+            input.value = Math.max(1, Math.min(val, tempMaxEstoque));
         }
 
         function confirmarAddCarrinho() {
             const qtd = parseInt(document.getElementById('add-cart-qtd').value);
-            if (qtd < 1 || qtd > tempMaxEstoque) return;
-            
-            const cartIndex = carrinho.findIndex(x => x.pid === tempAddPid && x.tipo === tempAddTipo);
-            if (cartIndex > -1) {
-                carrinho[cartIndex].qtde += qtd;
-            } else {
-                carrinho.push({ pid: tempAddPid, qtde: qtd, tipo: tempAddTipo }); 
-            }
-            
-            atualizarBadgeCarrinho();
-            fecharModalAddCarrinho();
-            showToast("Peça adicionada à sacola!");
+            const idx = carrinho.findIndex(x => x.pid === tempAddPid && x.tipo === tempAddTipo);
+            if (idx > -1) carrinho[idx].qtde += qtd; else carrinho.push({ pid: tempAddPid, qtde: qtd, tipo: tempAddTipo });
+            atualizarBadgeCarrinho(); fecharModalAddCarrinho(); showToast("Adicionado!");
         }
+
+        function fecharModalAddCarrinho() { document.getElementById('modal-add-carrinho').classList.add('hidden-screen'); }
 
         function atualizarBadgeCarrinho() {
-            const fab = document.getElementById('fab-cart');
-            const badge = document.getElementById('cart-badge');
             const total = carrinho.reduce((acc, i) => acc + i.qtde, 0);
-            
-            if (total > 0) {
-                fab.classList.remove('hidden-screen');
-                badge.textContent = total;
-            } else {
-                fab.classList.add('hidden-screen');
-                fecharCarrinho();
-            }
-        }
-
-        function calcularItemCarrinho(item) {
-            const p = dbProdutos.find(x => x.id === item.pid);
-            if(!p) return { valorUnit: 0, valorTotal: 0, custoUnit: 0, nome: "Produto Apagado" };
-            
-            const custo = parseFloat(p.custo) || 0;
-            const margem = parseFloat(p.margem) || 0;
-            const desc = parseFloat(p.desconto) || 0;
-            
-            const pVitrine = (custo * (1 + (margem / 100))) / (1 - (desc / 100));
-            const pFinal = pVitrine * (1 - (desc / 100));
-            
-            const valorUnit = item.tipo === 'cheio' ? pVitrine : pFinal;
-            
-            return {
-                nome: p.nome || 'Peça S/ Nome',
-                valorUnit: valorUnit,
-                valorTotal: valorUnit * item.qtde,
-                custoUnit: custo,
-                estoqueMax: parseInt(p.estoque) || 0
-            };
+            document.getElementById('fab-cart').classList.toggle('hidden-screen', total === 0);
+            document.getElementById('cart-badge').textContent = total;
         }
 
         function abrirCarrinho() {
-            document.getElementById('modal-carrinho').classList.remove('hidden-screen');
-            renderCarrinho();
-        }
-
-        function fecharCarrinho() {
-            document.getElementById('modal-carrinho').classList.add('hidden-screen');
-        }
-
-        function renderCarrinho() {
-            const lista = document.getElementById('lista-carrinho');
-            lista.innerHTML = '';
-            
-            let totalPagar = 0;
-
+            const lista = document.getElementById('lista-carrinho'); lista.innerHTML = '';
+            let total = 0;
             carrinho.forEach((item, index) => {
                 const info = calcularItemCarrinho(item);
-                totalPagar += info.valorTotal;
-
-                lista.innerHTML += `
-                    <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100 flex flex-col gap-3">
-                        <div class="flex justify-between items-start">
-                            <h4 class="font-bold text-slate-800 text-sm w-3/4">${info.nome}</h4>
-                            <button onclick="removerDoCarrinho(${index})" class="text-red-400 p-1 active:scale-90"><i class="fas fa-trash"></i></button>
-                        </div>
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center gap-2 bg-white border border-slate-200 rounded-lg p-1 shadow-sm">
-                                <button onclick="modQTDCarrinho(${index}, -1)" class="w-6 h-6 text-slate-500 rounded-md bg-slate-50 active:bg-slate-200"><i class="fas fa-minus text-[10px]"></i></button>
-                                <span class="font-bold text-sm w-4 text-center">${item.qtde}</span>
-                                <button onclick="modQTDCarrinho(${index}, 1)" class="w-6 h-6 text-slate-500 rounded-md bg-slate-50 active:bg-slate-200"><i class="fas fa-plus text-[10px]"></i></button>
-                            </div>
-                            <div class="text-right">
-                                <p class="text-[10px] text-slate-400 uppercase">Subtotal</p>
-                                <p class="font-bold text-brand-600">${fmtMoeda(info.valorTotal)}</p>
-                            </div>
-                        </div>
-                        <select onchange="modTipoPrecoCarrinho(${index}, this.value)" class="w-full bg-white border border-slate-200 text-xs rounded-lg px-2 py-2 text-slate-600 outline-none font-bold">
-                            <option value="desc" ${item.tipo === 'desc' ? 'selected' : ''}>Com Desconto (${fmtMoeda(calcularItemCarrinho({...item, tipo: 'desc'}).valorUnit)} / un)</option>
-                            <option value="cheio" ${item.tipo === 'cheio' ? 'selected' : ''}>Preço Cheio (${fmtMoeda(calcularItemCarrinho({...item, tipo: 'cheio'}).valorUnit)} / un)</option>
-                        </select>
-                    </div>
-                `;
+                total += info.valorTotal;
+                lista.innerHTML += `<div class="bg-slate-50 p-4 rounded-xl flex justify-between items-center"><div><p class="font-bold text-sm">${item.qtde}x ${info.nome}</p><p class="text-[10px] uppercase text-brand-600">${item.tipo}</p></div><div class="text-right"><p class="font-black text-brand-600">${fmtMoeda(info.valorTotal)}</p><button onclick="removerDoCarrinho(${index})" class="text-red-400 text-xs mt-1 underline">Remover</button></div></div>`;
             });
-
-            document.getElementById('carrinho-total').textContent = fmtMoeda(totalPagar);
+            document.getElementById('carrinho-total').textContent = fmtMoeda(total);
+            document.getElementById('modal-carrinho').classList.remove('hidden-screen');
         }
 
-        function modQTDCarrinho(index, delta) {
-            const item = carrinho[index];
-            if (!item) return;
-            
-            const p = dbProdutos.find(x => x.id === item.pid);
-            if (!p) return;
+        function removerDoCarrinho(i) { carrinho.splice(i, 1); atualizarBadgeCarrinho(); abrirCarrinho(); }
+        function fecharCarrinho() { document.getElementById('modal-carrinho').classList.add('hidden-screen'); }
 
-            let n = item.qtde + delta;
-            const totalOfThisPidInCart = carrinho.filter((x, i) => x.pid === item.pid && i !== index).reduce((sum, x) => sum + x.qtde, 0);
-            
-            if (n + totalOfThisPidInCart > parseInt(p.estoque)) return alert("Estoque insuficiente para adicionar mais desta peça.");
-            if (n <= 0) {
-                removerDoCarrinho(index);
-            } else {
-                item.qtde = n;
-                atualizarBadgeCarrinho();
-                renderCarrinho();
-            }
-        }
-
-        function modTipoPrecoCarrinho(index, novoTipo) {
-            if (carrinho[index]) {
-                carrinho[index].tipo = novoTipo;
-                const existingIndex = carrinho.findIndex((x, i) => x.pid === carrinho[index].pid && x.tipo === novoTipo && i !== index);
-                if (existingIndex > -1) {
-                    carrinho[existingIndex].qtde += carrinho[index].qtde;
-                    carrinho.splice(index, 1);
-                }
-                renderCarrinho();
-            }
-        }
-
-        function removerDoCarrinho(index) {
-            carrinho.splice(index, 1);
-            atualizarBadgeCarrinho();
-            renderCarrinho();
-        }
-
-        // --- CHECKOUT DO CARRINHO UNIFICADO ---
         function iniciarCheckout() {
             if(carrinho.length === 0) return;
             totalCheckoutAtual = carrinho.reduce((sum, item) => sum + calcularItemCarrinho(item).valorTotal, 0);
-            
             document.getElementById('checkout-total-pgto').textContent = fmtMoeda(totalCheckoutAtual);
-            document.getElementById('checkout-metodo-pgto').value = 'PIX';
-            document.getElementById('checkout-canal-pgto').value = 'Loja Física';
-            document.getElementById('checkout-valor-recebido').value = '';
-            document.getElementById('checkout-troco').textContent = 'R$ 0,00';
-            document.getElementById('checkout-troco').classList.replace('text-red-500', 'text-emerald-600');
-            
-            // Reset Cartão
-            document.getElementById('checkout-cartao-parcelas').value = '1';
-            document.getElementById('checkout-cartao-juros').value = '';
-            calcularCartao();
-            
-            // Reset Carnê
-            document.getElementById('checkout-carne-entrada').value = '';
-            document.getElementById('checkout-carne-parcelas').value = 1;
-            document.getElementById('checkout-carne-juros').value = '';
-            document.getElementById('checkout-carne-data').value = new Date().toISOString().split('T')[0];
-            calcularCarne();
-
-            toggleMetodoPgto();
-            
-            fecharCarrinho();
+            document.getElementById('checkout-sel-cliente').innerHTML = dbClientes.map(c => `<option value="${c.id}">${c.nome}</option>`).join('');
+            fecharCarrinho(); toggleMetodoPgto();
             document.getElementById('modal-checkout-pgto').classList.remove('hidden-screen');
         }
 
         function toggleMetodoPgto() {
-            const metodo = document.getElementById('checkout-metodo-pgto').value;
-            const boxTroco = document.getElementById('box-troco');
-            const boxCartao = document.getElementById('box-parcelas-cartao');
-            const boxCarne = document.getElementById('box-carne');
-            
-            boxTroco.classList.add('hidden-screen');
-            boxCartao.classList.add('hidden-screen');
-            boxCarne.classList.add('hidden-screen');
-            
-            if (metodo === 'Dinheiro') {
-                boxTroco.classList.remove('hidden-screen');
-                document.getElementById('checkout-valor-recebido').value = '';
-                calcularTroco();
-            } else if (metodo === 'Cartão de Crédito') {
-                boxCartao.classList.remove('hidden-screen');
-                calcularCartao();
-            } else if (metodo === 'Carnê (Parcelado)') {
-                if(dbClientes.length === 0) {
-                    alert("Cadastre um cliente primeiro na aba 'Clientes' para vender no carnê.");
-                    document.getElementById('checkout-metodo-pgto').value = 'PIX'; 
-                    return toggleMetodoPgto();
-                }
-                boxCarne.classList.remove('hidden-screen');
-                const sel = document.getElementById('checkout-sel-cliente'); 
-                sel.innerHTML = '';
-                dbClientes.forEach(c => sel.innerHTML += `<option value="${c.id}">${c.nome}</option>`);
+            const met = document.getElementById('checkout-metodo-pgto').value;
+            ['box-troco', 'box-parcelas-cartao', 'box-carne'].forEach(b => document.getElementById(b).classList.add('hidden-screen'));
+            if (met === 'Dinheiro') document.getElementById('box-troco').classList.remove('hidden-screen');
+            else if (met === 'Cartão de Crédito') document.getElementById('box-parcelas-cartao').classList.remove('hidden-screen');
+            else if (met === 'Carnê (Parcelado)') {
+                if(dbClientes.length === 0) { alert("Cadastre um cliente primeiro."); document.getElementById('checkout-metodo-pgto').value = 'PIX'; return toggleMetodoPgto(); }
+                document.getElementById('box-carne').classList.remove('hidden-screen');
+                document.getElementById('checkout-carne-data').value = new Date().toISOString().split('T')[0];
                 calcularCarne();
             }
         }
 
         function calcularTroco() {
-            const recebido = parseFloat(document.getElementById('checkout-valor-recebido').value) || 0;
-            const troco = recebido - totalCheckoutAtual;
-            const elTroco = document.getElementById('checkout-troco');
-            elTroco.textContent = fmtMoeda(troco);
-            if (troco < 0) {
-                elTroco.classList.remove('text-emerald-600');
-                elTroco.classList.add('text-red-500');
-            } else {
-                elTroco.classList.remove('text-red-500');
-                elTroco.classList.add('text-emerald-600');
-            }
+            const troco = (parseFloat(document.getElementById('checkout-valor-recebido').value) || 0) - totalCheckoutAtual;
+            document.getElementById('checkout-troco').textContent = fmtMoeda(troco);
+            document.getElementById('checkout-troco').className = `text-xl font-black ${troco < 0 ? 'text-red-500' : 'text-emerald-600'}`;
         }
 
         function calcularCartao() {
             let n = parseInt(document.getElementById('checkout-cartao-parcelas').value) || 1;
-            let jurosPct = parseFloat(document.getElementById('checkout-cartao-juros').value) || 0;
-            
-            let totalCartao = totalCheckoutAtual * (1 + (jurosPct / 100));
-
-            document.getElementById('checkout-cartao-total-juros').textContent = fmtMoeda(totalCartao);
-            document.getElementById('checkout-cartao-val-cada').textContent = `${n}x de ${fmtMoeda(totalCartao / n)}`;
+            let j = parseFloat(document.getElementById('checkout-cartao-juros').value) || 0;
+            let tot = totalCheckoutAtual * (1 + (j / 100));
+            document.getElementById('checkout-cartao-total-juros').textContent = fmtMoeda(tot);
+            document.getElementById('checkout-cartao-val-cada').textContent = `${n}x de ${fmtMoeda(tot / n)}`;
         }
 
         function calcularCarne() {
-            let entrada = parseFloat(document.getElementById('checkout-carne-entrada').value) || 0;
-            let n = parseInt(document.getElementById('checkout-carne-parcelas').value);
-            if (isNaN(n) || n < 1) n = 1;
-            let jurosPct = parseFloat(document.getElementById('checkout-carne-juros').value) || 0;
-            
-            let saldoRestante = totalCheckoutAtual - entrada;
-            if (saldoRestante < 0) saldoRestante = 0;
-
-            let totalSaldoComJuros = saldoRestante * (1 + (jurosPct / 100));
-
-            document.getElementById('checkout-carne-total-juros').textContent = fmtMoeda(entrada + totalSaldoComJuros);
-            document.getElementById('checkout-carne-val-cada').textContent = `${n}x de ${fmtMoeda(totalSaldoComJuros / n)}`;
+            let ent = parseFloat(document.getElementById('checkout-carne-entrada').value) || 0;
+            let n = parseInt(document.getElementById('checkout-carne-parcelas').value) || 1;
+            let j = parseFloat(document.getElementById('checkout-carne-juros').value) || 0;
+            let saldo = Math.max(0, totalCheckoutAtual - ent);
+            let totSaldo = saldo * (1 + (j / 100));
+            document.getElementById('checkout-carne-total-juros').textContent = fmtMoeda(ent + totSaldo);
+            document.getElementById('checkout-carne-val-cada').textContent = `${n}x de ${fmtMoeda(totSaldo / n)}`;
         }
 
-        function fecharModalCheckout() {
-            document.getElementById('modal-checkout-pgto').classList.add('hidden-screen');
-            abrirCarrinho(); 
-        }
+        function fecharModalCheckout() { document.getElementById('modal-checkout-pgto').classList.add('hidden-screen'); abrirCarrinho(); }
 
         function confirmarVenda() {
-            let metodo = document.getElementById('checkout-metodo-pgto').value;
-            const canal = document.getElementById('checkout-canal-pgto').value;
-            const idCompra = guid();
-            const dataIso = new Date().toISOString();
-            
-            // Variáveis globais para parcelamento
-            let isParcelado = false;
-            let nParc = 1;
-            let cid = null;
-            let cnome = "Cliente Avulso";
-            let totalFinalCompra = totalCheckoutAtual;
-            
-            // Usado para distribuir o Lucro uniformemente quando há juros
-            let multiplicadorJuros = 1;
+            let met = document.getElementById('checkout-metodo-pgto').value;
+            const can = document.getElementById('checkout-canal-pgto').value;
+            const idC = guid(); const dataIso = new Date().toISOString();
+            let totalFinal = totalCheckoutAtual; let multiplicador = 1;
 
-            if (metodo === 'Dinheiro') {
-                const recebido = parseFloat(document.getElementById('checkout-valor-recebido').value) || 0;
-                if (recebido > 0 && recebido < totalCheckoutAtual) {
-                    if(!confirm("Atenção: O valor recebido em Dinheiro é MENOR que o total da compra. Deseja confirmar mesmo assim?")) return;
-                }
-            } else if (metodo === 'Cartão de Crédito') {
-                const parcelas = parseInt(document.getElementById('checkout-cartao-parcelas').value);
-                const jurosPct = parseFloat(document.getElementById('checkout-cartao-juros').value) || 0;
-                
-                totalFinalCompra = totalCheckoutAtual * (1 + (jurosPct / 100)); 
-                multiplicadorJuros = totalFinalCompra / totalCheckoutAtual;
-
-                if (parcelas > 1) {
-                    metodo = `Cartão de Crédito (${parcelas}x${jurosPct > 0 ? ' c/ Juros' : ''})`;
-                    isParcelado = true;
-                    nParc = parcelas;
-                    cnome = "Cartão de Crédito / Avulso"; 
-                } else if (jurosPct > 0) {
-                    metodo = `Cartão de Crédito (1x c/ Juros)`;
-                }
-            } else if (metodo === 'Carnê (Parcelado)') {
-                cid = document.getElementById('checkout-sel-cliente').value;
+            if (met === 'Carnê (Parcelado)') {
+                const cid = document.getElementById('checkout-sel-cliente').value;
                 const cli = dbClientes.find(x => x.id === cid);
-                if(!cli) return alert("Cliente inválido.");
-                cnome = cli.nome;
+                let ent = parseFloat(document.getElementById('checkout-carne-entrada').value) || 0;
+                let n = parseInt(document.getElementById('checkout-carne-parcelas').value) || 1;
+                let j = parseFloat(document.getElementById('checkout-carne-juros').value) || 0;
+                let saldo = Math.max(0, totalCheckoutAtual - ent);
+                let valorJuros = saldo * (j / 100);
+                totalFinal = totalCheckoutAtual + valorJuros;
+                multiplicador = totalFinal / totalCheckoutAtual;
 
-                let entrada = parseFloat(document.getElementById('checkout-carne-entrada').value) || 0;
-                nParc = parseInt(document.getElementById('checkout-carne-parcelas').value);
-                if (isNaN(nParc) || nParc < 1) nParc = 1;
-                const jurosPct = parseFloat(document.getElementById('checkout-carne-juros').value) || 0;
-
-                const dataInicString = document.getElementById('checkout-carne-data').value;
-                if(!dataInicString) return alert("Defina a data do 1º Vencimento.");
-
-                let saldoAParcelar = totalCheckoutAtual - entrada;
-                if (saldoAParcelar < 0) saldoAParcelar = 0;
-                
-                let valorJurosNoSaldo = saldoAParcelar * (jurosPct / 100);
-                totalFinalCompra = totalCheckoutAtual + valorJurosNoSaldo; // Entrada não sofre juros
-                multiplicadorJuros = totalFinalCompra / totalCheckoutAtual;
-
-                metodo = `Carnê (${entrada > 0 ? 'Entrada + ' : ''}${nParc}x${jurosPct > 0 ? ' c/ Juros' : ''})`;
-                isParcelado = true;
-
-                // Gerar parcelas do Carnê
-                let custoTotalCompra = carrinho.reduce((sum, item) => sum + (calcularItemCarrinho(item).custoUnit * item.qtde), 0);
-                
-                // 1. Lançar a Entrada se houver (Paga hoje)
-                if (entrada > 0) {
-                    dbParcelas.push({
-                        id: guid(), vid: idCompra,
-                        cid: cid, cnome: cnome, pnome: `Entrada (Sinal)`,
-                        valor: entrada, custoBase: (custoTotalCompra * (entrada / totalFinalCompra)), 
-                        vencimento: dataIso, status: 'pago'
-                    });
+                if (ent > 0) dbParcelas.push({ id: guid(), vid: idC, cid: cid, cnome: cli.nome, valor: ent, vencimento: dataIso, status: 'pago' });
+                let valP = (saldo + valorJuros) / n;
+                let dtV = new Date(document.getElementById('checkout-carne-data').value);
+                for(let i=0; i<n; i++) {
+                    let d = new Date(dtV); d.setMonth(d.getMonth() + i);
+                    dbParcelas.push({ id: guid(), vid: idC, cid: cid, cnome: cli.nome, valor: valP, vencimento: d.toISOString(), status: 'pendente' });
                 }
-
-                // 2. Lançar o Saldo Parcelado
-                if (saldoAParcelar > 0) {
-                    let valParc = (saldoAParcelar + valorJurosNoSaldo) / nParc;
-                    let custoParc = (custoTotalCompra * ((saldoAParcelar + valorJurosNoSaldo) / totalFinalCompra)) / nParc;
-                    let dataBase = new Date(dataInicString);
-                    
-                    for(let i = 0; i < nParc; i++) {
-                        let venc = new Date(dataBase);
-                        venc.setMonth(venc.getMonth() + i);
-                        dbParcelas.push({
-                            id: guid(), vid: idCompra,
-                            cid: cid, cnome: cnome, pnome: `Parcela ${i+1}/${nParc}`,
-                            valor: valParc, custoBase: custoParc,
-                            vencimento: venc.toISOString(), status: 'pendente'
-                        });
-                    }
+            } else if (met === 'Cartão de Crédito') {
+                let n = parseInt(document.getElementById('checkout-cartao-parcelas').value);
+                let j = parseFloat(document.getElementById('checkout-cartao-juros').value) || 0;
+                totalFinal = totalCheckoutAtual * (1 + (j / 100));
+                multiplicador = totalFinal / totalCheckoutAtual;
+                for(let i=0; i<n; i++) {
+                    let d = new Date(); d.setMonth(d.getMonth() + i);
+                    dbParcelas.push({ id: guid(), vid: idC, cnome: "Cartão", valor: totalFinal/n, vencimento: d.toISOString(), status: i === 0 ? 'pago' : 'pendente' });
                 }
             }
 
-            // Se for Cartão de Crédito parcelado (Não é Carnê)
-            if (isParcelado && !metodo.includes('Carnê')) {
-                let custoTotalCompra = carrinho.reduce((sum, item) => sum + (calcularItemCarrinho(item).custoUnit * item.qtde), 0);
-                for(let i = 0; i < nParc; i++) {
-                    let venc = new Date();
-                    if (i > 0) venc.setMonth(venc.getMonth() + i);
-                    
-                    // A primeira parcela do cartão cai na hora, o restante agendado
-                    dbParcelas.push({
-                        id: guid(), vid: idCompra,
-                        cid: cid, cnome: cnome, pnome: `Sacola (${carrinho.reduce((a, b) => a + b.qtde, 0)} itens)`,
-                        valor: totalFinalCompra / nParc, custoBase: custoTotalCompra / nParc,
-                        vencimento: i === 0 ? dataIso : venc.toISOString(), 
-                        status: i === 0 ? 'pago' : 'pendente'
-                    });
-                }
-            }
-
-            // Gerar o histórico de vendas para relatório (Itens individuais)
             carrinho.forEach(item => {
                 const info = calcularItemCarrinho(item);
-                const custoItemGeral = info.custoUnit * item.qtde;
-                
-                // Aplica a proporção do juros global ao valor do item vendido para refletir no lucro
-                const valorFinalDoItemComJuros = info.valorTotal * multiplicadorJuros;
-                const lucroTotalItem = valorFinalDoItemComJuros - custoItemGeral;
-                
-                dbVendas.push({
-                    id: guid(), idCompra: idCompra, 
-                    pid: item.pid, pnome: info.nome, qtde: item.qtde,
-                    cid: cid, cnome: cid ? cnome : null,
-                    valor: valorFinalDoItemComJuros, custo: custoItemGeral, lucro: lucroTotalItem,
-                    tipo: isParcelado ? `Parcelado` : `À Vista`, 
-                    metodo: metodo,
-                    canal: canal,
-                    data: dataIso, status: isParcelado ? 'parcelado' : 'pago' 
-                });
-                modEstoque(item.pid, -item.qtde);
+                const valorComJ = info.valorTotal * multiplicador;
+                dbVendas.push({ id: guid(), idCompra: idC, pid: item.pid, pnome: info.nome, qtde: item.qtde, valor: valorComJ, lucro: valorComJ - (info.custoUnit*item.qtde), metodo: met, canal: can, data: dataIso, status: 'pago' });
+                modEstoqueDireto(item.pid, -item.qtde);
             });
 
             saveDB(); carrinho = []; atualizarBadgeCarrinho();
             document.getElementById('modal-checkout-pgto').classList.add('hidden-screen');
-            showToast("Venda Concluída!");
+            showToast("Venda Concluída! 💰");
         }
 
-        // --- SISTEMA DE ESTORNOS DE VENDAS ---
-        function abrirModalEstorno(vendaId) {
-            const v = dbVendas.find(x => x.id === vendaId);
-            if (!v) return;
-            compraAtualEstorno = v.idCompra || v.id; 
-
-            renderModalEstorno();
-            document.getElementById('modal-estorno').classList.remove('hidden-screen');
+        // Função auxiliar para baixar estoque sem perguntar (durante venda)
+        function modEstoqueDireto(id, delta) {
+            const idx = dbProdutos.findIndex(p => p.id === id);
+            if (idx > -1) {
+                dbProdutos[idx].estoque = Math.max(0, (parseInt(dbProdutos[idx].estoque) || 0) + delta).toString();
+                saveDB();
+            }
         }
 
-        function fecharModalEstorno() {
-            document.getElementById('modal-estorno').classList.add('hidden-screen');
-            compraAtualEstorno = null;
+        // --- SISTEMA DE ESTORNO ---
+        function abrirModalEstorno(vId) {
+            const v = dbVendas.find(x => x.id === vId); if(!v) return;
+            compraAtualEstorno = v.idCompra || v.id;
+            renderModalEstorno(); document.getElementById('modal-opcoes-estorno').classList.remove('hidden-screen');
         }
+        function fecharModalEstorno() { document.getElementById('modal-opcoes-estorno').classList.add('hidden-screen'); }
 
         function renderModalEstorno() {
-            const vendasDaCompra = dbVendas.filter(x => (x.idCompra === compraAtualEstorno) || (x.id === compraAtualEstorno));
-            if (vendasDaCompra.length === 0) {
-                fecharModalEstorno();
-                renderRelatorios();
-                return;
-            }
-
+            const vendas = dbVendas.filter(x => x.idCompra === compraAtualEstorno || x.id === compraAtualEstorno);
+            if (vendas.length === 0) { fecharModalEstorno(); renderRelatorios(); return; }
             const container = document.getElementById('estorno-content');
-            let html = `<h4 class="font-bold text-slate-700 mb-2">Devolver Itens ao Estoque</h4>`;
-            html += `<div class="flex flex-col gap-2 mb-6">`;
-
-            vendasDaCompra.forEach(item => {
-                if(item.qtde > 0) {
-                    const valUnit = item.valor / item.qtde;
-                    html += `
-                        <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 flex justify-between items-center">
-                            <div>
-                                <p class="text-sm font-bold text-slate-800">${item.pnome}</p>
-                                <p class="text-xs text-slate-500">${item.qtde} un. (Total: ${fmtMoeda(item.valor)})</p>
-                            </div>
-                            <button onclick="estornarUmItem('${item.id}', ${valUnit})" class="bg-orange-100 text-orange-600 px-3 py-2 rounded-lg text-xs font-bold active:scale-95 shadow-sm"><i class="fas fa-undo"></i> Devolver 1</button>
-                        </div>
-                    `;
-                }
-            });
-            html += `</div>`;
-
-            html += `
-                <h4 class="font-bold text-slate-700 mb-2">Abatimento / Estorno de Valor (R$)</h4>
-                <p class="text-[10px] text-slate-500 mb-2 leading-tight">Use isso para abater o valor sem devolver itens ao estoque (Ex: desconto aplicado após a venda).</p>
-                <div class="flex gap-2 mb-6">
-                    <input type="number" id="estorno-valor-input" placeholder="0.00" step="0.01" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none font-bold text-slate-700">
-                    <button onclick="aplicarEstornoValor()" class="bg-blue-500 text-white px-4 py-3 rounded-xl font-bold active:scale-95 shadow-md">Aplicar</button>
-                </div>
-            `;
-
-            html += `
-                <div class="border-t border-slate-200 pt-4">
-                    <button onclick="estornoTotal()" class="w-full bg-red-500 text-white font-bold py-4 rounded-xl shadow-lg active:scale-95 flex justify-center items-center gap-2"><i class="fas fa-trash-alt"></i> Estornar TUDO (Cancelar Compra)</button>
-                </div>
-            `;
-            container.innerHTML = html;
+            container.innerHTML = `<h4 class="font-bold text-slate-700 mb-2 mt-4">Itens da Compra</h4><div class="space-y-2 mb-6">` + 
+                vendas.map(item => `<div class="bg-slate-50 p-3 rounded-xl border flex justify-between items-center"><div><p class="font-bold text-sm">${item.pnome}</p><p class="text-xs text-slate-500">${item.qtde} un.</p></div><button onclick="estornarUmItem('${item.id}')" class="bg-orange-100 text-orange-600 px-3 py-2 rounded-lg text-xs font-bold active:scale-95">Devolver 1</button></div>`).join('') +
+                `</div><button onclick="estornoTotal()" class="w-full bg-red-50 text-red-600 border border-red-200 font-bold py-4 rounded-xl shadow-md active:scale-95 transition flex justify-center items-center gap-2"><i class="fas fa-trash-alt"></i> Cancelar Toda a Venda</button>`;
         }
 
-        function abaterValorDasParcelas(idCompra, valorAbater) {
-            let parcelas = dbParcelas.filter(p => p.vid === idCompra);
-            // Ordenar: primeiro as pendentes (da mais distante pra mais próxima), depois as pagas
-            parcelas.sort((a, b) => {
-                if (a.status === 'pendente' && b.status !== 'pendente') return -1;
-                if (a.status !== 'pendente' && b.status === 'pendente') return 1;
-                return new Date(b.vencimento) - new Date(a.vencimento); 
+        function estornarUmItem(vId) {
+            const v = dbVendas.find(x => x.id === vId);
+            openModalConfirm("Devolver Item?", "O item voltará ao estoque e o valor será abatido.", () => {
+                const valU = v.valor / v.qtde;
+                modEstoqueDireto(v.pid, 1); v.qtde -= 1; v.valor -= valU;
+                if (v.qtde <= 0) dbVendas = dbVendas.filter(x => x.id !== vId);
+                abaterValorDasParcelas(compraAtualEstorno, valU);
+                saveDB(); renderModalEstorno(); renderRelatorios(); showToast("Item devolvido.");
             });
+        }
 
-            let resto = valorAbater;
-            for (let i = 0; i < parcelas.length; i++) {
+        function abaterValorDasParcelas(idC, val) {
+            let parcs = dbParcelas.filter(p => p.vid === idC).sort((a,b) => new Date(b.vencimento) - new Date(a.vencimento));
+            let resto = val;
+            for (let p of parcs) {
                 if (resto <= 0) break;
-                let p = parcelas[i];
-                if (p.valor <= resto) {
-                    resto -= p.valor;
-                    // Exclui a parcela se ela for totalmente coberta pelo estorno
-                    dbParcelas = dbParcelas.filter(x => x.id !== p.id);
-                } else {
-                    p.valor -= resto;
-                    p.custoBase = Math.max(0, p.custoBase - resto); 
-                    resto = 0;
-                }
+                if (p.valor <= resto) { resto -= p.valor; dbParcelas = dbParcelas.filter(x => x.id !== p.id); }
+                else { p.valor -= resto; resto = 0; }
             }
-        }
-
-        function estornarUmItem(idVenda, valUnit) {
-            const v = dbVendas.find(x => x.id === idVenda);
-            if(!v) return;
-
-            openModalConfirm("Devolver Item?", `Retornar 1x ${v.pnome} ao estoque e abater ${fmtMoeda(valUnit)} da venda?`, () => {
-                modEstoque(v.pid, 1);
-                v.qtde -= 1;
-                v.valor -= valUnit;
-                
-                const p = dbProdutos.find(x => x.id === v.pid);
-                const custoUnit = p ? parseFloat(p.custo) : 0;
-                v.lucro -= (valUnit - custoUnit);
-
-                if (v.qtde <= 0) {
-                    dbVendas = dbVendas.filter(x => x.id !== idVenda);
-                }
-
-                abaterValorDasParcelas(compraAtualEstorno, valUnit);
-
-                saveDB();
-                renderModalEstorno();
-                renderRelatorios();
-                showToast("Item devolvido com sucesso!");
-            });
-        }
-
-        function aplicarEstornoValor() {
-            const val = parseFloat(document.getElementById('estorno-valor-input').value);
-            if(isNaN(val) || val <= 0) return alert("Insira um valor válido.");
-
-            openModalConfirm("Estornar Valor?", `Abater ${fmtMoeda(val)} desta venda?`, () => {
-                const vendas = dbVendas.filter(x => (x.idCompra === compraAtualEstorno) || (x.id === compraAtualEstorno));
-                if(vendas.length > 0) {
-                    let resto = val;
-                    for (let v of vendas) {
-                        if (resto <= 0) break;
-                        let maxAbate = Math.min(v.valor, resto);
-                        v.valor -= maxAbate;
-                        v.lucro -= maxAbate; // Impacta diretamente o lucro
-                        resto -= maxAbate;
-                    }
-                }
-                abaterValorDasParcelas(compraAtualEstorno, val);
-                saveDB();
-                renderModalEstorno();
-                renderRelatorios();
-                showToast("Valor abatido com sucesso!");
-            });
         }
 
         function estornoTotal() {
-            openModalConfirm("Cancelar Compra?", "Isso irá devolver TODOS os itens ao estoque e remover a venda e parcelas.", () => {
-                const vendas = dbVendas.filter(x => (x.idCompra === compraAtualEstorno) || (x.id === compraAtualEstorno));
-                vendas.forEach(item => {
-                    modEstoque(item.pid, item.qtde || 1);
-                });
-                dbVendas = dbVendas.filter(x => (x.idCompra !== compraAtualEstorno) && (x.id !== compraAtualEstorno));
+            openModalConfirm("Cancelar Tudo?", "Devolve itens e anula débitos.", () => {
+                dbVendas.filter(x => x.idCompra === compraAtualEstorno || x.id === compraAtualEstorno).forEach(i => modEstoqueDireto(i.pid, i.qtde));
+                dbVendas = dbVendas.filter(x => x.idCompra !== compraAtualEstorno && x.id !== compraAtualEstorno);
                 dbParcelas = dbParcelas.filter(x => x.vid !== compraAtualEstorno);
-
-                saveDB();
-                fecharModalEstorno();
-                renderRelatorios();
-                showToast("Compra estornada com sucesso!");
+                saveDB(); fecharModalEstorno(); renderRelatorios(); showToast("Venda Cancelada.");
             });
         }
 
-        // --- CLIENTES ---
+        // --- FINANCEIRO, GRÁFICOS, ETC ---
         function renderClientes() {
             const list = document.getElementById('listaClientes'); list.innerHTML = '';
             document.getElementById('msg-vazia-clientes').classList.toggle('hidden-screen', dbClientes.length > 0);
-
             dbClientes.forEach(c => {
-                const dividas = dbParcelas.filter(p => p.cid === c.id && p.status === 'pendente');
-                const totalDivida = dividas.reduce((acc, p) => acc + p.valor, 0);
-                
-                let badgeDivida = '';
-                if (totalDivida > 0) {
-                    badgeDivida = `
-                        <div class="mt-4 pt-3 border-t border-slate-100 flex justify-between items-center">
-                            <div>
-                                <span class="text-[9px] text-red-500 font-bold uppercase tracking-wider">Dívida Ativa</span>
-                                <p class="font-black text-red-600 text-sm">${fmtMoeda(totalDivida)}</p>
-                            </div>
-                            <button onclick="abrirModalGerenciarParcelas('${c.id}')" class="bg-red-50 text-red-600 border border-red-200 px-3 py-2 rounded-xl text-xs font-bold active:scale-95 flex items-center gap-1 transition hover:bg-red-100">
-                                <i class="fas fa-hand-holding-usd"></i> Ver Parcelas
-                            </button>
-                        </div>
-                    `;
-                }
-
-                list.innerHTML += `
-                    <div class="bg-white p-5 rounded-3xl border border-brand-100 shadow-sm flex flex-col group relative">
-                        <div class="flex justify-between items-start">
-                            <div>
-                                <h3 class="font-bold text-slate-800 text-lg">${c.nome}</h3>
-                                <p class="text-xs text-slate-400"><i class="fas fa-phone mr-1"></i> ${c.tel} | <i class="fas fa-id-card mr-1"></i> ${c.cpf}</p>
-                                <p class="text-[10px] text-brand-600 font-medium mt-1 uppercase"><i class="fas fa-map-marker-alt mr-1"></i> ${c.endereco || 'Endereço não informado'}</p>
-                            </div>
-                            <button onclick="deleteCli('${c.id}')" class="text-slate-300 hover:text-red-500 p-2 transition"><i class="fas fa-trash-alt"></i></button>
-                        </div>
-                        ${badgeDivida}
-                    </div>`;
+                const totalD = dbParcelas.filter(p => p.cid === c.id && p.status === 'pendente').reduce((a, b) => a + b.valor, 0);
+                list.innerHTML += `<div class="bg-white p-5 rounded-3xl border border-brand-100 shadow-sm"><div class="flex justify-between items-start"><div><h3 class="font-bold text-slate-800 text-lg">${c.nome}</h3><p class="text-xs text-slate-400">${c.tel}</p></div><button onclick="deleteCli('${c.id}')" class="text-slate-200 hover:text-red-500"><i class="fas fa-trash"></i></button></div>${totalD > 0 ? `<div class="mt-4 pt-3 border-t flex justify-between items-center"><div><span class="text-[9px] text-red-500 font-bold uppercase">Dívida</span><p class="font-black text-red-600">${fmtMoeda(totalD)}</p></div><button onclick="abrirModalGerenciarParcelas('${c.id}')" class="bg-red-50 text-red-600 px-3 py-2 rounded-xl text-xs font-bold">Ver</button></div>` : ''}</div>`;
             });
         }
 
-        function abrirModalCliente() { document.getElementById('modal-cliente').classList.remove('hidden-screen'); }
-        function fecharModalCliente() { document.getElementById('modal-cliente').classList.add('hidden-screen'); }
-        
-        function salvarNovoCliente() {
-            const n = document.getElementById('cli-nome').value;
-            if(!n) return alert("Preencha o nome!");
-            dbClientes.push({
-                id: guid(),
-                nome: n, cpf: document.getElementById('cli-cpf').value,
-                rg: document.getElementById('cli-rg').value, email: document.getElementById('cli-email').value,
-                tel: document.getElementById('cli-tel').value, endereco: document.getElementById('cli-endereco').value
-            });
-            saveDB(); fecharModalCliente(); renderClientes();
-            document.querySelectorAll('#modal-cliente input, #modal-cliente textarea').forEach(i => i.value = '');
-        }
-
-        function deleteCli(id) {
-            openModalConfirm("Excluir Cliente?", "Todos os dados dele serão apagados.", () => {
-                dbClientes = dbClientes.filter(c => c.id !== id);
-                saveDB(); renderClientes();
-            });
-        }
-
-        // --- FORNECEDORES ---
-        function renderFornecedores() {
-            const list = document.getElementById('listaFornecedores'); list.innerHTML = '';
-            document.getElementById('msg-vazia-fornecedores').classList.toggle('hidden-screen', dbFornecedores.length > 0);
-
-            dbFornecedores.forEach(f => {
-                list.innerHTML += `
-                    <div class="bg-white p-5 rounded-3xl border border-brand-100 shadow-sm flex justify-between items-center group">
-                        <div>
-                            <h3 class="font-bold text-slate-800 text-lg">${f.empresa}</h3>
-                            <p class="text-xs text-slate-500 font-medium"><i class="fas fa-user mr-1"></i> ${f.contato || 'N/A'} | <i class="fas fa-phone mx-1"></i> ${f.tel}</p>
-                            <p class="text-[10px] text-slate-400 mt-1 uppercase"><i class="fas fa-id-card mr-1"></i> ${f.cnpj}</p>
-                        </div>
-                        <button onclick="deleteFornecedor('${f.id}')" class="text-slate-300 hover:text-red-500 p-2 opacity-0 group-hover:opacity-100 transition"><i class="fas fa-trash-alt"></i></button>
-                    </div>`;
-            });
-        }
-
-        function abrirModalFornecedor() { document.getElementById('modal-fornecedor').classList.remove('hidden-screen'); }
-        function fecharModalFornecedor() { document.getElementById('modal-fornecedor').classList.add('hidden-screen'); }
-        
-        function salvarNovoFornecedor() {
-            const emp = document.getElementById('forn-empresa').value;
-            if(!emp) return alert("Preencha o nome da Empresa/Marca!");
-            dbFornecedores.push({
-                id: guid(),
-                empresa: emp, contato: document.getElementById('forn-contato').value,
-                cnpj: document.getElementById('forn-cnpj').value, email: document.getElementById('forn-email').value,
-                tel: document.getElementById('forn-tel').value, detalhes: document.getElementById('forn-detalhes').value
-            });
-            saveDB(); fecharModalFornecedor(); renderFornecedores();
-            document.querySelectorAll('#modal-fornecedor input, #modal-fornecedor textarea').forEach(i => i.value = '');
-            showToast("Fornecedor cadastrado!");
-        }
-
-        function deleteFornecedor(id) {
-            openModalConfirm("Excluir Fornecedor?", "Todos os dados deste parceiro serão apagados.", () => {
-                dbFornecedores = dbFornecedores.filter(f => f.id !== id);
-                saveDB(); renderFornecedores();
-            });
-        }
-
-        // --- RESUMO DO ESTOQUE ---
-        function abrirResumoEstoque() {
-            let totalPecas = 0;
-            let custoTotal = 0;
-            let valorVendaTotal = 0;
-
-            dbProdutos.forEach(p => {
-                let qtd = parseInt(p.estoque) || 0;
-                if (qtd > 0) {
-                    let custo = parseFloat(p.custo) || 0;
-                    let margem = parseFloat(p.margem) || 0;
-                    let desc = parseFloat(p.desconto) || 0;
-
-                    let pVitrine = (custo * (1 + (margem / 100))) / (1 - (desc / 100));
-
-                    totalPecas += qtd;
-                    custoTotal += (custo * qtd);
-                    valorVendaTotal += (pVitrine * qtd); 
-                }
-            });
-
-            let lucroProjetado = valorVendaTotal - custoTotal;
-
-            document.getElementById('resumo-estoque-pecas').textContent = totalPecas;
-            document.getElementById('resumo-estoque-custo').textContent = fmtMoeda(custoTotal);
-            document.getElementById('resumo-estoque-venda').textContent = fmtMoeda(valorVendaTotal);
-            document.getElementById('resumo-estoque-lucro').textContent = fmtMoeda(lucroProjetado);
-
-            document.getElementById('modal-resumo-estoque').classList.remove('hidden-screen');
-        }
-
-        function fecharResumoEstoque() {
-            document.getElementById('modal-resumo-estoque').classList.add('hidden-screen');
-        }
-
-        // --- RELATÓRIOS E FINANCEIRO ---
         function renderRelatorios() {
-            const hoje = new Date();
-            const mes = hoje.getMonth(), ano = hoje.getFullYear();
-            document.getElementById('titulo-mes').textContent = hoje.toLocaleString('pt-BR', { month: 'long', year: 'numeric' });
-
-            const vendasAVista = dbVendas.filter(v => v.status === 'pago' && new Date(v.data).getMonth() === mes && new Date(v.data).getFullYear() === ano);
-            const parcelasPagas = dbParcelas.filter(p => p.status === 'pago' && new Date(p.vencimento).getMonth() === mes && new Date(p.vencimento).getFullYear() === ano);
-            
-            const totalRecebido = vendasAVista.reduce((a, b) => a + b.valor, 0) + parcelasPagas.reduce((a, b) => a + b.valor, 0);
-            const lucroBruto = vendasAVista.reduce((a, b) => a + b.lucro, 0) + parcelasPagas.reduce((a, b) => a + (b.valor - b.custoBase), 0);
-            const totalPendente = dbParcelas.filter(p => p.status === 'pendente').reduce((a, b) => a + b.valor, 0);
-
-            document.getElementById('resumo-recebido').textContent = fmtMoeda(totalRecebido);
-            document.getElementById('resumo-pendente').textContent = fmtMoeda(totalPendente);
-            document.getElementById('resumo-lucro-real').textContent = fmtMoeda(lucroBruto); 
-
-            const prox = dbParcelas.filter(p => {
-                if(p.status !== 'pendente') return false;
-                const d = new Date(p.vencimento), diff = (d - hoje) / (1000 * 3600 * 24);
-                return diff <= 3 && diff >= -30; 
-            });
-            
-            const alertaBox = document.getElementById('alertas-vencimento');
-            alertaBox.classList.toggle('hidden-screen', prox.length === 0);
-            const alertaList = document.getElementById('lista-alertas-vencimento'); alertaList.innerHTML = '';
-            prox.forEach(p => {
-                alertaList.innerHTML += `
-                    <div onclick="baixaParcela('${p.id}')" class="bg-white border-l-4 border-red-500 p-3 rounded-xl shadow-sm flex justify-between items-center active:scale-95 cursor-pointer hover:bg-red-50 transition">
-                        <div><p class="text-xs font-bold text-slate-800">${p.cnome} <span class="text-slate-400 font-normal">(${p.pnome})</span></p><p class="text-[10px] text-red-500 font-bold">VENCE EM ${fmtData(p.vencimento)}</p></div>
-                        <div class="flex items-center gap-3">
-                            <p class="font-black text-red-600">${fmtMoeda(p.valor)}</p>
-                            <div class="bg-emerald-500 text-white rounded p-1 text-[10px] shadow-sm"><i class="fas fa-check"></i></div>
-                        </div>
-                    </div>`;
-            });
-
-            const hList = document.getElementById('listaVendas'); hList.innerHTML = '';
+            const list = document.getElementById('listaVendas'); list.innerHTML = '';
             const hist = [...dbVendas].reverse().slice(0, 30);
             document.getElementById('msg-vazia-vendas').classList.toggle('hidden-screen', hist.length > 0);
+            const hoje = new Date();
+            const rec = dbVendas.filter(v => v.status === 'pago' && new Date(v.data).getMonth() === hoje.getMonth()).reduce((a,b) => a+b.valor, 0) + dbParcelas.filter(p => p.status === 'pago' && new Date(p.vencimento).getMonth() === hoje.getMonth()).reduce((a,b) => a+b.valor, 0);
+            document.getElementById('resumo-recebido').textContent = fmtMoeda(rec);
+            document.getElementById('resumo-pendente').textContent = fmtMoeda(dbParcelas.filter(p => p.status === 'pendente').reduce((a,b) => a+b.valor, 0));
+            document.getElementById('resumo-lucro-real').textContent = fmtMoeda(dbVendas.reduce((a,b) => a+b.lucro, 0));
             hist.forEach(v => {
-                const qtdeTag = v.qtde > 1 ? `<span class="bg-slate-800 text-white px-1 rounded mr-1">${v.qtde}x</span>` : '';
-                const metodoDisplay = v.metodo || 'Dinheiro';
-                const canalDisplay = v.canal || 'Loja Física';
-                
-                hList.innerHTML += `
-                    <div class="bg-white p-4 rounded-2xl border border-brand-100 flex justify-between items-center shadow-sm">
-                        <div>
-                            <p class="font-bold text-slate-800 text-sm">${qtdeTag}${v.pnome} <span class="text-slate-400 font-normal text-[10px]">#${v.cnome || 'Avulso'}</span></p>
-                            <p class="text-[10px] text-brand-600 font-bold uppercase mb-2">${metodoDisplay} • ${canalDisplay} • ${fmtDataHora(v.data)}</p>
-                            <div class="flex gap-2">
-                                <span class="text-[10px] bg-emerald-50 text-emerald-600 px-2 py-1 rounded-md font-bold">Venda: ${fmtMoeda(v.valor)}</span>
-                                <span class="text-[10px] bg-brand-50 text-brand-600 px-2 py-1 rounded-md font-bold">Lucro: ${fmtMoeda(v.lucro)}</span>
-                            </div>
-                        </div>
-                        <button onclick="abrirModalEstorno('${v.id}')" class="text-slate-200 hover:text-orange-500 transition p-2" title="Estornar / Devolver"><i class="fas fa-undo-alt"></i></button>
-                    </div>`;
+                list.innerHTML += `<div class="bg-white p-4 rounded-2xl border flex justify-between items-center shadow-sm"><div><p class="font-bold text-slate-800 text-sm">${v.qtde}x ${v.pnome}</p><p class="text-[10px] text-brand-600 font-bold uppercase">${v.metodo} • ${fmtDataHora(v.data)}</p><span class="text-[10px] bg-emerald-50 text-emerald-600 px-2 py-1 rounded-md font-bold">${fmtMoeda(v.valor)}</span></div><button onclick="abrirModalEstorno('${v.id}')" class="text-slate-200 hover:text-orange-500 p-2"><i class="fas fa-undo-alt text-xl"></i></button></div>`;
             });
         }
 
-        // --- GERENCIAR PARCELAS ---
-        function abrirModalGerenciarParcelas(cid = null) {
-            filtroClienteIdAtual = cid;
-            renderListaTodasParcelas();
-            document.getElementById('modal-gerenciar-parcelas').classList.remove('hidden-screen');
-        }
-
-        function fecharModalGerenciarParcelas() {
-            document.getElementById('modal-gerenciar-parcelas').classList.add('hidden-screen');
-            filtroClienteIdAtual = null;
-        }
-
-        function renderListaTodasParcelas() {
-            const list = document.getElementById('lista-todas-parcelas');
-            list.innerHTML = '';
-            
-            let pendentes = dbParcelas.filter(p => p.status === 'pendente');
-            
-            if (filtroClienteIdAtual) {
-                pendentes = pendentes.filter(p => p.cid === filtroClienteIdAtual);
-                const cli = dbClientes.find(x => x.id === filtroClienteIdAtual);
-                document.getElementById('titulo-modal-parcelas').innerHTML = `<i class="fas fa-user-tag text-orange-500"></i> Dívida de: ${cli ? cli.nome : ''}`;
-            } else {
-                document.getElementById('titulo-modal-parcelas').innerHTML = `<i class="fas fa-hand-holding-usd text-orange-500"></i> Contas a Receber (Todas)`;
-            }
-
-            pendentes.sort((a,b) => new Date(a.vencimento) - new Date(b.vencimento));
-
-            if(pendentes.length === 0) {
-                list.innerHTML = '<p class="text-center text-slate-500 py-8 font-bold">Nenhuma parcela a receber no momento! 🎉</p>';
-                return;
-            }
-
-            pendentes.forEach(p => {
-                const hoje = new Date();
-                const v = new Date(p.vencimento);
-                const atrasado = v < hoje && v.toDateString() !== hoje.toDateString();
-
-                list.innerHTML += `
-                    <div class="bg-slate-50 p-4 rounded-xl border ${atrasado ? 'border-red-300 bg-red-50' : 'border-slate-200'} flex justify-between items-center mb-2">
-                        <div>
-                            <p class="font-bold text-sm text-slate-800">${p.cnome}</p>
-                            <p class="text-[10px] ${atrasado ? 'text-red-600 font-bold' : 'text-slate-500'} uppercase">Venc: ${fmtData(p.vencimento)} ${atrasado ? '(ATRASADO)' : ''}</p>
-                        </div>
-                        <div class="flex items-center gap-3">
-                            <span class="font-black text-orange-500">${fmtMoeda(p.valor)}</span>
-                            <button onclick="baixaParcelaModal('${p.id}')" class="bg-emerald-500 text-white px-3 py-2 rounded-lg text-xs font-bold active:scale-95 shadow-md flex gap-1 items-center"><i class="fas fa-check-circle"></i> Receber</button>
-                        </div>
-                    </div>
-                `;
-            });
-        }
-
-        function baixaParcelaModal(id) {
-            const p = dbParcelas.find(x => x.id === id);
-            openModalConfirm("Confirmar Recebimento?", `Confirmar pagamento de ${fmtMoeda(p.valor)} de ${p.cnome}?`, () => {
-                p.status = 'pago'; 
-                p.vencimento = new Date().toISOString(); 
-                saveDB(); 
-                renderRelatorios(); 
-                renderListaTodasParcelas(); 
-                showToast(`Sucesso! ${fmtMoeda(p.valor)} adicionado ao "Recebido".`);
-            }, 'emerald');
-        }
-
-        function baixaParcela(id) {
-            const p = dbParcelas.find(x => x.id === id);
-            openModalConfirm("Confirmar Pagamento?", `Receber parcela de ${fmtMoeda(p.valor)} de ${p.cnome}?`, () => {
-                p.status = 'pago'; 
-                p.vencimento = new Date().toISOString(); 
-                saveDB(); 
-                renderRelatorios(); 
-                showToast(`Sucesso! ${fmtMoeda(p.valor)} adicionado ao "Recebido".`);
-            }, 'emerald');
-        }
-
-        function visualizarRelatorio() {
-            const ini = new Date(document.getElementById('exp-inicio').value);
-            const fim = new Date(document.getElementById('exp-fim').value); 
-            fim.setHours(23,59,59);
-            
-            if(isNaN(ini) || isNaN(fim)) return alert("Selecione a Data Inicial e a Data Final primeiro.");
-
-            relatorioTempData = dbVendas.filter(v => { const d = new Date(v.data); return d >= ini && d <= fim; });
-            
-            if (relatorioTempData.length === 0) return alert("Nenhuma venda encontrada nesse período.");
-
-            const tbody = document.getElementById('preview-tbody');
-            tbody.innerHTML = '';
-            
-            relatorioTempData.forEach(v => {
-                tbody.innerHTML += `
-                    <tr class="hover:bg-slate-50 transition">
-                        <td class="p-3 border-b border-slate-100">${fmtData(v.data)}</td>
-                        <td class="p-3 border-b border-slate-100 font-bold">${v.pnome}</td>
-                        <td class="p-3 border-b border-slate-100 text-center">${v.qtde || 1}</td>
-                        <td class="p-3 border-b border-slate-100">${v.cnome || '-'}</td>
-                        <td class="p-3 border-b border-slate-100 text-[10px]">${v.metodo || 'Dinheiro'}</td>
-                        <td class="p-3 border-b border-slate-100 text-[10px]">${v.canal || 'Loja Física'}</td>
-                        <td class="p-3 border-b border-slate-100 text-right text-emerald-600 font-bold">${fmtMoeda(v.valor)}</td>
-                        <td class="p-3 border-b border-slate-100 text-right text-brand-600">${fmtMoeda(v.lucro)}</td>
-                    </tr>
-                `;
-            });
-
-            document.getElementById('modal-preview-relatorio').classList.remove('hidden-screen');
-        }
-
-        function fecharPreviewRelatorio() {
-            document.getElementById('modal-preview-relatorio').classList.add('hidden-screen');
-        }
-
-        function gerarTextoRelatorio() {
-            if (!relatorioTempData || relatorioTempData.length === 0) return "";
-            
-            let total = 0;
-            let lucro = 0;
-            
-            const ini = fmtData(document.getElementById('exp-inicio').value);
-            const fim = fmtData(document.getElementById('exp-fim').value);
-            
-            let txt = `📊 *RELATÓRIO DE VENDAS*\n`;
-            txt += `Período: ${ini} a ${fim}\n\n`;
-
-            relatorioTempData.forEach(v => {
-                total += v.valor;
-                lucro += v.lucro;
-                txt += `🔹 ${v.qtde}x ${v.pnome}\n`;
-                txt += `   Data: ${fmtDataHora(v.data)}\n`;
-                txt += `   Pagto: ${v.metodo || 'Dinheiro'} (${v.canal || 'Loja Física'})\n`;
-                txt += `   Valor: ${fmtMoeda(v.valor)}\n\n`;
-            });
-            
-            txt += `💰 *Total Vendido:* ${fmtMoeda(total)}\n`;
-            txt += `📈 *Lucro Bruto:* ${fmtMoeda(lucro)}\n`;
-            
-            return txt;
-        }
-
-        function enviarRelatorioWhatsapp() {
-            const txt = gerarTextoRelatorio();
-            if(!txt) return;
-            const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(txt)}`;
-            window.open(url, '_blank');
-        }
-
-        function enviarRelatorioEmail() {
-            const txt = gerarTextoRelatorio();
-            if(!txt) return;
-            const url = `mailto:?subject=Relatório de Vendas&body=${encodeURIComponent(txt)}`;
-            window.location.href = url;
-        }
-
-        // --- DESPESAS E PONTO DE EQUILÍBRIO ---
         function renderDespesas() {
             const hoje = new Date();
-            const mes = hoje.getMonth(), ano = hoje.getFullYear();
-            document.getElementById('titulo-mes-despesas').textContent = hoje.toLocaleString('pt-BR', { month: 'long', year: 'numeric' });
-
-            const vendasAVista = dbVendas.filter(v => v.status === 'pago' && new Date(v.data).getMonth() === mes && new Date(v.data).getFullYear() === ano);
-            const parcelasPagas = dbParcelas.filter(p => p.status === 'pago' && new Date(p.vencimento).getMonth() === mes && new Date(p.vencimento).getFullYear() === ano);
-            const lucroBruto = vendasAVista.reduce((a, b) => a + b.lucro, 0) + parcelasPagas.reduce((a, b) => a + (b.valor - b.custoBase), 0);
-
-            const despesasMes = dbDespesas.filter(d => {
-                const dataD = new Date(d.data);
-                return dataD.getMonth() === mes && dataD.getFullYear() === ano;
+            const desp = dbDespesas.filter(d => new Date(d.data).getMonth() === hoje.getMonth());
+            document.getElementById('despesas-total').textContent = fmtMoeda(desp.reduce((a,b) => a+b.valor, 0));
+            const list = document.getElementById('lista-despesas'); list.innerHTML = '';
+            document.getElementById('msg-vazia-despesas').classList.toggle('hidden-screen', desp.length > 0);
+            desp.slice().reverse().forEach(d => {
+                list.innerHTML += `<div class="bg-white p-4 rounded-2xl border flex justify-between items-center shadow-sm"><div><p class="font-bold text-sm">${d.descricao}</p><p class="text-[10px] uppercase text-slate-400">${fmtDataHora(d.data)}</p></div><div class="flex items-center gap-3"><span class="font-black text-red-500">${fmtMoeda(d.valor)}</span><button onclick="excluirDespesa('${d.id}')" class="text-slate-200 hover:text-red-500 p-2"><i class="fas fa-trash-alt"></i></button></div></div>`;
             });
-            const totalDespesas = despesasMes.reduce((a, b) => a + b.valor, 0);
-
-            const lucroLiquidoFinal = lucroBruto - totalDespesas;
-
-            document.getElementById('despesas-lucro-bruto').textContent = fmtMoeda(lucroBruto);
-            document.getElementById('despesas-total').textContent = fmtMoeda(totalDespesas);
-            
-            const elLucroLiquido = document.getElementById('despesas-lucro-liquido');
-            elLucroLiquido.textContent = fmtMoeda(lucroLiquidoFinal);
-            elLucroLiquido.className = `text-2xl font-black ${lucroLiquidoFinal >= 0 ? 'text-blue-500' : 'text-red-500'}`;
-
-            const barra = document.getElementById('barra-equilibrio');
-            const statusEq = document.getElementById('status-equilibrio');
-            
-            if (totalDespesas === 0) {
-                barra.style.width = lucroBruto > 0 ? '100%' : '0%';
-                barra.className = `h-full transition-all duration-500 ${lucroBruto > 0 ? 'bg-blue-500' : 'bg-slate-300'}`;
-                statusEq.innerHTML = lucroBruto > 0 ? '<span class="text-blue-500 font-bold">Excelente! Tudo é lucro puro.</span>' : '<span class="text-slate-400">Nenhuma despesa ou venda registrada.</span>';
-            } else {
-                let pct = (lucroBruto / totalDespesas) * 100;
-                if (pct > 100) pct = 100;
-                barra.style.width = pct + '%';
-                
-                if (lucroBruto >= totalDespesas) {
-                    barra.className = 'h-full transition-all duration-500 bg-blue-500';
-                    statusEq.innerHTML = `<span class="text-blue-500 font-bold">Ponto de Equilíbrio Atingido! <i class="fas fa-check-circle"></i></span>`;
-                } else {
-                    barra.className = 'h-full transition-all duration-500 bg-red-500';
-                    const falta = totalDespesas - lucroBruto;
-                    statusEq.innerHTML = `<span class="text-red-500 font-bold">Faltam ${fmtMoeda(falta)} para o empate.</span>`;
-                }
-            }
-
-            const list = document.getElementById('lista-despesas');
-            list.innerHTML = '';
-            if (despesasMes.length === 0) {
-                document.getElementById('msg-vazia-despesas').classList.remove('hidden-screen');
-            } else {
-                document.getElementById('msg-vazia-despesas').classList.add('hidden-screen');
-                despesasMes.slice().reverse().forEach(d => {
-                    list.innerHTML += `
-                        <div class="bg-white p-4 rounded-2xl border border-slate-100 flex justify-between items-center shadow-sm">
-                            <div>
-                                <p class="font-bold text-slate-800 text-sm">${d.descricao}</p>
-                                <p class="text-[10px] text-slate-400 uppercase">${fmtDataHora(d.data)}</p>
-                            </div>
-                            <div class="flex items-center gap-3">
-                                <span class="font-black text-red-500">- ${fmtMoeda(d.valor)}</span>
-                                <button onclick="excluirDespesa('${d.id}')" class="text-slate-200 hover:text-red-500 transition p-2"><i class="fas fa-trash-alt"></i></button>
-                            </div>
-                        </div>`;
-                });
-            }
         }
 
         function salvarNovaDespesa() {
             const desc = document.getElementById('add-desp-desc').value;
-            const valor = parseFloat(document.getElementById('add-desp-valor').value);
-            
-            if (!desc || isNaN(valor) || valor <= 0) return alert("Preencha a descrição e um valor válido.");
-            
-            dbDespesas.push({
-                id: guid(),
-                descricao: desc,
-                valor: valor,
-                data: new Date().toISOString()
-            });
-            
-            saveDB();
-            document.getElementById('add-desp-desc').value = '';
-            document.getElementById('add-desp-valor').value = '';
-            renderDespesas();
-            showToast("Despesa registrada!");
+            const val = parseFloat(document.getElementById('add-desp-valor').value);
+            if(!desc || !val) return alert("Preencha!");
+            dbDespesas.push({ id: guid(), descricao: desc, valor: val, data: new Date().toISOString() });
+            saveDB(); document.getElementById('add-desp-desc').value = ''; document.getElementById('add-desp-valor').value = ''; renderDespesas();
         }
+        function excluirDespesa(id) { dbDespesas = dbDespesas.filter(x => x.id !== id); saveDB(); renderDespesas(); }
 
-        function excluirDespesa(id) {
-            openModalConfirm("Excluir Despesa?", "Esse gasto será removido dos seus registros.", () => {
-                dbDespesas = dbDespesas.filter(d => d.id !== id);
-                saveDB();
-                renderDespesas();
-            });
-        }
-
-
-        // --- LÓGICA DE GRÁFICOS ---
         function renderGraficos() {
-            const periodo = document.getElementById('grafico-periodo').value;
+            const per = document.getElementById('grafico-periodo').value;
             const tipo = document.getElementById('grafico-tipo').value;
-
             const hoje = new Date();
-            let dataLimite = new Date();
-            let mesAtual = hoje.getMonth();
-            let anoAtual = hoje.getFullYear();
-            let vendasFiltradas = [];
-
-            if (periodo === 'este_mes') {
-                vendasFiltradas = dbVendas.filter(v => {
-                    const d = new Date(v.data);
-                    return d.getMonth() === mesAtual && d.getFullYear() === anoAtual;
-                });
-            } else if (periodo === 'ultimos_7') {
-                dataLimite.setDate(hoje.getDate() - 7);
-                vendasFiltradas = dbVendas.filter(v => new Date(v.data) >= dataLimite);
-            } else if (periodo === 'ultimos_15') {
-                dataLimite.setDate(hoje.getDate() - 15);
-                vendasFiltradas = dbVendas.filter(v => new Date(v.data) >= dataLimite);
-            } else if (periodo === 'trimestre') {
-                const trimestreAtual = Math.floor(mesAtual / 3);
-                vendasFiltradas = dbVendas.filter(v => {
-                    const d = new Date(v.data);
-                    return Math.floor(d.getMonth() / 3) === trimestreAtual && d.getFullYear() === anoAtual;
-                });
-            } else if (periodo === 'semestre') {
-                const semestreAtual = Math.floor(mesAtual / 6);
-                vendasFiltradas = dbVendas.filter(v => {
-                    const d = new Date(v.data);
-                    return Math.floor(d.getMonth() / 6) === semestreAtual && d.getFullYear() === anoAtual;
-                });
-            } else if (periodo === 'este_ano') {
-                vendasFiltradas = dbVendas.filter(v => new Date(v.data).getFullYear() === anoAtual);
-            }
+            let filtered = dbVendas.filter(v => {
+                const d = new Date(v.data);
+                if (per === 'este_mes') return d.getMonth() === hoje.getMonth() && d.getFullYear() === hoje.getFullYear();
+                if (per === 'ultimos_7') return (hoje - d) / 86400000 <= 7;
+                return d.getFullYear() === hoje.getFullYear();
+            });
 
             const canvas = document.getElementById('meuGrafico');
-            const msgVazia = document.getElementById('msg-vazia-grafico');
-
-            if (graficoInstancia) {
-                graficoInstancia.destroy();
-            }
-
-            if (vendasFiltradas.length === 0) {
-                canvas.classList.add('hidden-screen');
-                msgVazia.classList.remove('hidden-screen');
-                return;
-            } else {
-                canvas.classList.remove('hidden-screen');
-                msgVazia.classList.add('hidden-screen');
-            }
-
+            if (graficoInstancia) graficoInstancia.destroy();
+            if (filtered.length === 0) { canvas.classList.add('hidden-screen'); document.getElementById('msg-vazia-grafico').classList.remove('hidden-screen'); return; }
+            canvas.classList.remove('hidden-screen'); document.getElementById('msg-vazia-grafico').classList.add('hidden-screen');
             const ctx = canvas.getContext('2d');
 
             if (tipo === 'faturamento') {
-                const agrupado = {};
-                vendasFiltradas.forEach(v => {
-                    const d = new Date(v.data);
-                    const isAgrupamentoMensal = (periodo === 'este_ano' || periodo === 'semestre' || periodo === 'trimestre');
-                    
-                    const chave = isAgrupamentoMensal 
-                        ? `${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}` 
-                        : `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`;
-                    
-                    if (!agrupado[chave]) agrupado[chave] = { 
-                        faturamento: 0, 
-                        lucro: 0,
-                        ordem: isAgrupamentoMensal ? d.getFullYear() * 100 + d.getMonth() : d.getTime()
-                    };
-                    agrupado[chave].faturamento += v.valor;
-                    agrupado[chave].lucro += v.lucro;
-                });
-
-                const labels = Object.keys(agrupado).sort((a, b) => agrupado[a].ordem - agrupado[b].ordem);
-                const dataFaturamento = labels.map(l => agrupado[l].faturamento);
-                const dataLucro = labels.map(l => agrupado[l].lucro);
-
-                graficoInstancia = new Chart(ctx, {
-                    type: 'bar',
-                    data: {
-                        labels: labels,
-                        datasets: [
-                            {
-                                label: 'Faturamento (R$)',
-                                data: dataFaturamento,
-                                backgroundColor: '#10b981', 
-                                borderRadius: 4
-                            },
-                            {
-                                label: 'Lucro Bruto (R$)',
-                                data: dataLucro,
-                                backgroundColor: '#e11d48', 
-                                borderRadius: 4
-                            }
-                        ]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: { position: 'bottom', labels: { usePointStyle: true, boxWidth: 10 } }
-                        },
-                        scales: { y: { beginAtZero: true } }
-                    }
-                });
-
+                const ag = {}; filtered.forEach(v => { const d = new Date(v.data).toLocaleDateString('pt-BR', {day:'2-digit', month:'2-digit'}); ag[d] = (ag[d] || 0) + v.valor; });
+                graficoInstancia = new Chart(ctx, { type: 'bar', data: { labels: Object.keys(ag), datasets: [{ label: 'Vendas (R$)', data: Object.values(ag), backgroundColor: '#e11d48', borderRadius: 4 }] }, options: { responsive: true, maintainAspectRatio: false } });
             } else if (tipo === 'top_produtos') {
-                const agrupado = {};
-                vendasFiltradas.forEach(v => {
-                    if (!agrupado[v.pnome]) agrupado[v.pnome] = 0;
-                    agrupado[v.pnome] += (v.qtde || 1);
-                });
-
-                const ordenado = Object.entries(agrupado).sort((a, b) => b[1] - a[1]).slice(0, 5);
-                const labels = ordenado.map(i => i[0]);
-                const data = ordenado.map(i => i[1]);
-
-                graficoInstancia = new Chart(ctx, {
-                    type: 'doughnut',
-                    data: {
-                        labels: labels,
-                        datasets: [{
-                            data: data,
-                            backgroundColor: ['#e11d48', '#f43f5e', '#fb7185', '#fda4af', '#fecdd3'],
-                            borderWidth: 2,
-                            borderColor: '#ffffff'
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: { position: 'right', labels: { usePointStyle: true, boxWidth: 10 } }
-                        },
-                        cutout: '60%'
-                    }
-                });
+                const ag = {}; filtered.forEach(v => { ag[v.pnome] = (ag[v.pnome] || 0) + v.qtde; });
+                const sorted = Object.entries(ag).sort((a,b) => b[1]-a[1]).slice(0, 5);
+                graficoInstancia = new Chart(ctx, { type: 'doughnut', data: { labels: sorted.map(i => i[0]), datasets: [{ data: sorted.map(i => i[1]), backgroundColor: ['#e11d48', '#fb7185', '#fda4af', '#fecdd3', '#ffe4e6'] }] }, options: { responsive: true, maintainAspectRatio: false } });
             } else if (tipo === 'metodo_pagamento') {
-                const agrupado = {};
-                vendasFiltradas.forEach(v => {
-                    let met = v.metodo || 'Dinheiro';
-                    if(met.includes('Carnê')) met = 'Carnê (Parcelado)';
-                    else if(met.includes('Cartão de Crédito')) met = 'Cartão de Crédito';
-                    
-                    if (!agrupado[met]) agrupado[met] = 0;
-                    agrupado[met] += v.valor; 
-                });
-
-                const labels = Object.keys(agrupado);
-                const data = Object.values(agrupado);
-
-                graficoInstancia = new Chart(ctx, {
-                    type: 'pie',
-                    data: {
-                        labels: labels,
-                        datasets: [{
-                            data: data,
-                            backgroundColor: ['#10b981', '#3b82f6', '#f59e0b', '#8b5cf6', '#e11d48'],
-                            borderWidth: 2,
-                            borderColor: '#ffffff'
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: { position: 'right', labels: { usePointStyle: true, boxWidth: 10 } }
-                        }
-                    }
-                });
+                const ag = {}; filtered.forEach(v => { let met = v.metodo || 'Dinheiro'; if(met.includes('Carnê')) met = 'Carnê'; else if(met.includes('Cartão de Crédito')) met = 'Cartão de Crédito'; if (!ag[met]) ag[met] = 0; ag[met] += v.valor; });
+                graficoInstancia = new Chart(ctx, { type: 'pie', data: { labels: Object.keys(ag), datasets: [{ data: Object.values(ag), backgroundColor: ['#10b981', '#3b82f6', '#f59e0b', '#8b5cf6', '#e11d48'] }] }, options: { responsive: true, maintainAspectRatio: false } });
             } else if (tipo === 'canal_venda') {
-                const agrupado = {};
-                vendasFiltradas.forEach(v => {
-                    const can = v.canal || 'Loja Física';
-                    if (!agrupado[can]) agrupado[can] = 0;
-                    agrupado[can] += v.valor; 
-                });
-
-                const labels = Object.keys(agrupado);
-                const data = Object.values(agrupado);
-
-                graficoInstancia = new Chart(ctx, {
-                    type: 'doughnut',
-                    data: {
-                        labels: labels,
-                        datasets: [{
-                            data: data,
-                            backgroundColor: ['#e11d48', '#3b82f6', '#10b981'],
-                            borderWidth: 2,
-                            borderColor: '#ffffff'
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: { position: 'bottom', labels: { usePointStyle: true, boxWidth: 10 } }
-                        },
-                        cutout: '50%'
-                    }
-                });
+                const ag = {}; filtered.forEach(v => { const can = v.canal || 'Loja Física'; if (!ag[can]) ag[can] = 0; ag[can] += v.valor; });
+                graficoInstancia = new Chart(ctx, { type: 'doughnut', data: { labels: Object.keys(ag), datasets: [{ data: Object.values(ag), backgroundColor: ['#e11d48', '#3b82f6', '#10b981'] }] }, options: { responsive: true, maintainAspectRatio: false } });
             }
         }
 
-        // --- MODAL CONFIRMAÇÃO GERAL ---
         function openModalConfirm(t, tx, cb, color = 'red') {
-            document.getElementById('modal-confirm-titulo').textContent = t;
+            document.getElementById('modal-confirm-titulo').textContent = t; 
             document.getElementById('modal-confirm-texto').textContent = tx;
             const btn = document.getElementById('btn-confirm-yes');
-            
-            const isRed = color === 'red';
-            btn.className = `flex-1 ${isRed ? 'bg-red-500 shadow-red-200' : 'bg-emerald-600 shadow-emerald-200'} text-white font-bold py-3 rounded-xl shadow-lg active:scale-95`;
-            btn.textContent = isRed ? "Sim, Apagar" : "Confirmar";
-            
-            document.getElementById('modal-confirm-icon').className = `w-14 h-14 ${isRed ? 'bg-red-100 text-red-500' : 'bg-emerald-100 text-emerald-600'} rounded-full flex items-center justify-center text-2xl mx-auto mb-4`;
-            document.getElementById('modal-confirm-icon').innerHTML = `<i class="fas fa-${isRed ? 'exclamation-triangle' : 'check'}"></i>`;
-            
-            btn.onclick = () => { cb(); fecharModalConfirm(); };
+            btn.className = `flex-1 ${color === 'red' ? 'bg-red-500' : 'bg-emerald-600'} text-white font-bold py-3 rounded-xl shadow-lg active:scale-95`;
+            btn.onclick = () => { cb(); fecharModalConfirm(); }; 
             document.getElementById('modal-confirmacao').classList.remove('hidden-screen');
         }
         function fecharModalConfirm() { document.getElementById('modal-confirmacao').classList.add('hidden-screen'); }
 
-        function verificarAlertasVencimento(showToastAlert = false) {
-            const hoje = new Date();
-            const prox = dbParcelas.filter(p => {
-                if(p.status !== 'pendente') return false;
-                const d = new Date(p.vencimento);
-                const diff = (d - hoje) / (1000 * 3600 * 24);
-                return diff <= 3 && diff >= -30; 
-            });
+        function abrirModalGerenciarParcelas(cid = null) { filtroClienteIdAtual = cid; renderListaTodasParcelas(); document.getElementById('modal-gerenciar-parcelas').classList.remove('hidden-screen'); }
+        function fecharModalGerenciarParcelas() { document.getElementById('modal-gerenciar-parcelas').classList.add('hidden-screen'); }
 
-            const badge = document.getElementById('badge-alertas');
-            if (badge) {
-                if (prox.length > 0) {
-                    badge.textContent = prox.length;
-                    badge.classList.remove('hidden-screen');
-                    if (showToastAlert) {
-                        setTimeout(() => showToast(`Atenção: ${prox.length} dívida(s) vencendo em breve!`), 1000);
-                    }
-                } else {
-                    badge.classList.add('hidden-screen');
-                }
-            }
+        function renderListaTodasParcelas() {
+            const list = document.getElementById('lista-todas-parcelas'); list.innerHTML = '';
+            let ps = dbParcelas.filter(p => p.status === 'pendente' && (!filtroClienteIdAtual || p.cid === filtroClienteIdAtual));
+            ps.sort((a,b) => new Date(a.vencimento) - new Date(b.vencimento));
+            ps.forEach(p => {
+                list.innerHTML += `<div class="bg-slate-50 p-4 rounded-xl border flex justify-between items-center"><div><p class="font-bold text-sm">${p.cnome}</p><p class="text-[10px]">Venc: ${fmtData(p.vencimento)}</p></div><div class="flex items-center gap-3"><span class="font-black text-orange-500">${fmtMoeda(p.valor)}</span><button onclick="baixaParcelaModal('${p.id}')" class="bg-emerald-500 text-white px-3 py-2 rounded-lg text-xs font-bold shadow-md active:scale-95">Pagar</button></div></div>`;
+            });
+        }
+        function baixaParcelaModal(id) { 
+            const p = dbParcelas.find(x => x.id === id); 
+            p.status = 'pago'; p.vencimento = new Date().toISOString(); 
+            saveDB(); renderRelatorios(); renderListaTodasParcelas(); 
+            showToast("Recebido!"); 
         }
 
-        // Inicialização
-        verificarBaixasAutomaticas();
-        verificarAlertasVencimento(true);
-        renderCategorias();
+        function verificarAlertasVencimento() {
+            const hoje = new Date();
+            const ps = dbParcelas.filter(p => p.status === 'pendente' && (new Date(p.vencimento) - hoje) / 86400000 <= 3);
+            document.getElementById('badge-alertas').textContent = ps.length;
+            document.getElementById('badge-alertas').classList.toggle('hidden-screen', ps.length === 0);
+        }
+
+        function visualizarRelatorio() {
+            const ini = new Date(document.getElementById('exp-inicio').value);
+            const fim = new Date(document.getElementById('exp-fim').value);
+            if(isNaN(ini) || isNaN(fim)) return alert("Datas inválidas.");
+            relatorioTempData = dbVendas.filter(v => {
+                const d = new Date(v.data);
+                return d >= ini && d <= fim;
+            });
+            const tbody = document.getElementById('preview-tbody'); 
+            tbody.innerHTML = relatorioTempData.map(v => `<tr><td class="p-3 border-b">${fmtData(v.data)}</td><td class="p-3 border-b font-bold">${v.pnome}</td><td class="p-3 border-b text-center">${v.qtde}</td><td class="p-3 border-b">${v.metodo}</td><td class="p-3 border-b text-right font-bold text-emerald-600">${fmtMoeda(v.valor)}</td></tr>`).join('');
+            document.getElementById('modal-preview-relatorio').classList.remove('hidden-screen');
+        }
+        function fecharPreviewRelatorio() { document.getElementById('modal-preview-relatorio').classList.add('hidden-screen'); }
+
+        inicializarApp();
     </script>
 </body>
 </html>
