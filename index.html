@@ -173,6 +173,8 @@
                     <select id="grafico-tipo" onchange="renderGraficos()" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none font-bold text-slate-700 active:bg-slate-100 transition">
                         <option value="faturamento">Faturamento vs Lucro (Barras)</option>
                         <option value="top_produtos">Produtos Mais Vendidos (Pizza)</option>
+                        <option value="metodo_pagamento">Vendas por Método de Pagto (Rosca)</option>
+                        <option value="canal_venda">Vendas por Canal (Loja vs Online)</option>
                     </select>
                 </div>
             </div>
@@ -238,50 +240,85 @@
                 </div>
                 <div class="flex gap-2">
                     <button onclick="iniciarCheckoutAVista()" class="flex-1 bg-emerald-600 text-white font-bold py-4 rounded-xl shadow-lg active:scale-95 text-sm flex flex-col items-center justify-center">
-                        <i class="fas fa-money-bill-wave text-lg mb-1"></i> À Vista
+                        <i class="fas fa-money-bill-wave text-lg mb-1"></i> Receber Agora
                     </button>
                     <button onclick="iniciarCheckoutParcelado()" class="flex-1 bg-slate-800 text-white font-bold py-4 rounded-xl shadow-lg active:scale-95 text-sm flex flex-col items-center justify-center">
-                        <i class="fas fa-calendar-alt text-lg mb-1"></i> Parcelar
+                        <i class="fas fa-calendar-alt text-lg mb-1"></i> Parcelar (Carnê)
                     </button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Modal Checkout À Vista (Com Troco) -->
-    <div id="modal-checkout-avista" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[200] flex items-center justify-center hidden-screen p-4">
+    <!-- Modal Checkout Receber Agora (Dinheiro, Cartão, PIX) -->
+    <div id="modal-checkout-pgto" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[200] flex items-center justify-center hidden-screen p-4">
         <div class="bg-white rounded-3xl p-6 w-full max-w-md shadow-2xl">
-            <h3 class="text-xl font-bold text-brand-900 mb-4">Pagamento À Vista</h3>
+            <h3 class="text-xl font-bold text-brand-900 mb-4">Finalizar Pagamento</h3>
             <div class="flex flex-col gap-4">
                 <div class="p-4 bg-brand-50 rounded-2xl border border-brand-100 flex justify-between items-center">
                     <span class="text-sm text-brand-700 font-bold">Total da Compra:</span>
-                    <span class="text-xl font-black text-brand-600" id="checkout-total-avista">R$ 0,00</span>
+                    <span class="text-xl font-black text-brand-600" id="checkout-total-pgto">R$ 0,00</span>
                 </div>
-                <div>
-                    <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Valor Recebido (R$)</label>
-                    <input type="number" id="checkout-valor-recebido" step="0.01" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none text-lg font-bold text-slate-800" placeholder="0.00" oninput="calcularTroco()">
+                
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Canal de Venda</label>
+                        <select id="checkout-canal-pgto" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-3 outline-none text-sm font-bold text-slate-700">
+                            <option value="Loja Física">Loja Física</option>
+                            <option value="Online">Online (Insta/Whats)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Pagamento</label>
+                        <select id="checkout-metodo-pgto" onchange="toggleTroco()" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-3 outline-none text-sm font-bold text-slate-700">
+                            <option value="PIX">PIX</option>
+                            <option value="Dinheiro">Dinheiro</option>
+                            <option value="Cartão de Crédito">Cartão de Crédito</option>
+                            <option value="Cartão de Débito">Cartão de Débito</option>
+                        </select>
+                    </div>
                 </div>
-                <div class="p-4 bg-slate-50 rounded-2xl border border-slate-200 flex justify-between items-center">
-                    <span class="text-sm text-slate-600 font-bold">Troco:</span>
-                    <span class="text-xl font-black text-emerald-600" id="checkout-troco">R$ 0,00</span>
+
+                <!-- Box Dinheiro (Oculto por Padrão) -->
+                <div id="box-troco" class="hidden-screen border-t border-slate-100 pt-3">
+                    <div class="mb-3">
+                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Valor Recebido (R$)</label>
+                        <input type="number" id="checkout-valor-recebido" step="0.01" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none text-lg font-bold text-slate-800" placeholder="0.00" oninput="calcularTroco()">
+                    </div>
+                    <div class="p-4 bg-slate-50 rounded-2xl border border-slate-200 flex justify-between items-center">
+                        <span class="text-sm text-slate-600 font-bold">Troco:</span>
+                        <span class="text-xl font-black text-emerald-600" id="checkout-troco">R$ 0,00</span>
+                    </div>
                 </div>
+
                 <div class="flex gap-3 mt-2">
                     <button onclick="fecharModalCheckoutAVista()" class="flex-1 bg-slate-100 text-slate-600 font-bold py-3 rounded-xl active:scale-95">Voltar</button>
-                    <button onclick="confirmarVendaAVista()" class="flex-1 bg-emerald-600 text-white font-bold py-3 rounded-xl shadow-lg active:scale-95">Confirmar Compra</button>
+                    <button onclick="confirmarVendaAVista()" class="flex-1 bg-emerald-600 text-white font-bold py-3 rounded-xl shadow-lg active:scale-95">Confirmar Venda</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Modal Venda Parcelada -->
+    <!-- Modal Venda Parcelada (Carnê) -->
     <div id="modal-parcelado" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[200] flex items-center justify-center hidden-screen p-4">
         <div class="bg-white rounded-3xl p-6 w-full max-w-md shadow-2xl">
             <h3 class="text-xl font-bold text-brand-900 mb-4">Finalizar no Carnê</h3>
             <div class="flex flex-col gap-4">
-                <div>
-                    <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Selecionar Cliente</label>
-                    <select id="sel-cliente" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none font-bold text-slate-700"></select>
+                
+                <div class="grid grid-cols-2 gap-3 border-b border-slate-100 pb-3">
+                    <div class="col-span-2">
+                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Selecionar Cliente</label>
+                        <select id="sel-cliente" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none font-bold text-slate-700"></select>
+                    </div>
+                    <div class="col-span-2">
+                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Canal de Venda</label>
+                        <select id="checkout-canal-parcelado" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-3 outline-none text-sm font-bold text-slate-700">
+                            <option value="Loja Física">Loja Física</option>
+                            <option value="Online">Online (Insta/Whats)</option>
+                        </select>
+                    </div>
                 </div>
+
                 <div class="grid grid-cols-2 gap-3">
                     <div>
                         <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Nº Parcelas</label>
@@ -292,13 +329,15 @@
                         <input type="date" id="data-primeira" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-sm outline-none font-bold text-slate-700">
                     </div>
                 </div>
+                
                 <div class="p-4 bg-brand-50 rounded-2xl border border-brand-100">
                     <p class="text-sm text-brand-700 font-medium">Valor Total: <b id="val-total-parc" class="text-lg text-brand-800">R$ 0,00</b></p>
                     <p class="text-xs text-brand-600 mt-1">Parcelas de: <b id="val-cada-parc" class="text-sm">R$ 0,00</b></p>
                 </div>
+                
                 <div class="flex gap-3">
                     <button onclick="fecharModalParcelado()" class="flex-1 bg-slate-100 text-slate-600 font-bold py-3 rounded-xl active:scale-95">Voltar</button>
-                    <button onclick="confirmarVendaParcelada()" class="flex-1 bg-brand-600 text-white font-bold py-3 rounded-xl shadow-lg active:scale-95">Concluir Compra</button>
+                    <button onclick="confirmarVendaParcelada()" class="flex-1 bg-brand-600 text-white font-bold py-3 rounded-xl shadow-lg active:scale-95">Gerar Carnê</button>
                 </div>
             </div>
         </div>
@@ -321,7 +360,8 @@
                             <th class="p-3 border-b border-slate-200">Produto</th>
                             <th class="p-3 border-b border-slate-200 text-center">Qtd</th>
                             <th class="p-3 border-b border-slate-200">Cliente</th>
-                            <th class="p-3 border-b border-slate-200">Pagamento</th>
+                            <th class="p-3 border-b border-slate-200">Método Pgto</th>
+                            <th class="p-3 border-b border-slate-200">Canal</th>
                             <th class="p-3 border-b border-slate-200 text-right">Venda</th>
                             <th class="p-3 border-b border-slate-200 text-right">Lucro</th>
                         </tr>
@@ -393,14 +433,12 @@
         // Variáveis Auxiliares Globais
         let carrinho = [];
         let totalCheckoutAtual = 0;
-        let relatorioTempData = []; // Armazena dados filtrados para a tabela preview
+        let relatorioTempData = [];
         
-        // Vars para Modal de Add Carrinho
         let tempAddPid = null;
         let tempAddTipo = null;
         let tempMaxEstoque = 0;
         
-        // Variável Chart.js
         let graficoInstancia = null;
 
         function saveDB() {
@@ -762,18 +800,33 @@
             renderCarrinho();
         }
 
-        // --- CHECKOUT DO CARRINHO ---
+        // --- CHECKOUT DO CARRINHO (RECEBER AGORA / À VISTA) ---
 
         function iniciarCheckoutAVista() {
             if(carrinho.length === 0) return;
             totalCheckoutAtual = carrinho.reduce((sum, item) => sum + calcularItemCarrinho(item).valorTotal, 0);
-            document.getElementById('checkout-total-avista').textContent = fmtMoeda(totalCheckoutAtual);
+            
+            // Reset no Modal
+            document.getElementById('checkout-total-pgto').textContent = fmtMoeda(totalCheckoutAtual);
+            document.getElementById('checkout-metodo-pgto').value = 'PIX';
+            document.getElementById('checkout-canal-pgto').value = 'Loja Física';
             document.getElementById('checkout-valor-recebido').value = '';
             document.getElementById('checkout-troco').textContent = 'R$ 0,00';
             document.getElementById('checkout-troco').classList.replace('text-red-500', 'text-emerald-600');
+            toggleTroco();
             
             fecharCarrinho();
-            document.getElementById('modal-checkout-avista').classList.remove('hidden-screen');
+            document.getElementById('modal-checkout-pgto').classList.remove('hidden-screen');
+        }
+
+        function toggleTroco() {
+            const isDinheiro = document.getElementById('checkout-metodo-pgto').value === 'Dinheiro';
+            const boxTroco = document.getElementById('box-troco');
+            if (isDinheiro) {
+                boxTroco.classList.remove('hidden-screen');
+            } else {
+                boxTroco.classList.add('hidden-screen');
+            }
         }
 
         function calcularTroco() {
@@ -791,14 +844,19 @@
         }
 
         function fecharModalCheckoutAVista() {
-            document.getElementById('modal-checkout-avista').classList.add('hidden-screen');
+            document.getElementById('modal-checkout-pgto').classList.add('hidden-screen');
             abrirCarrinho(); 
         }
 
         function confirmarVendaAVista() {
-            const recebido = parseFloat(document.getElementById('checkout-valor-recebido').value) || 0;
-            if (recebido > 0 && recebido < totalCheckoutAtual) {
-                if(!confirm("Atenção: O valor recebido é MENOR que o total da compra. Deseja confirmar a venda mesmo assim?")) return;
+            const metodo = document.getElementById('checkout-metodo-pgto').value;
+            const canal = document.getElementById('checkout-canal-pgto').value;
+            
+            if (metodo === 'Dinheiro') {
+                const recebido = parseFloat(document.getElementById('checkout-valor-recebido').value) || 0;
+                if (recebido > 0 && recebido < totalCheckoutAtual) {
+                    if(!confirm("Atenção: O valor recebido em Dinheiro é MENOR que o total da compra. Deseja confirmar mesmo assim?")) return;
+                }
             }
 
             const idCompra = guid();
@@ -812,16 +870,20 @@
                     id: guid(), idCompra: idCompra, 
                     pid: item.pid, pnome: info.nome, qtde: item.qtde,
                     valor: info.valorTotal, custo: (info.custoUnit * item.qtde), lucro: lucroTotalItem,
-                    tipo: `À Vista (${item.tipo === 'cheio' ? 'S/ Desc' : 'Desc'})`,
+                    tipo: `S/ Desc.`, // Campo antigo (mantido por compatibilidade)
+                    metodo: metodo,
+                    canal: canal,
                     data: dataIso, status: 'pago'
                 });
                 modEstoque(item.pid, -item.qtde);
             });
 
             saveDB(); carrinho = []; atualizarBadgeCarrinho();
-            document.getElementById('modal-checkout-avista').classList.add('hidden-screen');
+            document.getElementById('modal-checkout-pgto').classList.add('hidden-screen');
             showToast("Venda Concluída!");
         }
+
+        // --- CHECKOUT DO CARRINHO (PARCELADO / CARNÊ) ---
 
         function iniciarCheckoutParcelado() {
             if(carrinho.length === 0) return;
@@ -839,6 +901,7 @@
                 document.getElementById('val-total-parc').textContent = fmtMoeda(total);
                 document.getElementById('data-primeira').value = new Date().toISOString().split('T')[0];
                 document.getElementById('num-parcelas').value = 1;
+                document.getElementById('checkout-canal-parcelado').value = 'Loja Física';
                 
                 const updateVals = () => {
                     let n = parseInt(document.getElementById('num-parcelas').value);
@@ -859,6 +922,7 @@
         function confirmarVendaParcelada() {
             try {
                 const cid = document.getElementById('sel-cliente').value;
+                const canal = document.getElementById('checkout-canal-parcelado').value;
                 let nParc = parseInt(document.getElementById('num-parcelas').value);
                 if (isNaN(nParc) || nParc < 1) nParc = 1;
                 
@@ -888,6 +952,8 @@
                         cid: cid, cnome: cli.nome,
                         valor: info.valorTotal, custo: custoItemGeral, lucro: lucroTotalItem,
                         tipo: `Parcelado (${nParc}x)`,
+                        metodo: `Carnê (${nParc}x)`,
+                        canal: canal,
                         data: dataIso, status: 'parcelado'
                     });
                     modEstoque(item.pid, -item.qtde);
@@ -912,6 +978,47 @@
                 alert("Erro ao salvar a venda parcelada.");
                 console.error(e);
             }
+        }
+
+        // --- CLIENTES ---
+        function renderClientes() {
+            const list = document.getElementById('listaClientes'); list.innerHTML = '';
+            document.getElementById('msg-vazia-clientes').classList.toggle('hidden-screen', dbClientes.length > 0);
+
+            dbClientes.forEach(c => {
+                list.innerHTML += `
+                    <div class="bg-white p-5 rounded-3xl border border-brand-100 shadow-sm flex justify-between items-center group">
+                        <div>
+                            <h3 class="font-bold text-slate-800 text-lg">${c.nome}</h3>
+                            <p class="text-xs text-slate-400"><i class="fas fa-phone mr-1"></i> ${c.tel} | <i class="fas fa-id-card mr-1"></i> ${c.cpf}</p>
+                            <p class="text-[10px] text-brand-600 font-medium mt-1 uppercase"><i class="fas fa-map-marker-alt mr-1"></i> ${c.endereco || 'Endereço não informado'}</p>
+                        </div>
+                        <button onclick="deleteCli('${c.id}')" class="text-slate-300 hover:text-red-500 p-2 opacity-0 group-hover:opacity-100 transition"><i class="fas fa-trash-alt"></i></button>
+                    </div>`;
+            });
+        }
+
+        function abrirModalCliente() { document.getElementById('modal-cliente').classList.remove('hidden-screen'); }
+        function fecharModalCliente() { document.getElementById('modal-cliente').classList.add('hidden-screen'); }
+        
+        function salvarNovoCliente() {
+            const n = document.getElementById('cli-nome').value;
+            if(!n) return alert("Preencha o nome!");
+            dbClientes.push({
+                id: guid(),
+                nome: n, cpf: document.getElementById('cli-cpf').value,
+                rg: document.getElementById('cli-rg').value, email: document.getElementById('cli-email').value,
+                tel: document.getElementById('cli-tel').value, endereco: document.getElementById('cli-endereco').value
+            });
+            saveDB(); fecharModalCliente(); renderClientes();
+            document.querySelectorAll('#modal-cliente input, #modal-cliente textarea').forEach(i => i.value = '');
+        }
+
+        function deleteCli(id) {
+            openModalConfirm("Excluir Cliente?", "Todos os dados dele serão apagados.", () => {
+                dbClientes = dbClientes.filter(c => c.id !== id);
+                saveDB(); renderClientes();
+            });
         }
 
         // --- RELATÓRIOS E EXPORTAÇÃO EXCEL ---
@@ -951,11 +1058,14 @@
             document.getElementById('msg-vazia-vendas').classList.toggle('hidden-screen', hist.length > 0);
             hist.forEach(v => {
                 const qtdeTag = v.qtde > 1 ? `<span class="bg-slate-800 text-white px-1 rounded mr-1">${v.qtde}x</span>` : '';
+                const metodoDisplay = v.metodo || 'Dinheiro';
+                const canalDisplay = v.canal || 'Loja Física';
+                
                 hList.innerHTML += `
                     <div class="bg-white p-4 rounded-2xl border border-brand-100 flex justify-between items-center shadow-sm">
                         <div>
-                            <p class="font-bold text-slate-800 text-sm">${qtdeTag}${v.pnome} <span class="text-slate-400 font-normal text-[10px]">#${v.cnome || 'Balcão'}</span></p>
-                            <p class="text-[10px] text-brand-600 font-bold uppercase mb-2">${v.tipo} • ${fmtDataHora(v.data)}</p>
+                            <p class="font-bold text-slate-800 text-sm">${qtdeTag}${v.pnome} <span class="text-slate-400 font-normal text-[10px]">#${v.cnome || 'Avulso'}</span></p>
+                            <p class="text-[10px] text-brand-600 font-bold uppercase mb-2">${metodoDisplay} • ${canalDisplay} • ${fmtDataHora(v.data)}</p>
                             <div class="flex gap-2">
                                 <span class="text-[10px] bg-emerald-50 text-emerald-600 px-2 py-1 rounded-md font-bold">Venda: ${fmtMoeda(v.valor)}</span>
                                 <span class="text-[10px] bg-brand-50 text-brand-600 px-2 py-1 rounded-md font-bold">Lucro: ${fmtMoeda(v.lucro)}</span>
@@ -1020,7 +1130,8 @@
                         <td class="p-3 border-b border-slate-100 font-bold">${v.pnome}</td>
                         <td class="p-3 border-b border-slate-100 text-center">${v.qtde || 1}</td>
                         <td class="p-3 border-b border-slate-100">${v.cnome || '-'}</td>
-                        <td class="p-3 border-b border-slate-100 text-[10px]">${v.tipo}</td>
+                        <td class="p-3 border-b border-slate-100 text-[10px]">${v.metodo || 'Dinheiro'}</td>
+                        <td class="p-3 border-b border-slate-100 text-[10px]">${v.canal || 'Loja Física'}</td>
                         <td class="p-3 border-b border-slate-100 text-right text-emerald-600 font-bold">${fmtMoeda(v.valor)}</td>
                         <td class="p-3 border-b border-slate-100 text-right text-brand-600">${fmtMoeda(v.lucro)}</td>
                     </tr>
@@ -1038,22 +1149,23 @@
             if (!relatorioTempData || relatorioTempData.length === 0) return;
 
             const data = relatorioTempData.map(v => ({
-                "Data": fmtDataHora(v.data), 
+                "Data/Hora": fmtDataHora(v.data), 
                 "Produto": v.pnome,
                 "Qtde": v.qtde || 1,
-                "Cliente": v.cnome || "Balcão",
-                "Valor Total": v.valor.toFixed(2).replace('.', ','), 
-                "Lucro": v.lucro.toFixed(2).replace('.', ','), 
-                "Pagamento": v.tipo
+                "Cliente": v.cnome || "Avulso",
+                "Método Pgto": v.metodo || 'Dinheiro',
+                "Canal de Venda": v.canal || 'Loja Física',
+                "Valor Total (R$)": v.valor.toFixed(2).replace('.', ','), 
+                "Lucro (R$)": v.lucro.toFixed(2).replace('.', ',')
             }));
 
             const wb = XLSX.utils.book_new();
             const ws = XLSX.utils.json_to_sheet(data);
             
-            ws['!cols'] = [{ wch: 18 }, { wch: 25 }, { wch: 6 }, { wch: 20 }, { wch: 12 }, { wch: 12 }, { wch: 18 }];
+            ws['!cols'] = [{ wch: 18 }, { wch: 25 }, { wch: 6 }, { wch: 20 }, { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 15 }];
             
-            XLSX.utils.book_append_sheet(wb, ws, "Relatório");
-            const nomeArq = `Relatorio_Estoque_${Date.now()}.xlsx`;
+            XLSX.utils.book_append_sheet(wb, ws, "Relatório Geral");
+            const nomeArq = `Relatorio_Vendas_e_Lucro.xlsx`;
 
             try {
                 const b64 = XLSX.write(wb, { bookType: 'xlsx', type: 'base64' });
@@ -1211,6 +1323,70 @@
                             legend: { position: 'right', labels: { usePointStyle: true, boxWidth: 10 } }
                         },
                         cutout: '60%'
+                    }
+                });
+            } else if (tipo === 'metodo_pagamento') {
+                const agrupado = {};
+                vendasFiltradas.forEach(v => {
+                    // Extrai o método base para agrupar (ex: agrupa todos os Carnês juntos independente de ser 2x ou 3x)
+                    let met = v.metodo || 'Dinheiro';
+                    if(met.includes('Carnê')) met = 'Carnê (Parcelado)';
+                    
+                    if (!agrupado[met]) agrupado[met] = 0;
+                    agrupado[met] += v.valor; 
+                });
+
+                const labels = Object.keys(agrupado);
+                const data = Object.values(agrupado);
+
+                graficoInstancia = new Chart(ctx, {
+                    type: 'pie',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            data: data,
+                            backgroundColor: ['#10b981', '#3b82f6', '#f59e0b', '#8b5cf6', '#e11d48'],
+                            borderWidth: 2,
+                            borderColor: '#ffffff'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { position: 'right', labels: { usePointStyle: true, boxWidth: 10 } }
+                        }
+                    }
+                });
+            } else if (tipo === 'canal_venda') {
+                const agrupado = {};
+                vendasFiltradas.forEach(v => {
+                    const can = v.canal || 'Loja Física';
+                    if (!agrupado[can]) agrupado[can] = 0;
+                    agrupado[can] += v.valor; 
+                });
+
+                const labels = Object.keys(agrupado);
+                const data = Object.values(agrupado);
+
+                graficoInstancia = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            data: data,
+                            backgroundColor: ['#e11d48', '#3b82f6', '#10b981'],
+                            borderWidth: 2,
+                            borderColor: '#ffffff'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { position: 'bottom', labels: { usePointStyle: true, boxWidth: 10 } }
+                        },
+                        cutout: '50%'
                     }
                 });
             }
