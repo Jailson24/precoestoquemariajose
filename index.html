@@ -124,7 +124,7 @@
                 <input type="date" id="exp-inicio" class="bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-sm outline-none">
                 <input type="date" id="exp-fim" class="bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-sm outline-none">
             </div>
-            <button onclick="exportarExcel()" class="w-full bg-emerald-600 text-white font-bold py-3 rounded-xl active:scale-95"><i class="fas fa-download mr-2"></i> Baixar Relatório</button>
+            <button onclick="exportarExcel()" class="w-full bg-emerald-600 text-white font-bold py-3 rounded-xl active:scale-95"><i class="fas fa-share-alt mr-2"></i> Compartilhar / Baixar Excel</button>
         </div>
 
         <h3 class="text-lg font-bold text-brand-900 mb-4 ml-2">Histórico de Vendas</h3>
@@ -561,13 +561,20 @@
             });
         }
 
-        // --- EXCEL ---
+        // --- EXCEL E COMPARTILHAMENTO ---
         function exportarExcel() {
             const ini = new Date(document.getElementById('exp-inicio').value);
             const fim = new Date(document.getElementById('exp-fim').value); fim.setHours(23,59,59);
-            if(isNaN(ini)) return alert("Escolha as datas!");
+            
+            if(isNaN(ini) || isNaN(fim)) {
+                return alert("Por favor, selecione a Data Inicial e a Data Final.");
+            }
 
             const filt = dbVendas.filter(v => { const d = new Date(v.data); return d >= ini && d <= fim; });
+            if (filt.length === 0) {
+                return alert("Nenhuma venda encontrada no período selecionado.");
+            }
+
             const data = filt.map(v => ({
                 "Data": fmtData(v.data), "Produto": v.pnome, "Cliente": v.cnome || "À Vista",
                 "Valor Total": v.valor.toFixed(2), "Lucro": v.lucro.toFixed(2), "Status": v.status
@@ -575,7 +582,30 @@
 
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(data), "Relatorio");
-            XLSX.writeFile(wb, "Relatorio_Estoque.xlsx");
+            const nomeArq = "Relatorio_Estoque.xlsx";
+
+            try {
+                // Tenta criar o arquivo para usar a API de Compartilhamento Nativa (Mobile/APK)
+                const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+                const blob = new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+                const file = new File([blob], nomeArq, { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+
+                // Verifica se o aparelho suporta envio nativo (WhatsApp, Drive, etc)
+                if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                    navigator.share({
+                        title: 'Relatório de Vendas',
+                        files: [file]
+                    }).then(() => showToast("Ação concluída!")).catch(() => XLSX.writeFile(wb, nomeArq));
+                } else {
+                    // Fallback padrão se não suportar
+                    XLSX.writeFile(wb, nomeArq);
+                    showToast("Download iniciado!");
+                }
+            } catch(e) {
+                // Fallback de segurança absoluto
+                XLSX.writeFile(wb, nomeArq);
+                showToast("Download iniciado!");
+            }
         }
 
         // --- MODAL CONFIRMAÇÃO ---
