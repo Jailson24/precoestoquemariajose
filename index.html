@@ -11,7 +11,6 @@
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
     <!-- Biblioteca de Gráficos -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
@@ -145,13 +144,13 @@
 
         <!-- Exportação -->
         <div class="bg-white p-6 rounded-3xl border border-brand-100 shadow-sm mb-8">
-            <h3 class="text-lg font-bold text-brand-900 mb-4 flex items-center gap-2"><i class="fas fa-file-excel text-emerald-600"></i> Exportar Período</h3>
+            <h3 class="text-lg font-bold text-brand-900 mb-4 flex items-center gap-2"><i class="fas fa-paper-plane text-emerald-600"></i> Exportar e Enviar Período</h3>
             <div class="grid grid-cols-2 gap-3 mb-4">
                 <input type="date" id="exp-inicio" class="bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-sm outline-none">
                 <input type="date" id="exp-fim" class="bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-sm outline-none">
             </div>
             <button onclick="visualizarRelatorio()" class="w-full bg-emerald-600 text-white font-bold py-3 rounded-xl active:scale-95 flex justify-center items-center gap-2">
-                <i class="fas fa-search"></i> Visualizar Relatório
+                <i class="fas fa-search"></i> Ver Relatório e Enviar
             </button>
         </div>
 
@@ -187,9 +186,7 @@
                 <div id="barra-equilibrio" class="h-full bg-red-500 transition-all duration-500" style="width: 0%;"></div>
             </div>
             
-            <div class="text-center mb-6" id="status-equilibrio">
-                <!-- Injetado via JS -->
-            </div>
+            <div class="text-center mb-6" id="status-equilibrio"></div>
 
             <div class="p-4 bg-slate-50 rounded-2xl border border-slate-200 flex justify-between items-center">
                 <span class="text-sm text-slate-600 font-bold uppercase tracking-wider">Lucro Líquido Final:</span>
@@ -222,7 +219,6 @@
         </div>
 
         <div class="bg-white p-5 rounded-3xl border border-brand-100 shadow-sm mb-6">
-            <!-- Opções de Filtro -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                 <div>
                     <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Período de Análise</label>
@@ -245,13 +241,7 @@
                     </select>
                 </div>
             </div>
-            
-            <!-- Container do Canvas do Gráfico -->
-            <div class="relative h-72 md:h-96 w-full">
-                <canvas id="meuGrafico"></canvas>
-            </div>
-            
-            <!-- Mensagem caso não haja dados no período -->
+            <div class="relative h-72 md:h-96 w-full"><canvas id="meuGrafico"></canvas></div>
             <div id="msg-vazia-grafico" class="text-center py-10 hidden-screen absolute inset-0 flex flex-col items-center justify-center bg-white z-10 rounded-2xl">
                 <i class="fas fa-chart-bar text-4xl text-slate-300 mb-3"></i>
                 <p class="text-slate-500 font-bold">Sem dados suficientes para este período.</p>
@@ -261,17 +251,15 @@
 
     <!-- ================== MODAIS ================== -->
 
-    <!-- Modal para Escolher Quantidade ao Adicionar na Sacola -->
+    <!-- Modal Add Carrinho -->
     <div id="modal-add-carrinho" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[150] flex items-center justify-center hidden-screen p-4 transition-all">
         <div class="bg-white rounded-3xl p-6 w-full max-w-sm shadow-2xl flex flex-col">
             <div class="flex justify-between items-center mb-2">
                 <h3 class="text-xl font-bold text-brand-900">Adicionar à Sacola</h3>
                 <button onclick="fecharModalAddCarrinho()" class="text-slate-400 hover:text-slate-600 active:scale-95"><i class="fas fa-times text-xl"></i></button>
             </div>
-            
             <p id="add-cart-pnome" class="font-bold text-slate-700 text-lg mb-1"></p>
             <p id="add-cart-ptipo" class="text-[10px] text-brand-600 font-bold uppercase tracking-widest mb-4"></p>
-            
             <div class="flex items-center justify-between bg-slate-50 p-4 rounded-xl border border-slate-200 mb-6">
                 <span class="font-bold text-slate-600 text-sm">Quantidade:</span>
                 <div class="flex items-center gap-3">
@@ -280,7 +268,6 @@
                     <button onclick="modQtdModalAdd(1)" class="w-10 h-10 bg-brand-500 text-white rounded-lg active:scale-95 shadow-md shadow-brand-200"><i class="fas fa-plus"></i></button>
                 </div>
             </div>
-            
             <div class="flex gap-2">
                 <button onclick="fecharModalAddCarrinho()" class="flex-1 bg-slate-100 text-slate-600 font-bold py-3 rounded-xl active:scale-95">Cancelar</button>
                 <button onclick="confirmarAddCarrinho()" class="flex-1 bg-brand-600 text-white font-bold py-3 rounded-xl shadow-lg active:scale-95">Confirmar</button>
@@ -288,7 +275,7 @@
         </div>
     </div>
 
-    <!-- Modal Carrinho -->
+    <!-- Modal Carrinho e Finalizar -->
     <div id="modal-carrinho" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[150] flex items-end sm:items-center justify-center hidden-screen p-0 sm:p-4 transition-all">
         <div class="bg-white rounded-t-3xl sm:rounded-3xl p-6 w-full max-w-md shadow-2xl h-[90vh] sm:h-auto flex flex-col">
             <div class="flex justify-between items-center mb-6">
@@ -297,7 +284,7 @@
             </div>
             
             <div id="lista-carrinho" class="flex-1 overflow-y-auto no-scrollbar flex flex-col gap-4 mb-4">
-                <!-- Itens do Carrinho inseridos via JS -->
+                <!-- Itens inseridos via JS -->
             </div>
             
             <div class="border-t border-slate-100 pt-4">
@@ -306,118 +293,109 @@
                     <span id="carrinho-total" class="text-3xl font-black text-brand-600">R$ 0,00</span>
                 </div>
                 <div class="flex gap-2">
-                    <button onclick="iniciarCheckoutAVista()" class="flex-1 bg-emerald-600 text-white font-bold py-4 rounded-xl shadow-lg active:scale-95 text-sm flex flex-col items-center justify-center">
-                        <i class="fas fa-money-bill-wave text-lg mb-1"></i> Receber Agora
-                    </button>
-                    <button onclick="iniciarCheckoutParcelado()" class="flex-1 bg-slate-800 text-white font-bold py-4 rounded-xl shadow-lg active:scale-95 text-sm flex flex-col items-center justify-center">
-                        <i class="fas fa-calendar-alt text-lg mb-1"></i> Parcelar (Carnê)
+                    <button onclick="iniciarCheckout()" class="flex-1 bg-emerald-600 text-white font-bold py-4 rounded-xl shadow-lg active:scale-95 text-sm flex items-center justify-center gap-2">
+                        <i class="fas fa-check-circle text-lg"></i> Finalizar Compra
                     </button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Modal Checkout Receber Agora (Dinheiro, Cartão, PIX) -->
+    <!-- Modal Checkout Unificado (Dinheiro, Cartão, PIX, Carnê) -->
     <div id="modal-checkout-pgto" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[200] flex items-center justify-center hidden-screen p-4">
         <div class="bg-white rounded-3xl p-6 w-full max-w-md shadow-2xl">
-            <h3 class="text-xl font-bold text-brand-900 mb-4">Finalizar Pagamento</h3>
-            <div class="flex flex-col gap-4">
+            <h3 class="text-xl font-bold text-brand-900 mb-4">Concluir Pagamento</h3>
+            <div class="flex flex-col gap-4 max-h-[80vh] overflow-y-auto no-scrollbar">
+                
                 <div class="p-4 bg-brand-50 rounded-2xl border border-brand-100 flex justify-between items-center">
-                    <span class="text-sm text-brand-700 font-bold">Total da Compra:</span>
-                    <span class="text-xl font-black text-brand-600" id="checkout-total-pgto">R$ 0,00</span>
+                    <span class="text-sm text-brand-700 font-bold">Total:</span>
+                    <span class="text-2xl font-black text-brand-600" id="checkout-total-pgto">R$ 0,00</span>
                 </div>
                 
                 <div class="grid grid-cols-2 gap-3">
                     <div>
-                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Canal de Venda</label>
+                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Canal</label>
                         <select id="checkout-canal-pgto" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-3 outline-none text-sm font-bold text-slate-700">
                             <option value="Loja Física">Loja Física</option>
                             <option value="Online">Online (Insta/Whats)</option>
                         </select>
                     </div>
                     <div>
-                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Pagamento</label>
-                        <select id="checkout-metodo-pgto" onchange="toggleTroco()" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-3 outline-none text-sm font-bold text-slate-700">
+                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Método</label>
+                        <select id="checkout-metodo-pgto" onchange="toggleMetodoPgto()" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-3 outline-none text-sm font-bold text-slate-700">
                             <option value="PIX">PIX</option>
                             <option value="Dinheiro">Dinheiro</option>
                             <option value="Cartão de Crédito">Cartão de Crédito</option>
                             <option value="Cartão de Débito">Cartão de Débito</option>
+                            <option value="Carnê (Parcelado)">Carnê (Parcelado)</option>
                         </select>
                     </div>
                 </div>
 
-                <!-- Box Dinheiro (Oculto por Padrão) -->
+                <!-- Box Dinheiro -->
                 <div id="box-troco" class="hidden-screen border-t border-slate-100 pt-3">
                     <div class="mb-3">
                         <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Valor Recebido (R$)</label>
                         <input type="number" id="checkout-valor-recebido" step="0.01" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none text-lg font-bold text-slate-800" placeholder="0.00" oninput="calcularTroco()">
                     </div>
-                    <div class="p-4 bg-slate-50 rounded-2xl border border-slate-200 flex justify-between items-center">
+                    <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 flex justify-between items-center">
                         <span class="text-sm text-slate-600 font-bold">Troco:</span>
                         <span class="text-xl font-black text-emerald-600" id="checkout-troco">R$ 0,00</span>
                     </div>
                 </div>
-
-                <div class="flex gap-3 mt-2">
-                    <button onclick="fecharModalCheckoutAVista()" class="flex-1 bg-slate-100 text-slate-600 font-bold py-3 rounded-xl active:scale-95">Voltar</button>
-                    <button onclick="confirmarVendaAVista()" class="flex-1 bg-emerald-600 text-white font-bold py-3 rounded-xl shadow-lg active:scale-95">Confirmar Venda</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal Venda Parcelada (Carnê) -->
-    <div id="modal-parcelado" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[200] flex items-center justify-center hidden-screen p-4">
-        <div class="bg-white rounded-3xl p-6 w-full max-w-md shadow-2xl">
-            <h3 class="text-xl font-bold text-brand-900 mb-4">Finalizar no Carnê</h3>
-            <div class="flex flex-col gap-4">
                 
-                <div class="grid grid-cols-2 gap-3 border-b border-slate-100 pb-3">
-                    <div class="col-span-2">
-                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Selecionar Cliente</label>
-                        <select id="sel-cliente" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none font-bold text-slate-700"></select>
-                    </div>
-                    <div class="col-span-2">
-                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Canal de Venda</label>
-                        <select id="checkout-canal-parcelado" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-3 outline-none text-sm font-bold text-slate-700">
-                            <option value="Loja Física">Loja Física</option>
-                            <option value="Online">Online (Insta/Whats)</option>
+                <!-- Box Cartão de Crédito -->
+                <div id="box-parcelas-cartao" class="hidden-screen border-t border-slate-100 pt-3">
+                    <div>
+                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Parcelamento do Cartão</label>
+                        <select id="checkout-cartao-parcelas" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none text-sm font-bold text-slate-700">
+                            <option value="1">1x (À Vista)</option>
+                            <option value="2">2x</option><option value="3">3x</option><option value="4">4x</option>
+                            <option value="5">5x</option><option value="6">6x</option><option value="7">7x</option>
+                            <option value="8">8x</option><option value="9">9x</option><option value="10">10x</option>
+                            <option value="11">11x</option><option value="12">12x</option>
                         </select>
                     </div>
                 </div>
 
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Nº Parcelas</label>
-                        <input type="number" id="num-parcelas" value="1" min="1" max="12" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none font-bold text-slate-700">
+                <!-- Box Carnê -->
+                <div id="box-carne" class="hidden-screen border-t border-slate-100 pt-3">
+                    <div class="mb-3">
+                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Selecionar Cliente</label>
+                        <select id="checkout-sel-cliente" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-3 outline-none text-sm font-bold text-slate-700"></select>
                     </div>
-                    <div>
-                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">1º Vencimento</label>
-                        <input type="date" id="data-primeira" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-sm outline-none font-bold text-slate-700">
+                    <div class="grid grid-cols-2 gap-3 mb-3">
+                        <div>
+                            <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Nº Parcelas</label>
+                            <input type="number" id="checkout-carne-parcelas" value="1" min="1" max="12" oninput="calcularCarne()" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none text-sm font-bold text-slate-700">
+                        </div>
+                        <div>
+                            <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">1º Vencimento</label>
+                            <input type="date" id="checkout-carne-data" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-sm outline-none font-bold text-slate-700">
+                        </div>
+                    </div>
+                    <div class="p-3 bg-brand-50 rounded-xl border border-brand-100 flex justify-between items-center">
+                        <span class="text-xs text-brand-700 font-bold">Valor da Parcela:</span>
+                        <span class="text-lg font-black text-brand-600" id="checkout-carne-val-cada">R$ 0,00</span>
                     </div>
                 </div>
-                
-                <div class="p-4 bg-brand-50 rounded-2xl border border-brand-100">
-                    <p class="text-sm text-brand-700 font-medium">Valor Total: <b id="val-total-parc" class="text-lg text-brand-800">R$ 0,00</b></p>
-                    <p class="text-xs text-brand-600 mt-1">Parcelas de: <b id="val-cada-parc" class="text-sm">R$ 0,00</b></p>
-                </div>
-                
-                <div class="flex gap-3">
-                    <button onclick="fecharModalParcelado()" class="flex-1 bg-slate-100 text-slate-600 font-bold py-3 rounded-xl active:scale-95">Voltar</button>
-                    <button onclick="confirmarVendaParcelada()" class="flex-1 bg-brand-600 text-white font-bold py-3 rounded-xl shadow-lg active:scale-95">Gerar Carnê</button>
+
+                <div class="flex gap-3 mt-2">
+                    <button onclick="fecharModalCheckout()" class="flex-1 bg-slate-100 text-slate-600 font-bold py-3 rounded-xl active:scale-95">Voltar</button>
+                    <button onclick="confirmarVenda()" class="flex-1 bg-emerald-600 text-white font-bold py-3 rounded-xl shadow-lg active:scale-95 flex justify-center items-center gap-2"><i class="fas fa-check"></i> Confirmar</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Modal Visualização do Excel antes do Download -->
+    <!-- Modal Visualização do Relatório (Envio por Whats/Email) -->
     <div id="modal-preview-relatorio" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[300] flex items-center justify-center hidden-screen p-4">
         <div class="bg-white rounded-3xl p-6 w-full max-w-4xl shadow-2xl h-[90vh] flex flex-col">
             <div class="flex justify-between items-center mb-2">
-                <h3 class="text-xl font-bold text-brand-900 flex items-center gap-2"><i class="fas fa-table text-emerald-600"></i> Relatório</h3>
+                <h3 class="text-xl font-bold text-brand-900 flex items-center gap-2"><i class="fas fa-table text-emerald-600"></i> Relatório Pronto</h3>
                 <button onclick="fecharPreviewRelatorio()" class="w-10 h-10 bg-slate-100 text-slate-500 rounded-full hover:bg-slate-200 active:scale-95"><i class="fas fa-times"></i></button>
             </div>
-            <p class="text-sm text-slate-500 mb-4">Confira os dados antes de baixar o arquivo Excel final.</p>
+            <p class="text-sm text-slate-500 mb-4">Selecione por onde deseja enviar os dados das vendas.</p>
             
             <div class="flex-1 overflow-auto border border-slate-200 rounded-xl mb-4 no-scrollbar">
                 <table class="w-full text-left border-collapse text-xs whitespace-nowrap">
@@ -437,15 +415,19 @@
                 </table>
             </div>
             
-            <div class="flex gap-3 mt-auto">
-                <button onclick="fecharPreviewRelatorio()" class="flex-1 bg-slate-100 text-slate-600 font-bold py-4 rounded-xl active:scale-95">Voltar</button>
-                <button onclick="baixarExcelReal()" class="flex-1 bg-emerald-600 text-white font-bold py-4 rounded-xl shadow-lg active:scale-95 flex justify-center items-center gap-2">
-                    <i class="fas fa-download"></i> Baixar Arquivo (.xlsx)
+            <div class="flex gap-2 mt-auto">
+                <button onclick="fecharPreviewRelatorio()" class="w-1/3 bg-slate-100 text-slate-600 font-bold py-4 rounded-xl active:scale-95">Voltar</button>
+                <button onclick="enviarRelatorioWhatsapp()" class="w-1/3 bg-green-500 text-white font-bold py-4 rounded-xl shadow-lg active:scale-95 flex flex-col justify-center items-center gap-1 text-[10px] sm:text-xs">
+                    <i class="fab fa-whatsapp text-lg"></i> WhatsApp
+                </button>
+                <button onclick="enviarRelatorioEmail()" class="w-1/3 bg-blue-500 text-white font-bold py-4 rounded-xl shadow-lg active:scale-95 flex flex-col justify-center items-center gap-1 text-[10px] sm:text-xs">
+                    <i class="fas fa-envelope text-lg"></i> E-mail
                 </button>
             </div>
         </div>
     </div>
 
+    <!-- Modais de Cadastro e Informações Extras -->
     <!-- Modal Cadastro Cliente -->
     <div id="modal-cliente" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[200] flex items-center justify-center hidden-screen p-4 overflow-y-auto">
         <div class="bg-white rounded-3xl p-6 w-full max-w-md shadow-2xl my-auto">
@@ -495,7 +477,6 @@
                 <h3 class="text-xl font-bold text-brand-900 flex items-center gap-2"><i class="fas fa-clipboard-list text-emerald-600"></i> Resumo Geral</h3>
                 <button onclick="fecharResumoEstoque()" class="text-slate-400 hover:text-slate-600 active:scale-95"><i class="fas fa-times text-xl"></i></button>
             </div>
-            
             <div class="flex flex-col gap-3 mb-6">
                 <div class="flex justify-between items-center border-b border-slate-100 pb-3">
                     <span class="text-xs font-bold text-slate-500 uppercase">Total de Peças</span>
@@ -514,7 +495,6 @@
                     <span id="resumo-estoque-lucro" class="text-lg font-black text-emerald-600">R$ 0,00</span>
                 </div>
             </div>
-            
             <button onclick="fecharResumoEstoque()" class="w-full bg-slate-100 text-slate-700 font-bold py-3 rounded-xl active:scale-95">Fechar</button>
         </div>
     </div>
@@ -688,7 +668,6 @@
                         <div><p class="text-[9px] text-slate-400 uppercase">Com Desconto</p><p class="font-bold text-slate-600" id="final-${p.id}">${fmtMoeda(pFinal)}</p></div>
                     </div>
                     
-                    <!-- BOTÕES ADICIONAR AO CARRINHO -->
                     <div class="mt-4 border-t border-slate-100 pt-3 flex gap-2">
                         <button onclick="abrirModalAddCarrinho('${p.id}', 'cheio')" class="flex-1 bg-brand-600 hover:bg-brand-700 text-white font-bold py-3 rounded-xl shadow-md transition flex justify-center items-center gap-1 active:scale-95 text-[11px] sm:text-sm">
                             <i class="fas fa-tag"></i> Sacola (Cheio)
@@ -927,9 +906,9 @@
             renderCarrinho();
         }
 
-        // --- CHECKOUT DO CARRINHO (RECEBER AGORA / À VISTA) ---
+        // --- CHECKOUT DO CARRINHO UNIFICADO ---
 
-        function iniciarCheckoutAVista() {
+        function iniciarCheckout() {
             if(carrinho.length === 0) return;
             totalCheckoutAtual = carrinho.reduce((sum, item) => sum + calcularItemCarrinho(item).valorTotal, 0);
             
@@ -940,19 +919,45 @@
             document.getElementById('checkout-valor-recebido').value = '';
             document.getElementById('checkout-troco').textContent = 'R$ 0,00';
             document.getElementById('checkout-troco').classList.replace('text-red-500', 'text-emerald-600');
-            toggleTroco();
+            document.getElementById('checkout-cartao-parcelas').value = '1';
+            
+            // Reset Carnê
+            document.getElementById('checkout-carne-parcelas').value = 1;
+            document.getElementById('checkout-carne-data').value = new Date().toISOString().split('T')[0];
+
+            toggleMetodoPgto();
             
             fecharCarrinho();
             document.getElementById('modal-checkout-pgto').classList.remove('hidden-screen');
         }
 
-        function toggleTroco() {
-            const isDinheiro = document.getElementById('checkout-metodo-pgto').value === 'Dinheiro';
+        function toggleMetodoPgto() {
+            const metodo = document.getElementById('checkout-metodo-pgto').value;
             const boxTroco = document.getElementById('box-troco');
-            if (isDinheiro) {
+            const boxCartao = document.getElementById('box-parcelas-cartao');
+            const boxCarne = document.getElementById('box-carne');
+            
+            boxTroco.classList.add('hidden-screen');
+            boxCartao.classList.add('hidden-screen');
+            boxCarne.classList.add('hidden-screen');
+            
+            if (metodo === 'Dinheiro') {
                 boxTroco.classList.remove('hidden-screen');
-            } else {
-                boxTroco.classList.add('hidden-screen');
+                document.getElementById('checkout-valor-recebido').value = '';
+                calcularTroco();
+            } else if (metodo === 'Cartão de Crédito') {
+                boxCartao.classList.remove('hidden-screen');
+            } else if (metodo === 'Carnê (Parcelado)') {
+                if(dbClientes.length === 0) {
+                    alert("Cadastre um cliente primeiro na aba 'Clientes' para vender no carnê.");
+                    document.getElementById('checkout-metodo-pgto').value = 'PIX'; // Reseta
+                    return toggleMetodoPgto();
+                }
+                boxCarne.classList.remove('hidden-screen');
+                const sel = document.getElementById('checkout-sel-cliente'); 
+                sel.innerHTML = '';
+                dbClientes.forEach(c => sel.innerHTML += `<option value="${c.id}">${c.nome}</option>`);
+                calcularCarne();
             }
         }
 
@@ -970,122 +975,51 @@
             }
         }
 
-        function fecharModalCheckoutAVista() {
+        function calcularCarne() {
+            let n = parseInt(document.getElementById('checkout-carne-parcelas').value);
+            if (isNaN(n) || n < 1) n = 1;
+            document.getElementById('checkout-carne-val-cada').textContent = fmtMoeda(totalCheckoutAtual / n);
+        }
+
+        function fecharModalCheckout() {
             document.getElementById('modal-checkout-pgto').classList.add('hidden-screen');
             abrirCarrinho(); 
         }
 
-        function confirmarVendaAVista() {
-            const metodo = document.getElementById('checkout-metodo-pgto').value;
+        function confirmarVenda() {
+            let metodo = document.getElementById('checkout-metodo-pgto').value;
             const canal = document.getElementById('checkout-canal-pgto').value;
+            const idCompra = guid();
+            const dataIso = new Date().toISOString();
             
+            // Validações antes de salvar
             if (metodo === 'Dinheiro') {
                 const recebido = parseFloat(document.getElementById('checkout-valor-recebido').value) || 0;
                 if (recebido > 0 && recebido < totalCheckoutAtual) {
                     if(!confirm("Atenção: O valor recebido em Dinheiro é MENOR que o total da compra. Deseja confirmar mesmo assim?")) return;
                 }
-            }
-
-            const idCompra = guid();
-            const dataIso = new Date().toISOString();
-
-            carrinho.forEach(item => {
-                const info = calcularItemCarrinho(item);
-                const lucroTotalItem = info.valorTotal - (info.custoUnit * item.qtde);
-                
-                dbVendas.push({
-                    id: guid(), idCompra: idCompra, 
-                    pid: item.pid, pnome: info.nome, qtde: item.qtde,
-                    valor: info.valorTotal, custo: (info.custoUnit * item.qtde), lucro: lucroTotalItem,
-                    tipo: `S/ Desc.`, 
-                    metodo: metodo,
-                    canal: canal,
-                    data: dataIso, status: 'pago'
-                });
-                modEstoque(item.pid, -item.qtde);
-            });
-
-            saveDB(); carrinho = []; atualizarBadgeCarrinho();
-            document.getElementById('modal-checkout-pgto').classList.add('hidden-screen');
-            showToast("Venda Concluída!");
-        }
-
-        // --- CHECKOUT DO CARRINHO (PARCELADO / CARNÊ) ---
-
-        function iniciarCheckoutParcelado() {
-            if(carrinho.length === 0) return;
-            if(dbClientes.length === 0) {
-                fecharCarrinho();
-                return alert("Para vender parcelado, cadastre um cliente primeiro na aba 'Clientes'.");
-            }
-            
-            try {
-                const total = carrinho.reduce((sum, item) => sum + calcularItemCarrinho(item).valorTotal, 0);
-                
-                const sel = document.getElementById('sel-cliente'); sel.innerHTML = '';
-                dbClientes.forEach(c => sel.innerHTML += `<option value="${c.id}">${c.nome}</option>`);
-                
-                document.getElementById('val-total-parc').textContent = fmtMoeda(total);
-                document.getElementById('data-primeira').value = new Date().toISOString().split('T')[0];
-                document.getElementById('num-parcelas').value = 1;
-                document.getElementById('checkout-canal-parcelado').value = 'Loja Física';
-                
-                const updateVals = () => {
-                    let n = parseInt(document.getElementById('num-parcelas').value);
-                    if (isNaN(n) || n < 1) n = 1;
-                    document.getElementById('val-cada-parc').textContent = fmtMoeda(total / n);
-                };
-                document.getElementById('num-parcelas').oninput = updateVals;
-                updateVals();
-
-                fecharCarrinho();
-                document.getElementById('modal-parcelado').classList.remove('hidden-screen');
-            } catch(e) {
-                alert("Erro ao preparar parcelamento. Verifique se os produtos e clientes são válidos.");
-                console.error(e);
-            }
-        }
-
-        function confirmarVendaParcelada() {
-            try {
-                const cid = document.getElementById('sel-cliente').value;
-                const canal = document.getElementById('checkout-canal-parcelado').value;
-                let nParc = parseInt(document.getElementById('num-parcelas').value);
+            } else if (metodo === 'Cartão de Crédito') {
+                const parcelas = document.getElementById('checkout-cartao-parcelas').value;
+                if (parcelas > 1) {
+                    metodo = `Cartão de Crédito (${parcelas}x)`;
+                }
+            } else if (metodo === 'Carnê (Parcelado)') {
+                const cid = document.getElementById('checkout-sel-cliente').value;
+                let nParc = parseInt(document.getElementById('checkout-carne-parcelas').value);
                 if (isNaN(nParc) || nParc < 1) nParc = 1;
                 
-                const dataInicString = document.getElementById('data-primeira').value;
+                const dataInicString = document.getElementById('checkout-carne-data').value;
                 if(!dataInicString) return alert("Defina a data do 1º Vencimento.");
                 const dataInic = new Date(dataInicString);
                 
                 const cli = dbClientes.find(x => x.id === cid);
                 if(!cli) return alert("Cliente inválido.");
+
+                metodo = `Carnê (${nParc}x)`;
                 
-                const idCompra = guid();
-                const dataIso = new Date().toISOString();
-                let totalCompra = 0;
-                let custoTotalCompra = 0;
-
-                carrinho.forEach(item => {
-                    const info = calcularItemCarrinho(item);
-                    const custoItemGeral = (info.custoUnit * item.qtde);
-                    const lucroTotalItem = info.valorTotal - custoItemGeral;
-                    
-                    totalCompra += info.valorTotal;
-                    custoTotalCompra += custoItemGeral;
-
-                    dbVendas.push({
-                        id: guid(), idCompra: idCompra, 
-                        pid: item.pid, pnome: info.nome, qtde: item.qtde,
-                        cid: cid, cnome: cli.nome,
-                        valor: info.valorTotal, custo: custoItemGeral, lucro: lucroTotalItem,
-                        tipo: `Parcelado (${nParc}x)`,
-                        metodo: `Carnê (${nParc}x)`,
-                        canal: canal,
-                        data: dataIso, status: 'parcelado'
-                    });
-                    modEstoque(item.pid, -item.qtde);
-                });
-
+                // Gerar as parcelas do Carnê
+                let custoTotalCompra = carrinho.reduce((sum, item) => sum + (calcularItemCarrinho(item).custoUnit * item.qtde), 0);
+                
                 for(let i = 0; i < nParc; i++) {
                     const venc = new Date(dataInic); 
                     venc.setMonth(venc.getMonth() + i);
@@ -1093,18 +1027,38 @@
                     dbParcelas.push({
                         id: guid(), vid: idCompra,
                         cid: cid, cnome: cli.nome, pnome: `Sacola (${carrinho.reduce((a, b) => a + b.qtde, 0)} itens)`,
-                        valor: totalCompra / nParc, custoBase: custoTotalCompra / nParc,
+                        valor: totalCheckoutAtual / nParc, custoBase: custoTotalCompra / nParc,
                         vencimento: venc.toISOString(), status: 'pendente'
                     });
                 }
-                
-                saveDB(); carrinho = []; atualizarBadgeCarrinho();
-                fecharModalParcelado(); 
-                showToast("Carnê gerado com sucesso!");
-            } catch(e) {
-                alert("Erro ao salvar a venda parcelada.");
-                console.error(e);
             }
+
+            // Gerar o histórico de vendas para os itens do carrinho
+            carrinho.forEach(item => {
+                const info = calcularItemCarrinho(item);
+                const custoItemGeral = info.custoUnit * item.qtde;
+                const lucroTotalItem = info.valorTotal - custoItemGeral;
+                
+                const isCarne = metodo.includes('Carnê');
+                const cid = isCarne ? document.getElementById('checkout-sel-cliente').value : null;
+                const cnome = cid ? dbClientes.find(x => x.id === cid).nome : null;
+
+                dbVendas.push({
+                    id: guid(), idCompra: idCompra, 
+                    pid: item.pid, pnome: info.nome, qtde: item.qtde,
+                    cid: cid, cnome: cnome,
+                    valor: info.valorTotal, custo: custoItemGeral, lucro: lucroTotalItem,
+                    tipo: isCarne ? `Parcelado` : `À Vista`, 
+                    metodo: metodo,
+                    canal: canal,
+                    data: dataIso, status: isCarne ? 'parcelado' : 'pago'
+                });
+                modEstoque(item.pid, -item.qtde);
+            });
+
+            saveDB(); carrinho = []; atualizarBadgeCarrinho();
+            document.getElementById('modal-checkout-pgto').classList.add('hidden-screen');
+            showToast("Venda Concluída!");
         }
 
         // --- CLIENTES ---
@@ -1225,7 +1179,7 @@
             document.getElementById('modal-resumo-estoque').classList.add('hidden-screen');
         }
 
-        // --- RELATÓRIOS E EXPORTAÇÃO EXCEL ---
+        // --- RELATÓRIOS E EXPORTAÇÃO WHATSAPP/EMAIL ---
         function renderRelatorios() {
             const hoje = new Date();
             const mes = hoje.getMonth(), ano = hoje.getFullYear();
@@ -1314,7 +1268,6 @@
             });
         }
 
-        // --- EXPORTAR EXCEL ---
         function visualizarRelatorio() {
             const ini = new Date(document.getElementById('exp-inicio').value);
             const fim = new Date(document.getElementById('exp-fim').value); 
@@ -1351,45 +1304,46 @@
             document.getElementById('modal-preview-relatorio').classList.add('hidden-screen');
         }
 
-        function baixarExcelReal() {
-            if (!relatorioTempData || relatorioTempData.length === 0) return;
-
-            const data = relatorioTempData.map(v => ({
-                "Data/Hora": fmtDataHora(v.data), 
-                "Produto": v.pnome,
-                "Qtde": v.qtde || 1,
-                "Cliente": v.cnome || "Avulso",
-                "Método Pgto": v.metodo || 'Dinheiro',
-                "Canal de Venda": v.canal || 'Loja Física',
-                "Valor Total (R$)": v.valor.toFixed(2).replace('.', ','), 
-                "Lucro Bruto (R$)": v.lucro.toFixed(2).replace('.', ',')
-            }));
-
-            const wb = XLSX.utils.book_new();
-            const ws = XLSX.utils.json_to_sheet(data);
+        // NOVO: Gerador de Texto para WhatsApp e Email
+        function gerarTextoRelatorio() {
+            if (!relatorioTempData || relatorioTempData.length === 0) return "";
             
-            ws['!cols'] = [{ wch: 18 }, { wch: 25 }, { wch: 6 }, { wch: 20 }, { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 15 }];
+            let total = 0;
+            let lucro = 0;
             
-            XLSX.utils.book_append_sheet(wb, ws, "Relatório Geral");
-            const nomeArq = `Relatorio_Vendas_e_Lucro.xlsx`;
+            const ini = fmtData(document.getElementById('exp-inicio').value);
+            const fim = fmtData(document.getElementById('exp-fim').value);
+            
+            let txt = `📊 *RELATÓRIO DE VENDAS*\n`;
+            txt += `Período: ${ini} a ${fim}\n\n`;
 
-            try {
-                const b64 = XLSX.write(wb, { bookType: 'xlsx', type: 'base64' });
-                const url = "data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64," + b64;
-                
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = nomeArq;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                
-                showToast("Download Concluído!");
-                fecharPreviewRelatorio();
-            } catch(e) {
-                alert("Erro ao forçar download nativo no aparelho.");
-                console.error(e);
-            }
+            relatorioTempData.forEach(v => {
+                total += v.valor;
+                lucro += v.lucro;
+                txt += `🔹 ${v.qtde}x ${v.pnome}\n`;
+                txt += `   Data: ${fmtDataHora(v.data)}\n`;
+                txt += `   Pagto: ${v.metodo || 'Dinheiro'} (${v.canal || 'Loja Física'})\n`;
+                txt += `   Valor: ${fmtMoeda(v.valor)}\n\n`;
+            });
+            
+            txt += `💰 *Total Vendido:* ${fmtMoeda(total)}\n`;
+            txt += `📈 *Lucro Bruto:* ${fmtMoeda(lucro)}\n`;
+            
+            return txt;
+        }
+
+        function enviarRelatorioWhatsapp() {
+            const txt = gerarTextoRelatorio();
+            if(!txt) return;
+            const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(txt)}`;
+            window.open(url, '_blank');
+        }
+
+        function enviarRelatorioEmail() {
+            const txt = gerarTextoRelatorio();
+            if(!txt) return;
+            const url = `mailto:?subject=Relatório de Vendas&body=${encodeURIComponent(txt)}`;
+            window.location.href = url;
         }
 
         // --- DESPESAS E PONTO DE EQUILÍBRIO ---
@@ -1639,6 +1593,7 @@
                 vendasFiltradas.forEach(v => {
                     let met = v.metodo || 'Dinheiro';
                     if(met.includes('Carnê')) met = 'Carnê (Parcelado)';
+                    else if(met.includes('Cartão de Crédito')) met = 'Cartão de Crédito';
                     
                     if (!agrupado[met]) agrupado[met] = 0;
                     agrupado[met] += v.valor; 
