@@ -329,7 +329,7 @@
         </div>
     </div>
 
-    <!-- Modal Checkout Unificado (Dinheiro, Cartão, PIX, Carnê) -->
+    <!-- Modal Checkout Unificado -->
     <div id="modal-checkout-pgto" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[200] flex items-center justify-center hidden-screen p-4">
         <div class="bg-white rounded-3xl p-6 w-full max-w-md shadow-2xl">
             <h3 class="text-xl font-bold text-brand-900 mb-4">Concluir Pagamento</h3>
@@ -416,7 +416,7 @@
         </div>
     </div>
 
-    <!-- Modal Visualização do Relatório (Envio por Whats/Email) -->
+    <!-- Modal Visualização do Relatório -->
     <div id="modal-preview-relatorio" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[300] flex items-center justify-center hidden-screen p-4">
         <div class="bg-white rounded-3xl p-6 w-full max-w-4xl shadow-2xl h-[90vh] flex flex-col">
             <div class="flex justify-between items-center mb-2">
@@ -455,7 +455,7 @@
         </div>
     </div>
 
-    <!-- Modais de Cadastro e Informações Extras -->
+    <!-- Modais de Cadastro -->
     <!-- Modal Cadastro Cliente -->
     <div id="modal-cliente" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[200] flex items-center justify-center hidden-screen p-4 overflow-y-auto">
         <div class="bg-white rounded-3xl p-6 w-full max-w-md shadow-2xl my-auto">
@@ -540,7 +540,7 @@
         </div>
     </div>
 
-    <!-- ================== NAVEGAÇÃO INFERIOR (ATUALIZADA) ================== -->
+    <!-- ================== NAVEGAÇÃO INFERIOR ================== -->
     <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 shadow-lg z-30">
         <div class="max-w-4xl mx-auto flex justify-between p-1 overflow-x-auto no-scrollbar">
             <button onclick="navegarApp('estoque')" id="tab-estoque" class="flex-1 flex flex-col items-center p-2 text-slate-400 min-w-[60px] tab-active transition-all"><i class="fas fa-box text-lg mb-1"></i><span class="text-[8px] sm:text-[9px] font-bold mt-1 uppercase">Estoque</span></button>
@@ -561,7 +561,6 @@
         let dbDespesas = JSON.parse(localStorage.getItem('db_despesas_v4')) || [];
         let dbFornecedores = JSON.parse(localStorage.getItem('db_fornecedores_v4')) || [];
         
-        // Variáveis Auxiliares Globais
         let carrinho = [];
         let totalCheckoutAtual = 0;
         let relatorioTempData = [];
@@ -610,7 +609,7 @@
             if (screen === 'despesas') renderDespesas();
         }
 
-        // --- INTELIGÊNCIA DE ESTOQUE (NOVO) ---
+        // --- INTELIGÊNCIA DE ESTOQUE ---
         function analisarEstoqueInteligente() {
             const hoje = new Date();
             const trintaDias = new Date(hoje.getTime() - (30 * 24 * 60 * 60 * 1000));
@@ -629,7 +628,6 @@
                     totalValorEstoque += (pVitrine * estoqueAtual);
                 }
 
-                // Achar vendas deste produto para estatística
                 let vendasDesteProduto = dbVendas.filter(v => v.pid === p.id);
                 let qtdVendida = vendasDesteProduto.reduce((sum, v) => sum + (v.qtde || 1), 0);
 
@@ -642,7 +640,7 @@
                 let parado = false;
                 if (estoqueAtual > 0) {
                     if (!ultimaVendaStr) {
-                        parado = true; // Nunca vendeu e tem estoque
+                        parado = true;
                     } else {
                         if (new Date(ultimaVendaStr) < trintaDias) parado = true;
                     }
@@ -667,7 +665,6 @@
             const { totalValorEstoque, produtosAnalisados } = analisarEstoqueInteligente();
             const itensParados = produtosAnalisados.filter(p => p.parado);
             
-            // Pega os produtos que tem estoque e ordena pelos que menos venderam
             const menosVendidos = [...produtosAnalisados]
                 .filter(p => p.estoqueAtual > 0)
                 .sort((a, b) => a.qtdVendida - b.qtdVendida)
@@ -699,7 +696,6 @@
                 </div>
             `;
 
-            // Preenche o Modal com a lista detalhada
             const listParados = document.getElementById('lista-modal-parados');
             listParados.innerHTML = itensParados.length > 0 ? itensParados.map(p => `
                 <div class="flex justify-between items-center bg-red-50 p-3 rounded-xl border border-red-100">
@@ -739,7 +735,7 @@
             document.getElementById('tela-produtos').classList.add('hidden-screen');
             currentCat = '';
 
-            renderInteligenciaEstoque(); // Atualiza painel inteligente
+            renderInteligenciaEstoque();
 
             categoriasInfo.forEach(cat => {
                 const count = dbProdutos.filter(p => p.categoria === cat.id).length;
@@ -852,7 +848,7 @@
                 if (elVitrine) elVitrine.textContent = fmtMoeda(pVitrine);
                 if (elFinal) elFinal.textContent = fmtMoeda(pFinal);
                 
-                if (carrinho.find(x => x.pid === id)) renderCarrinho(); // update cart live
+                if (carrinho.find(x => x.pid === id)) renderCarrinho();
             }
         }
 
@@ -885,7 +881,6 @@
         }
 
         // --- SISTEMA DE CARRINHO DE COMPRAS E QUANTIDADE ---
-        
         function abrirModalAddCarrinho(pid, tipoPreco) {
             const p = dbProdutos.find(x => x.id === pid);
             if (!p || parseInt(p.estoque) <= 0) return alert("Sem estoque disponível para esta peça!");
@@ -1055,12 +1050,10 @@
         }
 
         // --- CHECKOUT DO CARRINHO UNIFICADO ---
-
         function iniciarCheckout() {
             if(carrinho.length === 0) return;
             totalCheckoutAtual = carrinho.reduce((sum, item) => sum + calcularItemCarrinho(item).valorTotal, 0);
             
-            // Reset no Modal
             document.getElementById('checkout-total-pgto').textContent = fmtMoeda(totalCheckoutAtual);
             document.getElementById('checkout-metodo-pgto').value = 'PIX';
             document.getElementById('checkout-canal-pgto').value = 'Loja Física';
@@ -1069,7 +1062,6 @@
             document.getElementById('checkout-troco').classList.replace('text-red-500', 'text-emerald-600');
             document.getElementById('checkout-cartao-parcelas').value = '1';
             
-            // Reset Carnê
             document.getElementById('checkout-carne-parcelas').value = 1;
             document.getElementById('checkout-carne-data').value = new Date().toISOString().split('T')[0];
 
@@ -1098,7 +1090,7 @@
             } else if (metodo === 'Carnê (Parcelado)') {
                 if(dbClientes.length === 0) {
                     alert("Cadastre um cliente primeiro na aba 'Clientes' para vender no carnê.");
-                    document.getElementById('checkout-metodo-pgto').value = 'PIX'; // Reseta
+                    document.getElementById('checkout-metodo-pgto').value = 'PIX'; 
                     return toggleMetodoPgto();
                 }
                 boxCarne.classList.remove('hidden-screen');
@@ -1134,38 +1126,56 @@
             abrirCarrinho(); 
         }
 
+        // ========================== CÓDIGO CORRIGIDO AQUI ==========================
         function confirmarVenda() {
             let metodo = document.getElementById('checkout-metodo-pgto').value;
             const canal = document.getElementById('checkout-canal-pgto').value;
             const idCompra = guid();
             const dataIso = new Date().toISOString();
             
-            // Validações antes de salvar
+            // Variáveis globais para lidar com QUALQUER parcelamento (Cartão ou Carnê)
+            let isParcelado = false;
+            let nParc = 1;
+            let dataInic = new Date();
+            let cid = null;
+            let cnome = "Cliente Avulso"; // Nome genérico se não for Carnê
+
             if (metodo === 'Dinheiro') {
                 const recebido = parseFloat(document.getElementById('checkout-valor-recebido').value) || 0;
                 if (recebido > 0 && recebido < totalCheckoutAtual) {
                     if(!confirm("Atenção: O valor recebido em Dinheiro é MENOR que o total da compra. Deseja confirmar mesmo assim?")) return;
                 }
             } else if (metodo === 'Cartão de Crédito') {
-                const parcelas = document.getElementById('checkout-cartao-parcelas').value;
+                const parcelas = parseInt(document.getElementById('checkout-cartao-parcelas').value);
                 if (parcelas > 1) {
                     metodo = `Cartão de Crédito (${parcelas}x)`;
+                    // Se parcelou no cartão, ativa a flag de parcelamento para ir pro "A Receber"
+                    isParcelado = true;
+                    nParc = parcelas;
+                    cnome = "Cartão de Crédito / Avulso"; 
+                    
+                    // Cartão de crédito geralmente cai a primeira parcela daqui a 30 dias
+                    dataInic.setDate(dataInic.getDate() + 30);
                 }
             } else if (metodo === 'Carnê (Parcelado)') {
-                const cid = document.getElementById('checkout-sel-cliente').value;
-                let nParc = parseInt(document.getElementById('checkout-carne-parcelas').value);
+                cid = document.getElementById('checkout-sel-cliente').value;
+                nParc = parseInt(document.getElementById('checkout-carne-parcelas').value);
                 if (isNaN(nParc) || nParc < 1) nParc = 1;
                 
                 const dataInicString = document.getElementById('checkout-carne-data').value;
                 if(!dataInicString) return alert("Defina a data do 1º Vencimento.");
-                const dataInic = new Date(dataInicString);
+                dataInic = new Date(dataInicString);
                 
                 const cli = dbClientes.find(x => x.id === cid);
                 if(!cli) return alert("Cliente inválido.");
+                cnome = cli.nome;
 
                 metodo = `Carnê (${nParc}x)`;
-                
-                // Gerar as parcelas do Carnê
+                isParcelado = true;
+            }
+
+            // Lógica que agora serve tanto para Carnê quanto para Cartão (se for > 1x)
+            if (isParcelado) {
                 let custoTotalCompra = carrinho.reduce((sum, item) => sum + (calcularItemCarrinho(item).custoUnit * item.qtde), 0);
                 
                 for(let i = 0; i < nParc; i++) {
@@ -1174,7 +1184,7 @@
                     
                     dbParcelas.push({
                         id: guid(), vid: idCompra,
-                        cid: cid, cnome: cli.nome, pnome: `Sacola (${carrinho.reduce((a, b) => a + b.qtde, 0)} itens)`,
+                        cid: cid, cnome: cnome, pnome: `Sacola (${carrinho.reduce((a, b) => a + b.qtde, 0)} itens)`,
                         valor: totalCheckoutAtual / nParc, custoBase: custoTotalCompra / nParc,
                         vencimento: venc.toISOString(), status: 'pendente'
                     });
@@ -1187,19 +1197,16 @@
                 const custoItemGeral = info.custoUnit * item.qtde;
                 const lucroTotalItem = info.valorTotal - custoItemGeral;
                 
-                const isCarne = metodo.includes('Carnê');
-                const cid = isCarne ? document.getElementById('checkout-sel-cliente').value : null;
-                const cnome = cid ? dbClientes.find(x => x.id === cid).nome : null;
-
                 dbVendas.push({
                     id: guid(), idCompra: idCompra, 
                     pid: item.pid, pnome: info.nome, qtde: item.qtde,
-                    cid: cid, cnome: cnome,
+                    cid: cid, cnome: cid ? cnome : null,
                     valor: info.valorTotal, custo: custoItemGeral, lucro: lucroTotalItem,
-                    tipo: isCarne ? `Parcelado` : `À Vista`, 
+                    tipo: isParcelado ? `Parcelado` : `À Vista`, 
                     metodo: metodo,
                     canal: canal,
-                    data: dataIso, status: isCarne ? 'parcelado' : 'pago'
+                    // Se for parcelado, não pode contar como pago ainda (Isso conserta o bug do painel)
+                    data: dataIso, status: isParcelado ? 'parcelado' : 'pago' 
                 });
                 modEstoque(item.pid, -item.qtde);
             });
@@ -1208,6 +1215,7 @@
             document.getElementById('modal-checkout-pgto').classList.add('hidden-screen');
             showToast("Venda Concluída!");
         }
+        // =========================================================================
 
         // --- CLIENTES ---
         function renderClientes() {
@@ -1342,12 +1350,12 @@
 
             document.getElementById('resumo-recebido').textContent = fmtMoeda(totalRecebido);
             document.getElementById('resumo-pendente').textContent = fmtMoeda(totalPendente);
-            document.getElementById('resumo-lucro-real').textContent = fmtMoeda(lucroBruto); // Apenas lucro bruto aqui, o líquido vai pras Despesas
+            document.getElementById('resumo-lucro-real').textContent = fmtMoeda(lucroBruto); 
 
             const prox = dbParcelas.filter(p => {
                 if(p.status !== 'pendente') return false;
                 const d = new Date(p.vencimento), diff = (d - hoje) / (1000 * 3600 * 24);
-                return diff <= 3 && diff >= -30; // Evita mostrar muito antigos no alerta de próximos
+                return diff <= 3 && diff >= -30; 
             });
             
             const alertaBox = document.getElementById('alertas-vencimento');
@@ -1355,7 +1363,7 @@
             const alertaList = document.getElementById('lista-alertas-vencimento'); alertaList.innerHTML = '';
             prox.forEach(p => {
                 alertaList.innerHTML += `
-                    <div onclick="baixaParcela('${p.id}')" class="bg-white border-l-4 border-red-500 p-3 rounded-xl shadow-sm flex justify-between items-center active:scale-95">
+                    <div onclick="baixaParcela('${p.id}')" class="bg-white border-l-4 border-red-500 p-3 rounded-xl shadow-sm flex justify-between items-center active:scale-95 cursor-pointer hover:bg-red-50">
                         <div><p class="text-xs font-bold text-slate-800">${p.cnome} <span class="text-slate-400 font-normal">(${p.pnome})</span></p><p class="text-[10px] text-red-500 font-bold">VENCE EM ${fmtData(p.vencimento)}</p></div>
                         <p class="font-black text-red-600">${fmtMoeda(p.valor)}</p>
                     </div>`;
@@ -1398,7 +1406,7 @@
             const isCart = !!v.idCompra;
             const titulo = isCart ? "Estornar Sacola Completa?" : "Estornar Venda?";
             const msg = isCart 
-                ? "Esta peça faz parte de uma compra maior/carnê. O estorno cancelará TODA A COMPRA e devolverá TODAS as peças ao estoque." 
+                ? "Esta peça faz parte de uma compra maior. O estorno cancelará TODA A COMPRA e devolverá TODAS as peças ao estoque." 
                 : "A venda será apagada e a peça volta ao estoque.";
 
             openModalConfirm(titulo, msg, () => {
@@ -1678,13 +1686,13 @@
                             {
                                 label: 'Faturamento (R$)',
                                 data: dataFaturamento,
-                                backgroundColor: '#10b981', // Emerald
+                                backgroundColor: '#10b981', 
                                 borderRadius: 4
                             },
                             {
                                 label: 'Lucro Bruto (R$)',
                                 data: dataLucro,
-                                backgroundColor: '#e11d48', // Brand
+                                backgroundColor: '#e11d48', 
                                 borderRadius: 4
                             }
                         ]
