@@ -12,6 +12,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+    <!-- Biblioteca de Gráficos -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
     <script>
         tailwind.config = {
@@ -101,7 +103,7 @@
     <div id="screen-vendas" class="max-w-4xl mx-auto hidden-screen">
         <div class="flex items-center justify-between mb-6 bg-white p-5 rounded-3xl shadow-sm border border-brand-100">
             <div><h1 class="text-2xl font-bold text-brand-900">Financeiro</h1><p id="titulo-mes" class="text-sm text-brand-600 capitalize">Mês Atual</p></div>
-            <div class="w-12 h-12 bg-brand-100 rounded-full flex items-center justify-center text-brand-600 text-xl"><i class="fas fa-chart-line"></i></div>
+            <div class="w-12 h-12 bg-brand-100 rounded-full flex items-center justify-center text-brand-600 text-xl"><i class="fas fa-list-alt"></i></div>
         </div>
 
         <!-- Alertas de Parcelas a Vencer -->
@@ -128,7 +130,7 @@
             </div>
         </div>
 
-        <!-- NOVO: Exportação visualiza antes de baixar -->
+        <!-- Exportação -->
         <div class="bg-white p-6 rounded-3xl border border-brand-100 shadow-sm mb-8">
             <h3 class="text-lg font-bold text-brand-900 mb-4 flex items-center gap-2"><i class="fas fa-file-excel text-emerald-600"></i> Exportar Período</h3>
             <div class="grid grid-cols-2 gap-3 mb-4">
@@ -145,9 +147,52 @@
         <div id="msg-vazia-vendas" class="text-center py-10 bg-white rounded-3xl border border-brand-100 hidden-screen"><p class="text-slate-400">Nenhuma venda registrada.</p></div>
     </div>
 
+    <!-- ================== NOVA TELA: GRÁFICOS ================== -->
+    <div id="screen-graficos" class="max-w-4xl mx-auto hidden-screen">
+        <div class="flex items-center justify-between mb-6 bg-white p-5 rounded-3xl shadow-sm border border-brand-100">
+            <div><h1 class="text-2xl font-bold text-brand-900">Análise Gráfica</h1><p class="text-sm text-brand-600">Visualize seus resultados</p></div>
+            <div class="w-12 h-12 bg-brand-100 rounded-full flex items-center justify-center text-brand-600 text-xl"><i class="fas fa-chart-pie"></i></div>
+        </div>
+
+        <div class="bg-white p-5 rounded-3xl border border-brand-100 shadow-sm mb-6">
+            <!-- Opções de Filtro -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <div>
+                    <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Período de Análise</label>
+                    <select id="grafico-periodo" onchange="renderGraficos()" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none font-bold text-slate-700 active:bg-slate-100 transition">
+                        <option value="ultimos_7">Últimos 7 Dias</option>
+                        <option value="ultimos_15">Últimos 15 Dias</option>
+                        <option value="este_mes" selected>Este Mês</option>
+                        <option value="trimestre">Este Trimestre</option>
+                        <option value="semestre">Este Semestre</option>
+                        <option value="este_ano">Este Ano</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Tipo de Gráfico</label>
+                    <select id="grafico-tipo" onchange="renderGraficos()" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none font-bold text-slate-700 active:bg-slate-100 transition">
+                        <option value="faturamento">Faturamento vs Lucro (Barras)</option>
+                        <option value="top_produtos">Produtos Mais Vendidos (Pizza)</option>
+                    </select>
+                </div>
+            </div>
+            
+            <!-- Container do Canvas do Gráfico -->
+            <div class="relative h-72 md:h-96 w-full">
+                <canvas id="meuGrafico"></canvas>
+            </div>
+            
+            <!-- Mensagem caso não haja dados no período -->
+            <div id="msg-vazia-grafico" class="text-center py-10 hidden-screen absolute inset-0 flex flex-col items-center justify-center bg-white z-10 rounded-2xl">
+                <i class="fas fa-chart-bar text-4xl text-slate-300 mb-3"></i>
+                <p class="text-slate-500 font-bold">Sem dados suficientes para este período.</p>
+            </div>
+        </div>
+    </div>
+
     <!-- ================== MODAIS ================== -->
 
-    <!-- NOVO: Modal para Escolher Quantidade ao Adicionar na Sacola -->
+    <!-- Modal para Escolher Quantidade ao Adicionar na Sacola -->
     <div id="modal-add-carrinho" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[150] flex items-center justify-center hidden-screen p-4 transition-all">
         <div class="bg-white rounded-3xl p-6 w-full max-w-sm shadow-2xl flex flex-col">
             <div class="flex justify-between items-center mb-2">
@@ -259,7 +304,7 @@
         </div>
     </div>
 
-    <!-- NOVO: Modal Visualização do Excel antes do Download -->
+    <!-- Modal Visualização do Excel antes do Download -->
     <div id="modal-preview-relatorio" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[300] flex items-center justify-center hidden-screen p-4">
         <div class="bg-white rounded-3xl p-6 w-full max-w-4xl shadow-2xl h-[90vh] flex flex-col">
             <div class="flex justify-between items-center mb-2">
@@ -331,9 +376,10 @@
     <!-- ================== NAVEGAÇÃO INFERIOR ================== -->
     <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 shadow-lg z-30">
         <div class="max-w-4xl mx-auto flex justify-around p-1">
-            <button onclick="navegarApp('estoque')" id="tab-estoque" class="flex flex-col items-center p-3 text-slate-400 w-1/3 tab-active transition-all"><i class="fas fa-box text-xl mb-1"></i><span class="text-[10px] font-bold">Estoque</span></button>
-            <button onclick="navegarApp('clientes')" id="tab-clientes" class="flex flex-col items-center p-3 text-slate-400 w-1/3 transition-all"><i class="fas fa-users text-xl mb-1"></i><span class="text-[10px] font-bold">Clientes</span></button>
-            <button onclick="navegarApp('vendas')" id="tab-vendas" class="flex flex-col items-center p-3 text-slate-400 w-1/3 transition-all"><i class="fas fa-chart-line text-xl mb-1"></i><span class="text-[10px] font-bold">Relatórios</span></button>
+            <button onclick="navegarApp('estoque')" id="tab-estoque" class="flex flex-col items-center p-2 text-slate-400 w-1/4 tab-active transition-all"><i class="fas fa-box text-xl mb-1"></i><span class="text-[9px] font-bold mt-1 uppercase">Estoque</span></button>
+            <button onclick="navegarApp('clientes')" id="tab-clientes" class="flex flex-col items-center p-2 text-slate-400 w-1/4 transition-all"><i class="fas fa-users text-xl mb-1"></i><span class="text-[9px] font-bold mt-1 uppercase">Clientes</span></button>
+            <button onclick="navegarApp('vendas')" id="tab-vendas" class="flex flex-col items-center p-2 text-slate-400 w-1/4 transition-all"><i class="fas fa-list-alt text-xl mb-1"></i><span class="text-[9px] font-bold mt-1 uppercase">Relatórios</span></button>
+            <button onclick="navegarApp('graficos')" id="tab-graficos" class="flex flex-col items-center p-2 text-slate-400 w-1/4 transition-all"><i class="fas fa-chart-pie text-xl mb-1"></i><span class="text-[9px] font-bold mt-1 uppercase">Gráficos</span></button>
         </div>
     </nav>
 
@@ -353,6 +399,9 @@
         let tempAddPid = null;
         let tempAddTipo = null;
         let tempMaxEstoque = 0;
+        
+        // Variável Chart.js
+        let graficoInstancia = null;
 
         function saveDB() {
             localStorage.setItem('db_estoque_v4', JSON.stringify(dbProdutos));
@@ -376,8 +425,8 @@
         // --- NAVEGAÇÃO ---
         let currentCat = '';
         function navegarApp(screen) {
-            ['screen-estoque', 'screen-clientes', 'screen-vendas'].forEach(s => document.getElementById(s).classList.add('hidden-screen'));
-            ['tab-estoque', 'tab-clientes', 'tab-vendas'].forEach(t => document.getElementById(t).classList.remove('tab-active', 'text-brand-600'));
+            ['screen-estoque', 'screen-clientes', 'screen-vendas', 'screen-graficos'].forEach(s => document.getElementById(s).classList.add('hidden-screen'));
+            ['tab-estoque', 'tab-clientes', 'tab-vendas', 'tab-graficos'].forEach(t => document.getElementById(t).classList.remove('tab-active', 'text-brand-600'));
             
             document.getElementById(`screen-${screen}`).classList.remove('hidden-screen');
             document.getElementById(`tab-${screen}`).classList.add('tab-active', 'text-brand-600');
@@ -385,6 +434,7 @@
             if (screen === 'estoque') renderCategorias();
             if (screen === 'clientes') renderClientes();
             if (screen === 'vendas') renderRelatorios();
+            if (screen === 'graficos') renderGraficos();
         }
 
         // --- CATEGORIAS & PRODUTOS ---
@@ -473,7 +523,7 @@
                         <div><p class="text-[9px] text-slate-400 uppercase">Com Desconto</p><p class="font-bold text-slate-600" id="final-${p.id}">${fmtMoeda(pFinal)}</p></div>
                     </div>
                     
-                    <!-- BOTÕES ADICIONAR AO CARRINHO (Agora abrem modal para quantidade) -->
+                    <!-- BOTÕES ADICIONAR AO CARRINHO -->
                     <div class="mt-4 border-t border-slate-100 pt-3 flex gap-2">
                         <button onclick="abrirModalAddCarrinho('${p.id}', 'cheio')" class="flex-1 bg-brand-600 hover:bg-brand-700 text-white font-bold py-3 rounded-xl shadow-md transition flex justify-center items-center gap-1 active:scale-95 text-[11px] sm:text-sm">
                             <i class="fas fa-tag"></i> Sacola (Cheio)
@@ -548,7 +598,6 @@
             const p = dbProdutos.find(x => x.id === pid);
             if (!p || parseInt(p.estoque) <= 0) return alert("Sem estoque disponível para esta peça!");
             
-            // Verifica o quanto deste produto já está na sacola
             const cartItems = carrinho.filter(x => x.pid === pid).reduce((sum, i) => sum + i.qtde, 0);
             tempMaxEstoque = parseInt(p.estoque) - cartItems;
             
@@ -568,7 +617,7 @@
             const input = document.getElementById('add-cart-qtd');
             let val = parseInt(input.value) + delta;
             if (val < 1) val = 1;
-            if (val > tempMaxEstoque) val = tempMaxEstoque; // Limita ao estoque livre
+            if (val > tempMaxEstoque) val = tempMaxEstoque;
             input.value = val;
         }
 
@@ -698,7 +747,6 @@
         function modTipoPrecoCarrinho(index, novoTipo) {
             if (carrinho[index]) {
                 carrinho[index].tipo = novoTipo;
-                // Mescla itens idênticos se virarem o mesmo tipo
                 const existingIndex = carrinho.findIndex((x, i) => x.pid === carrinho[index].pid && x.tipo === novoTipo && i !== index);
                 if (existingIndex > -1) {
                     carrinho[existingIndex].qtde += carrinho[index].qtde;
@@ -714,7 +762,7 @@
             renderCarrinho();
         }
 
-        // --- CHECKOUT DO CARRINHO (PAGAMENTO E PARCELAMENTO BLINDADO) ---
+        // --- CHECKOUT DO CARRINHO ---
 
         function iniciarCheckoutAVista() {
             if(carrinho.length === 0) return;
@@ -845,7 +893,6 @@
                     modEstoque(item.pid, -item.qtde);
                 });
 
-                // Gera as parcelas atreladas à compra
                 for(let i = 0; i < nParc; i++) {
                     const venc = new Date(dataInic); 
                     venc.setMonth(venc.getMonth() + i);
@@ -919,7 +966,39 @@
             });
         }
 
-        // --- PREVIEW E DOWNLOAD DO EXCEL (FORMATO BASE64 ROBUSTO PARA APK) ---
+        function baixaParcela(id) {
+            const p = dbParcelas.find(x => x.id === id);
+            openModalConfirm("Confirmar Pagamento?", `Receber parcela de ${fmtMoeda(p.valor)} de ${p.cnome}?`, () => {
+                p.status = 'pago'; saveDB(); renderRelatorios(); showToast("Parcela paga!");
+            }, 'emerald');
+        }
+
+        function deleteVenda(id) {
+            const v = dbVendas.find(x => x.id === id);
+            if(!v) return;
+
+            const isCart = !!v.idCompra;
+            const titulo = isCart ? "Estornar Sacola Completa?" : "Estornar Venda?";
+            const msg = isCart 
+                ? "Esta peça faz parte de uma compra maior/carnê. O estorno cancelará TODA A COMPRA e devolverá TODAS as peças ao estoque." 
+                : "A venda será apagada e a peça volta ao estoque.";
+
+            openModalConfirm(titulo, msg, () => {
+                if (isCart) {
+                    const itensDaCompra = dbVendas.filter(x => x.idCompra === v.idCompra);
+                    itensDaCompra.forEach(item => { modEstoque(item.pid, item.qtde || 1); });
+                    dbVendas = dbVendas.filter(x => x.idCompra !== v.idCompra);
+                    dbParcelas = dbParcelas.filter(x => x.vid !== v.idCompra);
+                } else {
+                    modEstoque(v.pid, v.qtde || 1);
+                    dbVendas = dbVendas.filter(x => x.id !== id);
+                    dbParcelas = dbParcelas.filter(x => x.vid !== id);
+                }
+                saveDB(); renderRelatorios(); showToast("Estorno realizado!");
+            });
+        }
+
+        // --- EXPORTAR EXCEL ---
         function visualizarRelatorio() {
             const ini = new Date(document.getElementById('exp-inicio').value);
             const fim = new Date(document.getElementById('exp-fim').value); 
@@ -971,14 +1050,12 @@
             const wb = XLSX.utils.book_new();
             const ws = XLSX.utils.json_to_sheet(data);
             
-            // Ajusta a largura das colunas do Excel para ficar mais elegante
             ws['!cols'] = [{ wch: 18 }, { wch: 25 }, { wch: 6 }, { wch: 20 }, { wch: 12 }, { wch: 12 }, { wch: 18 }];
             
             XLSX.utils.book_append_sheet(wb, ws, "Relatório");
             const nomeArq = `Relatorio_Estoque_${Date.now()}.xlsx`;
 
             try {
-                // MÉTODO BASE64: À prova de falhas para Android WebViews (APKs)
                 const b64 = XLSX.write(wb, { bookType: 'xlsx', type: 'base64' });
                 const url = "data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64," + b64;
                 
@@ -994,6 +1071,148 @@
             } catch(e) {
                 alert("Erro ao forçar download nativo no aparelho.");
                 console.error(e);
+            }
+        }
+
+        // --- LÓGICA DE GRÁFICOS ---
+        function renderGraficos() {
+            const periodo = document.getElementById('grafico-periodo').value;
+            const tipo = document.getElementById('grafico-tipo').value;
+
+            const hoje = new Date();
+            let dataLimite = new Date();
+            let mesAtual = hoje.getMonth();
+            let anoAtual = hoje.getFullYear();
+            let vendasFiltradas = [];
+
+            if (periodo === 'este_mes') {
+                vendasFiltradas = dbVendas.filter(v => {
+                    const d = new Date(v.data);
+                    return d.getMonth() === mesAtual && d.getFullYear() === anoAtual;
+                });
+            } else if (periodo === 'ultimos_7') {
+                dataLimite.setDate(hoje.getDate() - 7);
+                vendasFiltradas = dbVendas.filter(v => new Date(v.data) >= dataLimite);
+            } else if (periodo === 'ultimos_15') {
+                dataLimite.setDate(hoje.getDate() - 15);
+                vendasFiltradas = dbVendas.filter(v => new Date(v.data) >= dataLimite);
+            } else if (periodo === 'trimestre') {
+                const trimestreAtual = Math.floor(mesAtual / 3);
+                vendasFiltradas = dbVendas.filter(v => {
+                    const d = new Date(v.data);
+                    return Math.floor(d.getMonth() / 3) === trimestreAtual && d.getFullYear() === anoAtual;
+                });
+            } else if (periodo === 'semestre') {
+                const semestreAtual = Math.floor(mesAtual / 6);
+                vendasFiltradas = dbVendas.filter(v => {
+                    const d = new Date(v.data);
+                    return Math.floor(d.getMonth() / 6) === semestreAtual && d.getFullYear() === anoAtual;
+                });
+            } else if (periodo === 'este_ano') {
+                vendasFiltradas = dbVendas.filter(v => new Date(v.data).getFullYear() === anoAtual);
+            }
+
+            const canvas = document.getElementById('meuGrafico');
+            const msgVazia = document.getElementById('msg-vazia-grafico');
+
+            if (graficoInstancia) {
+                graficoInstancia.destroy();
+            }
+
+            if (vendasFiltradas.length === 0) {
+                canvas.classList.add('hidden-screen');
+                msgVazia.classList.remove('hidden-screen');
+                return;
+            } else {
+                canvas.classList.remove('hidden-screen');
+                msgVazia.classList.add('hidden-screen');
+            }
+
+            const ctx = canvas.getContext('2d');
+
+            if (tipo === 'faturamento') {
+                const agrupado = {};
+                vendasFiltradas.forEach(v => {
+                    const d = new Date(v.data);
+                    const isAgrupamentoMensal = (periodo === 'este_ano' || periodo === 'semestre' || periodo === 'trimestre');
+                    
+                    const chave = isAgrupamentoMensal 
+                        ? `${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}` 
+                        : `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`;
+                    
+                    if (!agrupado[chave]) agrupado[chave] = { 
+                        faturamento: 0, 
+                        lucro: 0,
+                        ordem: isAgrupamentoMensal ? d.getFullYear() * 100 + d.getMonth() : d.getTime()
+                    };
+                    agrupado[chave].faturamento += v.valor;
+                    agrupado[chave].lucro += v.lucro;
+                });
+
+                const labels = Object.keys(agrupado).sort((a, b) => agrupado[a].ordem - agrupado[b].ordem);
+                const dataFaturamento = labels.map(l => agrupado[l].faturamento);
+                const dataLucro = labels.map(l => agrupado[l].lucro);
+
+                graficoInstancia = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [
+                            {
+                                label: 'Faturamento (R$)',
+                                data: dataFaturamento,
+                                backgroundColor: '#10b981', // Emerald
+                                borderRadius: 4
+                            },
+                            {
+                                label: 'Lucro (R$)',
+                                data: dataLucro,
+                                backgroundColor: '#e11d48', // Brand
+                                borderRadius: 4
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { position: 'bottom', labels: { usePointStyle: true, boxWidth: 10 } }
+                        },
+                        scales: { y: { beginAtZero: true } }
+                    }
+                });
+
+            } else if (tipo === 'top_produtos') {
+                const agrupado = {};
+                vendasFiltradas.forEach(v => {
+                    if (!agrupado[v.pnome]) agrupado[v.pnome] = 0;
+                    agrupado[v.pnome] += (v.qtde || 1);
+                });
+
+                const ordenado = Object.entries(agrupado).sort((a, b) => b[1] - a[1]).slice(0, 5);
+                const labels = ordenado.map(i => i[0]);
+                const data = ordenado.map(i => i[1]);
+
+                graficoInstancia = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            data: data,
+                            backgroundColor: ['#e11d48', '#f43f5e', '#fb7185', '#fda4af', '#fecdd3'],
+                            borderWidth: 2,
+                            borderColor: '#ffffff'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { position: 'right', labels: { usePointStyle: true, boxWidth: 10 } }
+                        },
+                        cutout: '60%'
+                    }
+                });
             }
         }
 
