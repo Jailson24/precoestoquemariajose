@@ -1265,12 +1265,18 @@
             saveDB(); fecharModalCliente(); renderClientes();
         }
 
-        // REGISTRO SERVICE WORKER (OFFLINE)
-        if ('serviceWorker' in navigator && location.protocol === 'https:') {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js').catch(err => console.log(err));
-            });
-        }
+       // REGISTRO SERVICE WORKER (FORÇADO PARA OFFLINE)
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js', { scope: './' })
+        .then(reg => {
+            console.log('App Pronto para uso Offline!', reg);
+        })
+        .catch(err => {
+            console.log('Erro ao preparar modo offline:', err);
+        });
+    });
+}
 
         inicializarApp();
     </script>
