@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestor de Estoque e Preços</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+        .alert-low-stock { background-color: #fee2e2 !important; color: #991b1b; }
+        input[type="number"]::-webkit-inner-spin-button, 
+        input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+    </style>
+</head>
+<body class="p-6 text-slate-800">
+
+    <div class="max-w-7xl mx-auto">
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-2xl font-bold text-slate-700"><i class="fas fa-box-open mr-2 text-blue-600"></i> Gestor de Estoque e Preços</h1>
+            <button onclick="adicionarLinha()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow-sm transition font-medium text-sm">
+                <i class="fas fa-plus mr-2"></i> Novo Produto
+            </button>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse" id="tabelaProdutos">
+                    <thead>
+                        <tr class="bg-slate-800 text-white text-sm">
+                            <th class="p-4 font-medium rounded-tl-xl w-64">Produto / Nome</th>
+                            <th class="p-4 font-medium bg-slate-700 text-center w-48 border-l border-slate-600">Estoque Atual</th>
+                            <th class="p-4 font-medium border-l border-slate-600 w-32">Custo (R$)</th>
+                            <th class="p-4 font-medium w-32">Margem (%)</th>
+                            <th class="p-4 font-medium w-32">Desconto (%)</th>
+                            <th class="p-4 font-medium bg-orange-50 text-orange-900 border-l border-slate-300 w-40 text-center">Preço Vitrine</th>
+                            <th class="p-4 font-medium bg-teal-50 text-teal-900 w-40 text-center">Preço c/ Desconto</th>
+                            <th class="p-4 font-medium border-l border-slate-600 w-32 text-center">Lucro (R$)</th>
+                            <th class="p-4 font-medium rounded-tr-xl w-32 text-center">Lucro (%)</th>
+                            <th class="p-4 bg-slate-800 w-16"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="corpoTabela" class="text-sm divide-y divide-slate-100">
+                        <!-- Linhas serão inseridas aqui via JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Função para formatar moeda
+        const formatarMoeda = (valor) => {
+            return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valor || 0);
+        };
+
+        // Função para formatar porcentagem
+        const formatarPorcentagem = (valor) => {
+            return new Intl.NumberFormat('pt-BR', { style: 'percent', minimumFractionDigits: 1 }).format((valor || 0) / 100);
+        };
+
+        let contadorId = 0;
+
+        // Função principal de cálculo
+        function calcularValores(id) {
+            const linha = document.getElementById(`linha-${id}`);
+            if(!linha) return;
+
+            const custoInput = linha.querySelector('.input-custo');
+            const margemInput = linha.querySelector('.input-margem');
+            const descontoInput = linha.querySelector('.input-desconto');
+            const estoqueInput = linha.querySelector('.input-estoque');
+            
+            const estoque = parseInt(estoqueInput.value) || 0;
+            const custo = parseFloat(custoInput.value) || 0;
+            const margem = parseFloat(margemInput.value) || 0;
+            const desconto = parseFloat(descontoInput.value) || 0;
+
+            // Elementos de resultado
+            const cellVitrine = linha.querySelector('.res-vitrine');
+            const cellFinal = linha.querySelector('.res-final');
+            const cellLucroRs = linha.querySelector('.res-lucro-rs');
+            const cellLucroPct = linha.querySelector('.res-lucro-pct');
+            const containerEstoque = linha.querySelector('.container-estoque');
+
+            // Lógica de Cor do Estoque (<= 3 fica vermelho)
+            if (estoque <= 3) {
+                containerEstoque.classList.add('alert-low-stock');
+            } else {
+                containerEstoque.classList.remove('alert-low-stock');
+            }
+
+            // Apenas calcula se houver custo
+            if (custo > 0) {
+                // Cálculo: (Custo * (1 + Margem/100)) / (1 - Desconto/100)
+                const precoVitrine = (custo * (1 + (margem / 100))) / (1 - (desconto / 100));
+                const precoFinal = precoVitrine * (1 - (desconto / 100));
+                const lucroRs = precoFinal - custo;
+                const lucroPct = (lucroRs / custo) * 100;
+
+                cellVitrine.textContent = formatarMoeda(precoVitrine);
+                cellFinal.textContent = formatarMoeda(precoFinal);
+                cellLucroRs.textContent = formatarMoeda(lucroRs);
+                cellLucroPct.textContent = formatarPorcentagem(lucroPct);
+                
+                // Formatação condicional do lucro
+                cellLucroRs.className = `res-lucro-rs p-4 text-center font-medium ${lucroRs < 0 ? 'text-red-600' : 'text-slate-700'}`;
+            } else {
+                cellVitrine.textContent = '-';
+                cellFinal.textContent = '-';
+                cellLucroRs.textContent = '-';
+                cellLucroPct.textContent = '-';
+            }
+        }
+
+        // Funções dos botões de quantidade
+        function alterarEstoque(id, delta) {
+            const input = document.querySelector(`#linha-${id} .input-estoque`);
+            let valorAtual = parseInt(input.value) || 0;
+            let novoValor = valorAtual + delta;
+            
+            if (novoValor < 0) novoValor = 0; // Impede estoque negativo
+            input.value = novoValor;
+            calcularValores(id);
+        }
+
+        // Adicionar nova linha na tabela
+        function adicionarLinha() {
+            contadorId++;
+            const id = contadorId;
+            const tbody = document.getElementById('corpoTabela');
+            
+            const tr = document.createElement('tr');
+            tr.id = `linha-${id}`;
+            tr.className = "hover:bg-slate-50 transition-colors group";
+            
+            tr.innerHTML = `
+                <td class="p-4 border-b border-slate-100">
+                    <input type="text" placeholder="Ex: Vestido Floral" class="w-full bg-transparent border-none focus:ring-0 text-slate-700 font-medium placeholder-slate-400 p-0">
+                </td>
+                
+                <td class="p-3 border-b border-l border-slate-100 bg-slate-50 container-estoque transition-colors">
+                    <div class="flex items-center justify-center space-x-2">
+                        <button onclick="alterarEstoque(${id}, -1)" class="w-8 h-8 flex items-center justify-center rounded-full bg-white border border-slate-300 text-slate-500 hover:bg-slate-200 hover:text-slate-800 transition shadow-sm"><i class="fas fa-minus text-xs"></i></button>
+                        <input type="number" class="input-estoque w-12 text-center bg-transparent border-none focus:ring-0 font-bold text-lg p-0" value="0" min="0" oninput="calcularValores(${id})">
+                        <button onclick="alterarEstoque(${id}, 1)" class="w-8 h-8 flex items-center justify-center rounded-full bg-blue-600 text-white hover:bg-blue-700 transition shadow-sm"><i class="fas fa-plus text-xs"></i></button>
+                    </div>
+                </td>
+
+                <td class="p-4 border-b border-l border-slate-100">
+                    <div class="flex items-center text-slate-500">
+                        <span class="mr-1">R$</span>
+                        <input type="number" step="0.01" class="input-custo w-full bg-transparent border-none focus:ring-0 p-0 text-slate-700" placeholder="0.00" oninput="calcularValores(${id})">
+                    </div>
+                </td>
+                
+                <td class="p-4 border-b border-slate-100">
+                    <div class="flex items-center text-slate-500">
+                        <input type="number" class="input-margem w-full bg-transparent border-none focus:ring-0 p-0 text-slate-700" placeholder="0" oninput="calcularValores(${id})">
+                        <span class="ml-1">%</span>
+                    </div>
+                </td>
+                
+                <td class="p-4 border-b border-slate-100">
+                    <div class="flex items-center text-slate-500">
+                        <input type="number" class="input-desconto w-full bg-transparent border-none focus:ring-0 p-0 text-slate-700" placeholder="0" oninput="calcularValores(${id})">
+                        <span class="ml-1">%</span>
+                    </div>
+                </td>
+
+                <td class="res-vitrine p-4 border-b border-l border-slate-200 bg-orange-50/50 text-orange-900 font-bold text-center">-</td>
+                <td class="res-final p-4 border-b bg-teal-50/50 text-teal-900 font-bold text-center">-</td>
+                
+                <td class="res-lucro-rs p-4 border-b border-l border-slate-100 text-slate-700 text-center font-medium">-</td>
+                <td class="res-lucro-pct p-4 border-b border-slate-100 text-slate-500 text-center">-</td>
+                
+                <td class="p-4 border-b border-slate-100 text-center">
+                    <button onclick="removerLinha(${id})" class="text-slate-300 hover:text-red-500 transition opacity-0 group-hover:opacity-100" title="Excluir Produto">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
+                </td>
+            `;
+            
+            tbody.appendChild(tr);
+            calcularValores(id); // Calcula inicial (para formatar a cor do estoque zero)
+        }
+
+        // Remover linha
+        function removerLinha(id) {
+            const linha = document.getElementById(`linha-${id}`);
+            if(linha) linha.remove();
+        }
+
+        // Inicializar com uma linha de exemplo
+        window.onload = () => {
+            adicionarLinha();
+            // Preencher a primeira linha com seu exemplo
+            setTimeout(() => {
+                const linha = document.getElementById('linha-1');
+                linha.querySelector('input[type="text"]').value = "Vestido";
+                linha.querySelector('.input-custo').value = 100;
+                linha.querySelector('.input-margem').value = 30;
+                linha.querySelector('.input-desconto').value = 10;
+                linha.querySelector('.input-estoque').value = 4; // Estoque OK
+                calcularValores(1);
+            }, 100);
+        };
+    </script>
+</body>
+</html>
