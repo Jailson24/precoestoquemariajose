@@ -11,7 +11,6 @@
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <!-- Biblioteca de Gráficos -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
     <script>
@@ -20,14 +19,8 @@
                 extend: {
                     colors: {
                         brand: {
-                            50: '#fff1f2',
-                            100: '#ffe4e6',
-                            200: '#fecdd3',
-                            500: '#f43f5e',
-                            600: '#e11d48',
-                            700: '#be123c',
-                            800: '#9f1239',
-                            900: '#881337',
+                            50: '#fff1f2', 100: '#ffe4e6', 200: '#fecdd3', 500: '#f43f5e',
+                            600: '#e11d48', 700: '#be123c', 800: '#9f1239', 900: '#881337',
                         }
                     }
                 }
@@ -45,7 +38,6 @@
         .toast-enter { animation: slideInDown 0.3s ease-out forwards; }
         .tab-active { color: #e11d48 !important; border-top: 2px solid #e11d48; }
         
-        /* Ocultar barra de rolagem no carrinho e tabelas para visual mais limpo */
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
@@ -261,6 +253,19 @@
 
     <!-- ================== MODAIS ================== -->
 
+    <!-- Modal Gerenciar Estornos -->
+    <div id="modal-estorno" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[200] flex items-center justify-center hidden-screen p-4">
+        <div class="bg-white rounded-3xl p-6 w-full max-w-lg shadow-2xl flex flex-col max-h-[90vh]">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold text-brand-900 flex items-center gap-2"><i class="fas fa-undo-alt text-orange-500"></i> Opções de Estorno</h3>
+                <button onclick="fecharModalEstorno()" class="w-10 h-10 bg-slate-100 text-slate-500 rounded-full hover:bg-slate-200 active:scale-95"><i class="fas fa-times"></i></button>
+            </div>
+            <div id="estorno-content" class="overflow-y-auto pr-2 no-scrollbar">
+                <!-- Injetado via JS -->
+            </div>
+        </div>
+    </div>
+
     <!-- Modal Gerenciar Todas Parcelas -->
     <div id="modal-gerenciar-parcelas" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[200] flex items-center justify-center hidden-screen p-4">
         <div class="bg-white rounded-3xl p-6 w-full max-w-lg shadow-2xl max-h-[90vh] flex flex-col">
@@ -285,7 +290,7 @@
             </div>
             <div class="overflow-y-auto no-scrollbar flex-1 pr-2 space-y-6">
                 <div>
-                    <h4 class="font-bold text-red-600 mb-2 flex items-center gap-2"><i class="fas fa-box-open"></i> Produtos Parados (> 30 dias sem venda)</h4>
+                    <h4 class="font-bold text-orange-600 mb-2 flex items-center gap-2"><i class="fas fa-clock"></i> Produtos Parados (> 30 dias sem venda)</h4>
                     <div id="lista-modal-parados" class="flex flex-col gap-2"></div>
                 </div>
                 <div>
@@ -416,29 +421,35 @@
                     </div>
                 </div>
 
-                <!-- Box Carnê (COM JUROS) -->
+                <!-- Box Carnê (COM JUROS E ENTRADA) -->
                 <div id="box-carne" class="hidden-screen border-t border-slate-100 pt-3">
                     <div class="mb-3">
                         <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Selecionar Cliente</label>
                         <select id="checkout-sel-cliente" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-3 outline-none text-sm font-bold text-slate-700"></select>
                     </div>
+                    
+                    <div class="mb-3">
+                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Valor de Entrada / Pago Hoje (Opcional - R$)</label>
+                        <input type="number" id="checkout-carne-entrada" placeholder="0.00" oninput="calcularCarne()" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none text-sm font-bold text-slate-700">
+                    </div>
+
                     <div class="grid grid-cols-2 gap-3 mb-3">
                         <div>
-                            <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Nº Parcelas</label>
+                            <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Parcelas (Saldo)</label>
                             <input type="number" id="checkout-carne-parcelas" value="1" min="1" max="12" oninput="calcularCarne()" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none text-sm font-bold text-slate-700">
                         </div>
                         <div>
-                            <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Juros (%)</label>
+                            <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Juros (Sobre o Saldo %)</label>
                             <input type="number" id="checkout-carne-juros" value="0" min="0" step="0.1" oninput="calcularCarne()" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none text-sm font-bold text-slate-700" placeholder="Ex: 5.5">
                         </div>
                     </div>
                     <div class="mb-3">
-                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">1º Vencimento</label>
+                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Data do 1º Vencimento</label>
                         <input type="date" id="checkout-carne-data" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-sm outline-none font-bold text-slate-700">
                     </div>
                     
                     <div class="p-3 bg-brand-50 rounded-xl border border-brand-100 flex justify-between items-center mb-1">
-                        <span class="text-xs text-brand-700 font-bold">Total com Juros:</span>
+                        <span class="text-xs text-brand-700 font-bold">Total Final (Entrada + Saldo c/ Juros):</span>
                         <span class="text-lg font-black text-brand-600" id="checkout-carne-total-juros">R$ 0,00</span>
                     </div>
                     <div class="text-right">
@@ -613,6 +624,7 @@
         
         let graficoInstancia = null;
         let filtroClienteIdAtual = null;
+        let compraAtualEstorno = null;
 
         function saveDB() {
             localStorage.setItem('db_estoque_v4', JSON.stringify(dbProdutos));
@@ -645,8 +657,8 @@
             
             dbParcelas.forEach(p => {
                 if (p.status === 'pendente') {
-                    const venda = dbVendas.find(v => v.idCompra === p.vid);
-                    if (venda && venda.metodo.includes('Cartão de Crédito')) {
+                    const venda = dbVendas.find(v => v.idCompra === p.vid || v.id === p.vid); // check idCompra or id
+                    if (venda && venda.metodo && venda.metodo.includes('Cartão de Crédito')) {
                         const venc = new Date(p.vencimento);
                         venc.setHours(0,0,0,0);
                         
@@ -720,19 +732,20 @@
 
                 let parado = false;
                 if (estoqueAtual > 0) {
+                    // Produtos antigos sem data de cadastro assumem data zerada (antiga)
+                    let dataCad = p.dataCadastro ? new Date(p.dataCadastro) : new Date(0);
+                    
                     if (!ultimaVendaStr) {
-                        parado = true;
+                        // Nunca vendido: Só é parado se foi CADASTRADO há mais de 30 dias
+                        if (dataCad < trintaDias) parado = true;
                     } else {
+                        // Já vendido: Só é parado se a ÚLTIMA VENDA foi há mais de 30 dias
                         if (new Date(ultimaVendaStr) < trintaDias) parado = true;
                     }
                 }
 
                 produtosAnalisados.push({
-                    ...p,
-                    qtdVendida,
-                    ultimaVendaStr,
-                    parado,
-                    estoqueAtual
+                    ...p, qtdVendida, ultimaVendaStr, parado, estoqueAtual
                 });
             });
 
@@ -760,12 +773,12 @@
                     <div class="w-10 h-10 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center shrink-0 ml-2"><i class="fas fa-dollar-sign"></i></div>
                 </div>
 
-                <div onclick="document.getElementById('modal-alertas-estoque').classList.remove('hidden-screen')" class="bg-white p-4 rounded-2xl border border-brand-100 shadow-sm flex items-center justify-between cursor-pointer active:scale-95 transition ${itensParados.length > 0 ? 'border-red-200 bg-red-50' : ''}">
+                <div onclick="document.getElementById('modal-alertas-estoque').classList.remove('hidden-screen')" class="bg-white p-4 rounded-2xl border border-brand-100 shadow-sm flex items-center justify-between cursor-pointer active:scale-95 transition ${itensParados.length > 0 ? 'border-orange-200 bg-orange-50' : ''}">
                     <div>
-                        <p class="text-[10px] font-bold ${itensParados.length > 0 ? 'text-red-500' : 'text-slate-400'} uppercase tracking-widest">Itens Parados</p>
-                        <p class="text-xl font-black ${itensParados.length > 0 ? 'text-red-600' : 'text-slate-800'}">${itensParados.length}</p>
+                        <p class="text-[10px] font-bold ${itensParados.length > 0 ? 'text-orange-500' : 'text-slate-400'} uppercase tracking-widest">Itens Parados</p>
+                        <p class="text-xl font-black ${itensParados.length > 0 ? 'text-orange-600' : 'text-slate-800'}">${itensParados.length}</p>
                     </div>
-                    <div class="w-10 h-10 ${itensParados.length > 0 ? 'bg-red-100 text-red-600' : 'bg-slate-100 text-slate-500'} rounded-xl flex items-center justify-center shrink-0 ml-2"><i class="fas fa-exclamation-triangle"></i></div>
+                    <div class="w-10 h-10 ${itensParados.length > 0 ? 'bg-orange-100 text-orange-600' : 'bg-slate-100 text-slate-500'} rounded-xl flex items-center justify-center shrink-0 ml-2"><i class="fas fa-clock"></i></div>
                 </div>
 
                 <div onclick="document.getElementById('modal-alertas-estoque').classList.remove('hidden-screen')" class="bg-white p-4 rounded-2xl border border-brand-100 shadow-sm flex items-center justify-between cursor-pointer active:scale-95 transition">
@@ -773,18 +786,18 @@
                         <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Menos Vendidos</p>
                         <p class="text-sm font-bold text-slate-800 line-clamp-2 leading-tight mt-1">${menosVendidos.length > 0 ? menosVendidos.map(m => m.nome || 'S/N').join(', ') : 'Nenhum'}</p>
                     </div>
-                    <div class="w-10 h-10 bg-orange-50 text-orange-500 rounded-xl flex items-center justify-center shrink-0 ml-2"><i class="fas fa-arrow-down"></i></div>
+                    <div class="w-10 h-10 bg-blue-50 text-blue-500 rounded-xl flex items-center justify-center shrink-0 ml-2"><i class="fas fa-arrow-down"></i></div>
                 </div>
             `;
 
             const listParados = document.getElementById('lista-modal-parados');
             listParados.innerHTML = itensParados.length > 0 ? itensParados.map(p => `
-                <div class="flex justify-between items-center bg-red-50 p-3 rounded-xl border border-red-100">
+                <div class="flex justify-between items-center bg-orange-50 p-3 rounded-xl border border-orange-100">
                     <div>
                         <p class="font-bold text-sm text-slate-800">${p.nome || 'Produto sem nome'}</p>
-                        <p class="text-[10px] text-red-500 font-medium">Estoque: ${p.estoqueAtual} un | Últ. Venda: ${p.ultimaVendaStr ? fmtData(p.ultimaVendaStr) : 'Nunca'}</p>
+                        <p class="text-[10px] text-orange-600 font-medium">Estoque: ${p.estoqueAtual} un | Últ. Venda: ${p.ultimaVendaStr ? fmtData(p.ultimaVendaStr) : 'Nunca'}</p>
                     </div>
-                    <button onclick="document.getElementById('modal-alertas-estoque').classList.add('hidden-screen'); abrirCategoria('${p.categoria}', 'Verificando')" class="text-red-600 text-xs font-bold underline">Ver</button>
+                    <button onclick="document.getElementById('modal-alertas-estoque').classList.add('hidden-screen'); abrirCategoria('${p.categoria}', 'Verificando')" class="text-orange-600 text-xs font-bold underline">Ver</button>
                 </div>
             `).join('') : '<p class="text-xs text-slate-500">Nenhum item parado no estoque.</p>';
 
@@ -802,12 +815,9 @@
 
         // --- CATEGORIAS & PRODUTOS ---
         const categoriasInfo = [
-            { id: 'vestidos', nome: 'Vestidos', icone: 'fa-female' },
-            { id: 'blusas', nome: 'Blusas', icone: 'fa-tshirt' },
-            { id: 'calcas', nome: 'Calças', icone: 'fa-socks' },
-            { id: 'saias', nome: 'Saias', icone: 'fa-vest' },
-            { id: 'conjuntos', nome: 'Conjuntos', icone: 'fa-layer-group' },
-            { id: 'acessorios', nome: 'Acessórios', icone: 'fa-hat-cowboy' }
+            { id: 'vestidos', nome: 'Vestidos', icone: 'fa-female' }, { id: 'blusas', nome: 'Blusas', icone: 'fa-tshirt' },
+            { id: 'calcas', nome: 'Calças', icone: 'fa-socks' }, { id: 'saias', nome: 'Saias', icone: 'fa-vest' },
+            { id: 'conjuntos', nome: 'Conjuntos', icone: 'fa-layer-group' }, { id: 'acessorios', nome: 'Acessórios', icone: 'fa-hat-cowboy' }
         ];
 
         function renderCategorias() {
@@ -853,11 +863,12 @@
                 const pFinal = pVitrine * (1 - (desc / 100));
 
                 const analise = produtosAnalisados.find(x => x.id === p.id);
-                const badgeParado = (analise && analise.parado) ? `<span class="bg-red-100 text-red-600 text-[9px] px-2 py-0.5 rounded-md font-black ml-2 uppercase border border-red-200" title="Sem vendas há mais de 30 dias">Parado</span>` : '';
+                const badgeParado = (analise && analise.parado) ? `<span class="bg-orange-100 text-orange-700 text-[9px] px-2 py-0.5 rounded-md font-black ml-2 uppercase border border-orange-200" title="Sem vendas há mais de 30 dias"><i class="fas fa-clock"></i> Parado</span>` : '';
 
                 const div = document.createElement('div');
                 div.id = `card-${p.id}`;
-                div.className = `bg-white p-5 rounded-3xl border border-brand-100 shadow-sm ${parseInt(p.estoque) <= 3 ? 'alert-low-stock' : ''} ${analise && analise.parado ? 'border-red-300 bg-red-50/20' : ''}`;
+                // Removida a classe vermelha do parado para não confundir com o estoque baixo
+                div.className = `bg-white p-5 rounded-3xl border border-brand-100 shadow-sm ${parseInt(p.estoque) <= 3 ? 'alert-low-stock' : ''}`;
                 div.innerHTML = `
                     <div class="flex justify-between items-start border-b border-slate-50 pb-3 mb-3">
                         <div class="w-full">
@@ -907,7 +918,7 @@
         }
 
         function adicionarProduto() {
-            dbProdutos.push({ id: guid(), categoria: currentCat, nome: '', estoque: '0', custo: '', margem: '', desconto: '' });
+            dbProdutos.push({ id: guid(), categoria: currentCat, nome: '', estoque: '0', custo: '', margem: '', desconto: '', dataCadastro: new Date().toISOString() });
             saveDB(); renderProdutos();
         }
 
@@ -1148,6 +1159,7 @@
             calcularCartao();
             
             // Reset Carnê
+            document.getElementById('checkout-carne-entrada').value = '';
             document.getElementById('checkout-carne-parcelas').value = 1;
             document.getElementById('checkout-carne-juros').value = '';
             document.getElementById('checkout-carne-data').value = new Date().toISOString().split('T')[0];
@@ -1215,14 +1227,18 @@
         }
 
         function calcularCarne() {
+            let entrada = parseFloat(document.getElementById('checkout-carne-entrada').value) || 0;
             let n = parseInt(document.getElementById('checkout-carne-parcelas').value);
             if (isNaN(n) || n < 1) n = 1;
             let jurosPct = parseFloat(document.getElementById('checkout-carne-juros').value) || 0;
             
-            let totalCarne = totalCheckoutAtual * (1 + (jurosPct / 100));
+            let saldoRestante = totalCheckoutAtual - entrada;
+            if (saldoRestante < 0) saldoRestante = 0;
 
-            document.getElementById('checkout-carne-total-juros').textContent = fmtMoeda(totalCarne);
-            document.getElementById('checkout-carne-val-cada').textContent = `${n}x de ${fmtMoeda(totalCarne / n)}`;
+            let totalSaldoComJuros = saldoRestante * (1 + (jurosPct / 100));
+
+            document.getElementById('checkout-carne-total-juros').textContent = fmtMoeda(entrada + totalSaldoComJuros);
+            document.getElementById('checkout-carne-val-cada').textContent = `${n}x de ${fmtMoeda(totalSaldoComJuros / n)}`;
         }
 
         function fecharModalCheckout() {
@@ -1239,10 +1255,12 @@
             // Variáveis globais para parcelamento
             let isParcelado = false;
             let nParc = 1;
-            let dataInic = new Date();
             let cid = null;
             let cnome = "Cliente Avulso";
             let totalFinalCompra = totalCheckoutAtual;
+            
+            // Usado para distribuir o Lucro uniformemente quando há juros
+            let multiplicadorJuros = 1;
 
             if (metodo === 'Dinheiro') {
                 const recebido = parseFloat(document.getElementById('checkout-valor-recebido').value) || 0;
@@ -1253,7 +1271,8 @@
                 const parcelas = parseInt(document.getElementById('checkout-cartao-parcelas').value);
                 const jurosPct = parseFloat(document.getElementById('checkout-cartao-juros').value) || 0;
                 
-                totalFinalCompra = totalCheckoutAtual * (1 + (jurosPct / 100)); // Aplica os juros
+                totalFinalCompra = totalCheckoutAtual * (1 + (jurosPct / 100)); 
+                multiplicadorJuros = totalFinalCompra / totalCheckoutAtual;
 
                 if (parcelas > 1) {
                     metodo = `Cartão de Crédito (${parcelas}x${jurosPct > 0 ? ' c/ Juros' : ''})`;
@@ -1265,59 +1284,84 @@
                 }
             } else if (metodo === 'Carnê (Parcelado)') {
                 cid = document.getElementById('checkout-sel-cliente').value;
-                nParc = parseInt(document.getElementById('checkout-carne-parcelas').value);
-                if (isNaN(nParc) || nParc < 1) nParc = 1;
-                
-                const jurosPct = parseFloat(document.getElementById('checkout-carne-juros').value) || 0;
-                totalFinalCompra = totalCheckoutAtual * (1 + (jurosPct / 100));
-
-                const dataInicString = document.getElementById('checkout-carne-data').value;
-                if(!dataInicString) return alert("Defina a data do 1º Vencimento.");
-                dataInic = new Date(dataInicString);
-                
                 const cli = dbClientes.find(x => x.id === cid);
                 if(!cli) return alert("Cliente inválido.");
                 cnome = cli.nome;
 
-                metodo = `Carnê (${nParc}x${jurosPct > 0 ? ' c/ Juros' : ''})`;
+                let entrada = parseFloat(document.getElementById('checkout-carne-entrada').value) || 0;
+                nParc = parseInt(document.getElementById('checkout-carne-parcelas').value);
+                if (isNaN(nParc) || nParc < 1) nParc = 1;
+                const jurosPct = parseFloat(document.getElementById('checkout-carne-juros').value) || 0;
+
+                const dataInicString = document.getElementById('checkout-carne-data').value;
+                if(!dataInicString) return alert("Defina a data do 1º Vencimento.");
+
+                let saldoAParcelar = totalCheckoutAtual - entrada;
+                if (saldoAParcelar < 0) saldoAParcelar = 0;
+                
+                let valorJurosNoSaldo = saldoAParcelar * (jurosPct / 100);
+                totalFinalCompra = totalCheckoutAtual + valorJurosNoSaldo; // Entrada não sofre juros
+                multiplicadorJuros = totalFinalCompra / totalCheckoutAtual;
+
+                metodo = `Carnê (${entrada > 0 ? 'Entrada + ' : ''}${nParc}x${jurosPct > 0 ? ' c/ Juros' : ''})`;
                 isParcelado = true;
-            }
 
-            let multiplicadorJuros = totalFinalCompra / totalCheckoutAtual; // Para distribuir o lucro
-
-            if (isParcelado) {
+                // Gerar parcelas do Carnê
                 let custoTotalCompra = carrinho.reduce((sum, item) => sum + (calcularItemCarrinho(item).custoUnit * item.qtde), 0);
                 
-                for(let i = 0; i < nParc; i++) {
-                    // A 1ª parcela sempre será dada como PAGA HOJE e com o vencimento em HOJE (Entrada / 1ª fatura)
-                    let venc = new Date(dataInic);
+                // 1. Lançar a Entrada se houver (Paga hoje)
+                if (entrada > 0) {
+                    dbParcelas.push({
+                        id: guid(), vid: idCompra,
+                        cid: cid, cnome: cnome, pnome: `Entrada (Sinal)`,
+                        valor: entrada, custoBase: (custoTotalCompra * (entrada / totalFinalCompra)), 
+                        vencimento: dataIso, status: 'pago'
+                    });
+                }
+
+                // 2. Lançar o Saldo Parcelado
+                if (saldoAParcelar > 0) {
+                    let valParc = (saldoAParcelar + valorJurosNoSaldo) / nParc;
+                    let custoParc = (custoTotalCompra * ((saldoAParcelar + valorJurosNoSaldo) / totalFinalCompra)) / nParc;
+                    let dataBase = new Date(dataInicString);
                     
-                    if(metodo.includes('Cartão de Crédito') && i > 0) {
-                        venc = new Date();
+                    for(let i = 0; i < nParc; i++) {
+                        let venc = new Date(dataBase);
                         venc.setMonth(venc.getMonth() + i);
-                    } else if (metodo.includes('Carnê') && i > 0) {
-                        venc.setMonth(venc.getMonth() + i);
+                        dbParcelas.push({
+                            id: guid(), vid: idCompra,
+                            cid: cid, cnome: cnome, pnome: `Parcela ${i+1}/${nParc}`,
+                            valor: valParc, custoBase: custoParc,
+                            vencimento: venc.toISOString(), status: 'pendente'
+                        });
                     }
+                }
+            }
 
-                    // Forçando a primeira parcela a ser paga agora, conforme solicitado
-                    let statusParc = (i === 0) ? 'pago' : 'pendente';
-                    let dataVencParc = (i === 0) ? new Date().toISOString() : venc.toISOString();
-
+            // Se for Cartão de Crédito parcelado (Não é Carnê)
+            if (isParcelado && !metodo.includes('Carnê')) {
+                let custoTotalCompra = carrinho.reduce((sum, item) => sum + (calcularItemCarrinho(item).custoUnit * item.qtde), 0);
+                for(let i = 0; i < nParc; i++) {
+                    let venc = new Date();
+                    if (i > 0) venc.setMonth(venc.getMonth() + i);
+                    
+                    // A primeira parcela do cartão cai na hora, o restante agendado
                     dbParcelas.push({
                         id: guid(), vid: idCompra,
                         cid: cid, cnome: cnome, pnome: `Sacola (${carrinho.reduce((a, b) => a + b.qtde, 0)} itens)`,
                         valor: totalFinalCompra / nParc, custoBase: custoTotalCompra / nParc,
-                        vencimento: dataVencParc, status: statusParc
+                        vencimento: i === 0 ? dataIso : venc.toISOString(), 
+                        status: i === 0 ? 'pago' : 'pendente'
                     });
                 }
             }
 
-            // Gerar o histórico de vendas
+            // Gerar o histórico de vendas para relatório (Itens individuais)
             carrinho.forEach(item => {
                 const info = calcularItemCarrinho(item);
                 const custoItemGeral = info.custoUnit * item.qtde;
                 
-                // Aplica a proporção do juros ao valor do item vendido para refletir no lucro
+                // Aplica a proporção do juros global ao valor do item vendido para refletir no lucro
                 const valorFinalDoItemComJuros = info.valorTotal * multiplicadorJuros;
                 const lucroTotalItem = valorFinalDoItemComJuros - custoItemGeral;
                 
@@ -1339,6 +1383,157 @@
             showToast("Venda Concluída!");
         }
 
+        // --- SISTEMA DE ESTORNOS DE VENDAS ---
+        function abrirModalEstorno(vendaId) {
+            const v = dbVendas.find(x => x.id === vendaId);
+            if (!v) return;
+            compraAtualEstorno = v.idCompra || v.id; 
+
+            renderModalEstorno();
+            document.getElementById('modal-estorno').classList.remove('hidden-screen');
+        }
+
+        function fecharModalEstorno() {
+            document.getElementById('modal-estorno').classList.add('hidden-screen');
+            compraAtualEstorno = null;
+        }
+
+        function renderModalEstorno() {
+            const vendasDaCompra = dbVendas.filter(x => (x.idCompra === compraAtualEstorno) || (x.id === compraAtualEstorno));
+            if (vendasDaCompra.length === 0) {
+                fecharModalEstorno();
+                renderRelatorios();
+                return;
+            }
+
+            const container = document.getElementById('estorno-content');
+            let html = `<h4 class="font-bold text-slate-700 mb-2">Devolver Itens ao Estoque</h4>`;
+            html += `<div class="flex flex-col gap-2 mb-6">`;
+
+            vendasDaCompra.forEach(item => {
+                if(item.qtde > 0) {
+                    const valUnit = item.valor / item.qtde;
+                    html += `
+                        <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 flex justify-between items-center">
+                            <div>
+                                <p class="text-sm font-bold text-slate-800">${item.pnome}</p>
+                                <p class="text-xs text-slate-500">${item.qtde} un. (Total: ${fmtMoeda(item.valor)})</p>
+                            </div>
+                            <button onclick="estornarUmItem('${item.id}', ${valUnit})" class="bg-orange-100 text-orange-600 px-3 py-2 rounded-lg text-xs font-bold active:scale-95 shadow-sm"><i class="fas fa-undo"></i> Devolver 1</button>
+                        </div>
+                    `;
+                }
+            });
+            html += `</div>`;
+
+            html += `
+                <h4 class="font-bold text-slate-700 mb-2">Abatimento / Estorno de Valor (R$)</h4>
+                <p class="text-[10px] text-slate-500 mb-2 leading-tight">Use isso para abater o valor sem devolver itens ao estoque (Ex: desconto aplicado após a venda).</p>
+                <div class="flex gap-2 mb-6">
+                    <input type="number" id="estorno-valor-input" placeholder="0.00" step="0.01" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none font-bold text-slate-700">
+                    <button onclick="aplicarEstornoValor()" class="bg-blue-500 text-white px-4 py-3 rounded-xl font-bold active:scale-95 shadow-md">Aplicar</button>
+                </div>
+            `;
+
+            html += `
+                <div class="border-t border-slate-200 pt-4">
+                    <button onclick="estornoTotal()" class="w-full bg-red-500 text-white font-bold py-4 rounded-xl shadow-lg active:scale-95 flex justify-center items-center gap-2"><i class="fas fa-trash-alt"></i> Estornar TUDO (Cancelar Compra)</button>
+                </div>
+            `;
+            container.innerHTML = html;
+        }
+
+        function abaterValorDasParcelas(idCompra, valorAbater) {
+            let parcelas = dbParcelas.filter(p => p.vid === idCompra);
+            // Ordenar: primeiro as pendentes (da mais distante pra mais próxima), depois as pagas
+            parcelas.sort((a, b) => {
+                if (a.status === 'pendente' && b.status !== 'pendente') return -1;
+                if (a.status !== 'pendente' && b.status === 'pendente') return 1;
+                return new Date(b.vencimento) - new Date(a.vencimento); 
+            });
+
+            let resto = valorAbater;
+            for (let i = 0; i < parcelas.length; i++) {
+                if (resto <= 0) break;
+                let p = parcelas[i];
+                if (p.valor <= resto) {
+                    resto -= p.valor;
+                    // Exclui a parcela se ela for totalmente coberta pelo estorno
+                    dbParcelas = dbParcelas.filter(x => x.id !== p.id);
+                } else {
+                    p.valor -= resto;
+                    p.custoBase = Math.max(0, p.custoBase - resto); 
+                    resto = 0;
+                }
+            }
+        }
+
+        function estornarUmItem(idVenda, valUnit) {
+            const v = dbVendas.find(x => x.id === idVenda);
+            if(!v) return;
+
+            openModalConfirm("Devolver Item?", `Retornar 1x ${v.pnome} ao estoque e abater ${fmtMoeda(valUnit)} da venda?`, () => {
+                modEstoque(v.pid, 1);
+                v.qtde -= 1;
+                v.valor -= valUnit;
+                
+                const p = dbProdutos.find(x => x.id === v.pid);
+                const custoUnit = p ? parseFloat(p.custo) : 0;
+                v.lucro -= (valUnit - custoUnit);
+
+                if (v.qtde <= 0) {
+                    dbVendas = dbVendas.filter(x => x.id !== idVenda);
+                }
+
+                abaterValorDasParcelas(compraAtualEstorno, valUnit);
+
+                saveDB();
+                renderModalEstorno();
+                renderRelatorios();
+                showToast("Item devolvido com sucesso!");
+            });
+        }
+
+        function aplicarEstornoValor() {
+            const val = parseFloat(document.getElementById('estorno-valor-input').value);
+            if(isNaN(val) || val <= 0) return alert("Insira um valor válido.");
+
+            openModalConfirm("Estornar Valor?", `Abater ${fmtMoeda(val)} desta venda?`, () => {
+                const vendas = dbVendas.filter(x => (x.idCompra === compraAtualEstorno) || (x.id === compraAtualEstorno));
+                if(vendas.length > 0) {
+                    let resto = val;
+                    for (let v of vendas) {
+                        if (resto <= 0) break;
+                        let maxAbate = Math.min(v.valor, resto);
+                        v.valor -= maxAbate;
+                        v.lucro -= maxAbate; // Impacta diretamente o lucro
+                        resto -= maxAbate;
+                    }
+                }
+                abaterValorDasParcelas(compraAtualEstorno, val);
+                saveDB();
+                renderModalEstorno();
+                renderRelatorios();
+                showToast("Valor abatido com sucesso!");
+            });
+        }
+
+        function estornoTotal() {
+            openModalConfirm("Cancelar Compra?", "Isso irá devolver TODOS os itens ao estoque e remover a venda e parcelas.", () => {
+                const vendas = dbVendas.filter(x => (x.idCompra === compraAtualEstorno) || (x.id === compraAtualEstorno));
+                vendas.forEach(item => {
+                    modEstoque(item.pid, item.qtde || 1);
+                });
+                dbVendas = dbVendas.filter(x => (x.idCompra !== compraAtualEstorno) && (x.id !== compraAtualEstorno));
+                dbParcelas = dbParcelas.filter(x => x.vid !== compraAtualEstorno);
+
+                saveDB();
+                fecharModalEstorno();
+                renderRelatorios();
+                showToast("Compra estornada com sucesso!");
+            });
+        }
+
         // --- CLIENTES ---
         function renderClientes() {
             const list = document.getElementById('listaClientes'); list.innerHTML = '';
@@ -1353,7 +1548,7 @@
                     badgeDivida = `
                         <div class="mt-4 pt-3 border-t border-slate-100 flex justify-between items-center">
                             <div>
-                                <span class="text-[9px] text-red-500 font-bold uppercase tracking-wider">Dívida (Carnê)</span>
+                                <span class="text-[9px] text-red-500 font-bold uppercase tracking-wider">Dívida Ativa</span>
                                 <p class="font-black text-red-600 text-sm">${fmtMoeda(totalDivida)}</p>
                             </div>
                             <button onclick="abrirModalGerenciarParcelas('${c.id}')" class="bg-red-50 text-red-600 border border-red-200 px-3 py-2 rounded-xl text-xs font-bold active:scale-95 flex items-center gap-1 transition hover:bg-red-100">
@@ -1533,12 +1728,12 @@
                                 <span class="text-[10px] bg-brand-50 text-brand-600 px-2 py-1 rounded-md font-bold">Lucro: ${fmtMoeda(v.lucro)}</span>
                             </div>
                         </div>
-                        <button onclick="deleteVenda('${v.id}')" class="text-slate-200 hover:text-red-400 transition p-2"><i class="fas fa-trash-alt"></i></button>
+                        <button onclick="abrirModalEstorno('${v.id}')" class="text-slate-200 hover:text-orange-500 transition p-2" title="Estornar / Devolver"><i class="fas fa-undo-alt"></i></button>
                     </div>`;
             });
         }
 
-        // --- GERENCIAR PARCELAS (NOVO) ---
+        // --- GERENCIAR PARCELAS ---
         function abrirModalGerenciarParcelas(cid = null) {
             filtroClienteIdAtual = cid;
             renderListaTodasParcelas();
@@ -1564,7 +1759,6 @@
                 document.getElementById('titulo-modal-parcelas').innerHTML = `<i class="fas fa-hand-holding-usd text-orange-500"></i> Contas a Receber (Todas)`;
             }
 
-            // Ordenar por data mais antiga primeiro
             pendentes.sort((a,b) => new Date(a.vencimento) - new Date(b.vencimento));
 
             if(pendentes.length === 0) {
@@ -1596,12 +1790,11 @@
             const p = dbParcelas.find(x => x.id === id);
             openModalConfirm("Confirmar Recebimento?", `Confirmar pagamento de ${fmtMoeda(p.valor)} de ${p.cnome}?`, () => {
                 p.status = 'pago'; 
-                // Atualizar o vencimento para a data de hoje, que foi quando pagou
                 p.vencimento = new Date().toISOString(); 
                 saveDB(); 
                 renderRelatorios(); 
-                renderListaTodasParcelas(); // Atualiza a lista do modal sem fechar ele
-                showToast(`Sucesso! ${fmtMoeda(p.valor)} adicionado ao "Recebido (Mês)".`);
+                renderListaTodasParcelas(); 
+                showToast(`Sucesso! ${fmtMoeda(p.valor)} adicionado ao "Recebido".`);
             }, 'emerald');
         }
 
@@ -1609,36 +1802,11 @@
             const p = dbParcelas.find(x => x.id === id);
             openModalConfirm("Confirmar Pagamento?", `Receber parcela de ${fmtMoeda(p.valor)} de ${p.cnome}?`, () => {
                 p.status = 'pago'; 
-                p.vencimento = new Date().toISOString(); // Define o dia do pagamento
+                p.vencimento = new Date().toISOString(); 
                 saveDB(); 
                 renderRelatorios(); 
-                showToast(`Sucesso! ${fmtMoeda(p.valor)} adicionado ao "Recebido (Mês)".`);
+                showToast(`Sucesso! ${fmtMoeda(p.valor)} adicionado ao "Recebido".`);
             }, 'emerald');
-        }
-
-        function deleteVenda(id) {
-            const v = dbVendas.find(x => x.id === id);
-            if(!v) return;
-
-            const isCart = !!v.idCompra;
-            const titulo = isCart ? "Estornar Sacola Completa?" : "Estornar Venda?";
-            const msg = isCart 
-                ? "Esta peça faz parte de uma compra maior. O estorno cancelará TODA A COMPRA e devolverá TODAS as peças ao estoque." 
-                : "A venda será apagada e a peça volta ao estoque.";
-
-            openModalConfirm(titulo, msg, () => {
-                if (isCart) {
-                    const itensDaCompra = dbVendas.filter(x => x.idCompra === v.idCompra);
-                    itensDaCompra.forEach(item => { modEstoque(item.pid, item.qtde || 1); });
-                    dbVendas = dbVendas.filter(x => x.idCompra !== v.idCompra);
-                    dbParcelas = dbParcelas.filter(x => x.vid !== v.idCompra);
-                } else {
-                    modEstoque(v.pid, v.qtde || 1);
-                    dbVendas = dbVendas.filter(x => x.id !== id);
-                    dbParcelas = dbParcelas.filter(x => x.vid !== id);
-                }
-                saveDB(); renderRelatorios(); showToast("Estorno realizado!");
-            });
         }
 
         function visualizarRelatorio() {
@@ -2022,7 +2190,7 @@
             }
         }
 
-        // --- MODAL CONFIRMAÇÃO GERAL E ESTORNO ---
+        // --- MODAL CONFIRMAÇÃO GERAL ---
         function openModalConfirm(t, tx, cb, color = 'red') {
             document.getElementById('modal-confirm-titulo').textContent = t;
             document.getElementById('modal-confirm-texto').textContent = tx;
