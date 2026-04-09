@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Gestor de Estoque e Preços</title>
     
+    <!-- PWA Meta Tags -->
+    <link rel="manifest" href="manifest.json">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="theme-color" content="#e11d48">
@@ -887,26 +889,14 @@
             }
         }
 
-        // FUNÇÃO ATUALIZADA: AGORA SOLICITA CONFIRMAÇÃO E NOTIFICA (REQUISITADO)
         function modEstoque(id, delta) {
             const idx = dbProdutos.findIndex(p => p.id === id);
             if (idx > -1) {
                 const p = dbProdutos[idx];
                 const novaQtd = Math.max(0, (parseInt(p.estoque) || 0) + delta);
-                
-                // Se for um item novo (rascunho), altera direto sem perguntar
-                if (p.isDraft) {
-                    p.estoque = novaQtd.toString();
-                    renderProdutos();
-                    return;
-                }
-
-                // Se já estiver no estoque, pede confirmação
+                if (p.isDraft) { p.estoque = novaQtd.toString(); renderProdutos(); return; }
                 openModalConfirm("Alterar Quantidade?", `Deseja mudar o estoque de "${p.nome || 'Produto'}" para ${novaQtd} unidades?`, () => {
-                    p.estoque = novaQtd.toString();
-                    saveDB();
-                    renderProdutos();
-                    showToast("Quantidade atualizada e salva na nuvem! 📦");
+                    p.estoque = novaQtd.toString(); saveDB(); renderProdutos(); showToast("Quantidade atualizada! 📦");
                 }, 'emerald');
             }
         }
@@ -919,7 +909,6 @@
             });
         }
 
-        // --- CARRINHO E CHECKOUT ---
         function abrirModalAddCarrinho(pid, tipoPreco) {
             const p = dbProdutos.find(x => x.id === pid);
             if (!p || parseInt(p.estoque) <= 0) return alert("Sem estoque!");
@@ -951,6 +940,17 @@
             const total = carrinho.reduce((acc, i) => acc + i.qtde, 0);
             document.getElementById('fab-cart').classList.toggle('hidden-screen', total === 0);
             document.getElementById('cart-badge').textContent = total;
+        }
+
+        function calcularItemCarrinho(item) {
+            const p = dbProdutos.find(x => x.id === item.pid);
+            const custo = parseFloat(p.custo) || 0;
+            const margem = parseFloat(p.margem) || 0;
+            const desc = parseFloat(p.desconto) || 0;
+            const pVitrine = (custo * (1 + (margem / 100))) / (1 - (desc / 100));
+            const pFinal = pVitrine * (1 - (desc / 100));
+            const unit = item.tipo === 'cheio' ? pVitrine : pFinal;
+            return { nome: p.nome, valorTotal: unit * item.qtde, custoUnit: custo };
         }
 
         function abrirCarrinho() {
@@ -1063,7 +1063,6 @@
             showToast("Venda Concluída! 💰");
         }
 
-        // Função auxiliar para baixar estoque sem perguntar (durante venda)
         function modEstoqueDireto(id, delta) {
             const idx = dbProdutos.findIndex(p => p.id === id);
             if (idx > -1) {
@@ -1072,7 +1071,6 @@
             }
         }
 
-        // --- SISTEMA DE ESTORNO ---
         function abrirModalEstorno(vId) {
             const v = dbVendas.find(x => x.id === vId); if(!v) return;
             compraAtualEstorno = v.idCompra || v.id;
@@ -1119,7 +1117,6 @@
             });
         }
 
-        // --- FINANCEIRO, GRÁFICOS, ETC ---
         function renderClientes() {
             const list = document.getElementById('listaClientes'); list.innerHTML = '';
             document.getElementById('msg-vazia-clientes').classList.toggle('hidden-screen', dbClientes.length > 0);
@@ -1128,6 +1125,8 @@
                 list.innerHTML += `<div class="bg-white p-5 rounded-3xl border border-brand-100 shadow-sm"><div class="flex justify-between items-start"><div><h3 class="font-bold text-slate-800 text-lg">${c.nome}</h3><p class="text-xs text-slate-400">${c.tel}</p></div><button onclick="deleteCli('${c.id}')" class="text-slate-200 hover:text-red-500"><i class="fas fa-trash"></i></button></div>${totalD > 0 ? `<div class="mt-4 pt-3 border-t flex justify-between items-center"><div><span class="text-[9px] text-red-500 font-bold uppercase">Dívida</span><p class="font-black text-red-600">${fmtMoeda(totalD)}</p></div><button onclick="abrirModalGerenciarParcelas('${c.id}')" class="bg-red-50 text-red-600 px-3 py-2 rounded-xl text-xs font-bold">Ver</button></div>` : ''}</div>`;
             });
         }
+
+        function deleteCli(id) { openModalConfirm("Apagar Cliente?", "Isso remove o cadastro permanentemente.", () => { dbClientes = dbClientes.filter(c => c.id !== id); saveDB(); renderClientes(); }); }
 
         function renderRelatorios() {
             const list = document.getElementById('listaVendas'); list.innerHTML = '';
@@ -1232,9 +1231,10 @@
         }
 
         function visualizarRelatorio() {
-            const ini = new Date(document.getElementById('exp-inicio').value);
-            const fim = new Date(document.getElementById('exp-fim').value);
-            if(isNaN(ini) || isNaN(fim)) return alert("Datas inválidas.");
+            const iniStr = document.getElementById('exp-inicio').value;
+            const fimStr = document.getElementById('exp-fim').value;
+            if(!iniStr || !fimStr) return alert("Datas inválidas.");
+            const ini = new Date(iniStr); const fim = new Date(fimStr);
             relatorioTempData = dbVendas.filter(v => {
                 const d = new Date(v.data);
                 return d >= ini && d <= fim;
@@ -1244,6 +1244,39 @@
             document.getElementById('modal-preview-relatorio').classList.remove('hidden-screen');
         }
         function fecharPreviewRelatorio() { document.getElementById('modal-preview-relatorio').classList.add('hidden-screen'); }
+
+        function abrirResumoEstoque() {
+            const { totalValorEstoque } = analisarEstoqueInteligente();
+            let totalPecas = dbProdutos.reduce((a, b) => a + (parseInt(b.estoque) || 0), 0);
+            let custoTotal = dbProdutos.reduce((a, b) => a + ((parseFloat(b.custo) || 0) * (parseInt(b.estoque) || 0)), 0);
+            document.getElementById('resumo-estoque-pecas').textContent = totalPecas;
+            document.getElementById('resumo-estoque-custo').textContent = fmtMoeda(custoTotal);
+            document.getElementById('resumo-estoque-venda').textContent = fmtMoeda(totalValorEstoque);
+            document.getElementById('resumo-estoque-lucro').textContent = fmtMoeda(totalValorEstoque - custoTotal);
+            document.getElementById('modal-resumo-estoque').classList.remove('hidden-screen');
+        }
+        function fecharResumoEstoque() { document.getElementById('modal-resumo-estoque').classList.add('hidden-screen'); }
+
+        function abrirModalCliente() { document.getElementById('modal-cliente').classList.remove('hidden-screen'); }
+        function fecharModalCliente() { document.getElementById('modal-cliente').classList.add('hidden-screen'); }
+        function salvarNovoCliente() {
+            const n = document.getElementById('cli-nome').value; if(!n) return;
+            dbClientes.push({ id: guid(), nome: n, tel: document.getElementById('cli-tel').value });
+            saveDB(); fecharModalCliente(); renderClientes();
+        }
+
+       // REGISTRO SERVICE WORKER (FORÇADO PARA OFFLINE)
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js', { scope: './' })
+        .then(reg => {
+            console.log('App Pronto para uso Offline!', reg);
+        })
+        .catch(err => {
+            console.log('Erro ao preparar modo offline:', err);
+        });
+    });
+}
 
         inicializarApp();
     </script>
