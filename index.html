@@ -52,7 +52,7 @@
 <body class="p-4 md:p-8 text-slate-800 pb-32">
 
     <!-- Toast Notification -->
-    <div id="toast-container" class="fixed top-4 left-0 right-0 z-[500] flex justify-center hidden-screen pointer-events-none">
+    <div id="toast-container" class="fixed top-4 left-0 right-0 z-[500] flex justify-center hidden-screen pointer-events-none transition-all">
         <div id="toast-msg" class="bg-emerald-500 text-white px-6 py-3 rounded-full shadow-lg font-medium flex items-center gap-2 text-sm">
             <i class="fas fa-check-circle"></i> <span>Ação concluída!</span>
         </div>
@@ -77,10 +77,8 @@
                 </div>
             </div>
 
-            <!-- Categorias -->
             <div class="grid grid-cols-2 md:grid-cols-3 gap-4 mb-8" id="grid-categorias"></div>
 
-            <!-- Dashboard de Inteligência do Estoque -->
             <h3 class="text-lg font-bold text-brand-900 mb-4 ml-2 mt-4">Inteligência de Estoque</h3>
             <div id="cards-estoque-inteligente" class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8"></div>
         </div>
@@ -186,7 +184,7 @@
                 </div>
             </div>
             <div class="w-full bg-slate-100 h-6 rounded-full overflow-hidden border border-slate-200 relative mb-3">
-                <div id="barra-equilibrio" class="h-full bg-red-500 transition-all duration-500" style="width: 0%;"></div>
+                <div id="barra-equilibrio" class="h-full transition-all duration-500" style="width: 0%;"></div>
             </div>
             <div class="text-center mb-6" id="status-equilibrio"></div>
             <div class="p-4 bg-slate-50 rounded-2xl border border-slate-200 flex justify-between items-center">
@@ -201,7 +199,7 @@
                 <input type="text" id="add-desp-desc" placeholder="Ex: Luz, Aluguel" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none text-sm font-bold text-slate-700 sm:col-span-2">
                 <div class="flex gap-2">
                     <input type="number" id="add-desp-valor" step="0.01" placeholder="Valor (R$)" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none text-sm font-bold text-slate-700">
-                    <button onclick="salvarNovaDespesa()" class="w-14 bg-red-500 text-white rounded-xl shadow-md flex items-center justify-center active:scale-95"><i class="fas fa-plus"></i></button>
+                    <button type="button" onclick="salvarNovaDespesa()" class="w-14 bg-red-500 text-white rounded-xl shadow-md flex items-center justify-center active:scale-95"><i class="fas fa-plus"></i></button>
                 </div>
             </div>
         </div>
@@ -249,25 +247,23 @@
         </div>
     </div>
 
-    <!-- ================== MODAIS ================== -->
+    <!-- ================== MODAIS DO SISTEMA ================== -->
 
-    <!-- Modal Opções de Estorno -->
     <div id="modal-opcoes-estorno" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[300] flex items-center justify-center hidden-screen p-4">
         <div class="bg-white rounded-3xl p-6 w-full max-w-md shadow-xl max-h-[90vh] flex flex-col">
             <div class="flex justify-between items-center mb-4 border-b border-slate-100 pb-3">
                 <h3 class="text-lg font-bold text-slate-800"><i class="fas fa-undo-alt text-orange-500 mr-2"></i> Opções de Estorno</h3>
-                <button onclick="fecharModalEstorno()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times"></i></button>
+                <button type="button" onclick="fecharModalEstorno()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times"></i></button>
             </div>
             <div id="estorno-content" class="overflow-y-auto pr-2 no-scrollbar"></div>
         </div>
     </div>
 
-    <!-- Modal Gerenciar Todas Parcelas -->
     <div id="modal-gerenciar-parcelas" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[200] flex items-center justify-center hidden-screen p-4">
         <div class="bg-white rounded-3xl p-6 w-full max-w-lg shadow-2xl max-h-[90vh] flex flex-col">
             <div class="flex justify-between items-center mb-4 border-b border-slate-100 pb-4">
                 <h3 id="titulo-modal-parcelas" class="text-xl font-bold text-brand-900 flex items-center gap-2"><i class="fas fa-hand-holding-usd text-orange-500"></i> Contas a Receber</h3>
-                <button onclick="fecharModalGerenciarParcelas()" class="w-10 h-10 bg-slate-100 text-slate-500 rounded-full hover:bg-slate-200 active:scale-95"><i class="fas fa-times"></i></button>
+                <button type="button" onclick="fecharModalGerenciarParcelas()" class="w-10 h-10 bg-slate-100 text-slate-500 rounded-full hover:bg-slate-200 active:scale-95"><i class="fas fa-times"></i></button>
             </div>
             <div class="overflow-y-auto no-scrollbar flex-1 pr-2">
                 <div id="lista-todas-parcelas" class="flex flex-col gap-2"></div>
@@ -275,12 +271,11 @@
         </div>
     </div>
 
-    <!-- Modal Alertas Inteligência Estoque -->
     <div id="modal-alertas-estoque" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[200] flex items-center justify-center hidden-screen p-4">
         <div class="bg-white rounded-3xl p-6 w-full max-w-lg shadow-2xl max-h-[90vh] flex flex-col">
             <div class="flex justify-between items-center mb-4">
                 <h3 class="text-xl font-bold text-brand-900"><i class="fas fa-lightbulb text-orange-500 mr-2"></i> Inteligência de Estoque</h3>
-                <button onclick="document.getElementById('modal-alertas-estoque').classList.add('hidden-screen')" class="w-10 h-10 bg-slate-100 text-slate-500 rounded-full hover:bg-slate-200 active:scale-95"><i class="fas fa-times"></i></button>
+                <button type="button" onclick="document.getElementById('modal-alertas-estoque').classList.add('hidden-screen')" class="w-10 h-10 bg-slate-100 text-slate-500 rounded-full hover:bg-slate-200 active:scale-95"><i class="fas fa-times"></i></button>
             </div>
             <div class="overflow-y-auto no-scrollbar flex-1 pr-2 space-y-6">
                 <div>
@@ -295,36 +290,34 @@
         </div>
     </div>
 
-    <!-- Modal Add Carrinho -->
     <div id="modal-add-carrinho" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[150] flex items-center justify-center hidden-screen p-4 transition-all">
         <div class="bg-white rounded-3xl p-6 w-full max-w-sm shadow-2xl flex flex-col">
             <div class="flex justify-between items-center mb-2">
                 <h3 class="text-xl font-bold text-brand-900">Adicionar à Sacola</h3>
-                <button onclick="fecharModalAddCarrinho()" class="text-slate-400 hover:text-slate-600 active:scale-95"><i class="fas fa-times text-xl"></i></button>
+                <button type="button" onclick="fecharModalAddCarrinho()" class="text-slate-400 hover:text-slate-600 active:scale-95"><i class="fas fa-times text-xl"></i></button>
             </div>
             <p id="add-cart-pnome" class="font-bold text-slate-700 text-lg mb-1"></p>
             <p id="add-cart-ptipo" class="text-[10px] text-brand-600 font-bold uppercase tracking-widest mb-4"></p>
             <div class="flex items-center justify-between bg-slate-50 p-4 rounded-xl border border-slate-200 mb-6">
                 <span class="font-bold text-slate-600 text-sm">Quantidade:</span>
                 <div class="flex items-center gap-3">
-                    <button onclick="modQtdModalAdd(-1)" class="w-10 h-10 bg-white border border-slate-300 rounded-lg text-slate-500 active:scale-95 shadow-sm"><i class="fas fa-minus"></i></button>
+                    <button type="button" onclick="modQtdModalAdd(-1)" class="w-10 h-10 bg-white border border-slate-300 rounded-lg text-slate-500 active:scale-95 shadow-sm"><i class="fas fa-minus"></i></button>
                     <input type="number" id="add-cart-qtd" value="1" readonly class="w-10 text-center bg-transparent font-black text-2xl outline-none text-slate-800">
-                    <button onclick="modQtdModalAdd(1)" class="w-10 h-10 bg-brand-500 text-white rounded-lg active:scale-95 shadow-md shadow-brand-200"><i class="fas fa-plus"></i></button>
+                    <button type="button" onclick="modQtdModalAdd(1)" class="w-10 h-10 bg-brand-500 text-white rounded-lg active:scale-95 shadow-md shadow-brand-200"><i class="fas fa-plus"></i></button>
                 </div>
             </div>
             <div class="flex gap-2">
-                <button onclick="fecharModalAddCarrinho()" class="flex-1 bg-slate-100 text-slate-600 font-bold py-3 rounded-xl active:scale-95">Cancelar</button>
-                <button onclick="confirmarAddCarrinho()" class="flex-1 bg-brand-600 text-white font-bold py-3 rounded-xl shadow-lg active:scale-95">Confirmar</button>
+                <button type="button" onclick="fecharModalAddCarrinho()" class="flex-1 bg-slate-100 text-slate-600 font-bold py-3 rounded-xl active:scale-95">Cancelar</button>
+                <button type="button" onclick="confirmarAddCarrinho()" class="flex-1 bg-brand-600 text-white font-bold py-3 rounded-xl shadow-lg active:scale-95">Confirmar</button>
             </div>
         </div>
     </div>
 
-    <!-- Modal Carrinho e Finalizar -->
     <div id="modal-carrinho" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[150] flex items-end sm:items-center justify-center hidden-screen p-0 sm:p-4 transition-all">
         <div class="bg-white rounded-t-3xl sm:rounded-3xl p-6 w-full max-w-md shadow-2xl h-[90vh] sm:h-auto flex flex-col">
             <div class="flex justify-between items-center mb-6">
                 <h3 class="text-xl font-bold text-brand-900"><i class="fas fa-shopping-cart text-brand-500 mr-2"></i> Sacola de Compras</h3>
-                <button onclick="fecharCarrinho()" class="w-10 h-10 bg-slate-100 text-slate-500 rounded-full hover:bg-slate-200 active:scale-95"><i class="fas fa-times"></i></button>
+                <button type="button" onclick="fecharCarrinho()" class="w-10 h-10 bg-slate-100 text-slate-500 rounded-full hover:bg-slate-200 active:scale-95"><i class="fas fa-times"></i></button>
             </div>
             <div id="lista-carrinho" class="flex-1 overflow-y-auto no-scrollbar flex flex-col gap-4 mb-4"></div>
             <div class="border-t border-slate-100 pt-4">
@@ -333,7 +326,7 @@
                     <span id="carrinho-total" class="text-3xl font-black text-brand-600">R$ 0,00</span>
                 </div>
                 <div class="flex gap-2">
-                    <button onclick="iniciarCheckout()" class="flex-1 bg-emerald-600 text-white font-bold py-4 rounded-xl shadow-lg active:scale-95 text-sm flex items-center justify-center gap-2">
+                    <button type="button" onclick="iniciarCheckout()" class="flex-1 bg-emerald-600 text-white font-bold py-4 rounded-xl shadow-lg active:scale-95 text-sm flex items-center justify-center gap-2">
                         <i class="fas fa-check-circle text-lg"></i> Finalizar Compra
                     </button>
                 </div>
@@ -341,7 +334,6 @@
         </div>
     </div>
 
-    <!-- Modal Checkout Unificado -->
     <div id="modal-checkout-pgto" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[200] flex items-center justify-center hidden-screen p-4">
         <div class="bg-white rounded-3xl p-6 w-full max-w-md shadow-2xl">
             <h3 class="text-xl font-bold text-brand-900 mb-4">Concluir Pagamento</h3>
@@ -372,7 +364,6 @@
                     </div>
                 </div>
 
-                <!-- Box Dinheiro -->
                 <div id="box-troco" class="hidden-screen border-t border-slate-100 pt-3">
                     <div class="mb-3">
                         <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Valor Recebido (R$)</label>
@@ -384,7 +375,6 @@
                     </div>
                 </div>
                 
-                <!-- Box Cartão de Crédito -->
                 <div id="box-parcelas-cartao" class="hidden-screen border-t border-slate-100 pt-3">
                     <div class="grid grid-cols-2 gap-3 mb-3">
                         <div>
@@ -411,18 +401,15 @@
                     </div>
                 </div>
 
-                <!-- Box Carnê -->
                 <div id="box-carne" class="hidden-screen border-t border-slate-100 pt-3">
                     <div class="mb-3">
                         <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Selecionar Cliente</label>
                         <select id="checkout-sel-cliente" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-3 outline-none text-sm font-bold text-slate-700"></select>
                     </div>
-                    
                     <div class="mb-3">
                         <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Entrada / Pago Hoje (R$)</label>
                         <input type="number" id="checkout-carne-entrada" step="0.01" oninput="calcularCarne()" class="w-full bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl px-4 py-3 outline-none text-sm font-black" placeholder="0.00">
                     </div>
-
                     <div class="grid grid-cols-2 gap-3 mb-3">
                         <div>
                             <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Nº Parcelas (Saldo)</label>
@@ -437,7 +424,6 @@
                         <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">1º Vencimento (Parcelas)</label>
                         <input type="date" id="checkout-carne-data" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-sm outline-none font-bold text-slate-700">
                     </div>
-                    
                     <div class="p-3 bg-brand-50 rounded-xl border border-brand-100 flex justify-between items-center mb-1">
                         <span class="text-xs text-brand-700 font-bold">Total Final (Entrada+Saldo):</span>
                         <span class="text-lg font-black text-brand-600" id="checkout-carne-total-juros">R$ 0,00</span>
@@ -448,19 +434,18 @@
                 </div>
 
                 <div class="flex gap-3 mt-2">
-                    <button onclick="fecharModalCheckout()" class="flex-1 bg-slate-100 text-slate-600 font-bold py-3 rounded-xl active:scale-95">Voltar</button>
-                    <button onclick="confirmarVenda()" class="flex-1 bg-emerald-600 text-white font-bold py-3 rounded-xl shadow-lg active:scale-95 flex justify-center items-center gap-2"><i class="fas fa-check"></i> Confirmar</button>
+                    <button type="button" onclick="fecharModalCheckout()" class="flex-1 bg-slate-100 text-slate-600 font-bold py-3 rounded-xl active:scale-95">Voltar</button>
+                    <button type="button" onclick="confirmarVenda()" class="flex-1 bg-emerald-600 text-white font-bold py-3 rounded-xl shadow-lg active:scale-95 flex justify-center items-center gap-2"><i class="fas fa-check"></i> Confirmar</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Modal Visualização do Relatório -->
     <div id="modal-preview-relatorio" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[300] flex items-center justify-center hidden-screen p-4">
         <div class="bg-white rounded-3xl p-6 w-full max-w-4xl shadow-2xl h-[90vh] flex flex-col">
             <div class="flex justify-between items-center mb-2">
                 <h3 class="text-xl font-bold text-brand-900 flex items-center gap-2"><i class="fas fa-table text-emerald-600"></i> Relatório Pronto</h3>
-                <button onclick="fecharPreviewRelatorio()" class="w-10 h-10 bg-slate-100 text-slate-500 rounded-full hover:bg-slate-200 active:scale-95"><i class="fas fa-times"></i></button>
+                <button type="button" onclick="fecharPreviewRelatorio()" class="w-10 h-10 bg-slate-100 text-slate-500 rounded-full hover:bg-slate-200 active:scale-95"><i class="fas fa-times"></i></button>
             </div>
             <p class="text-sm text-slate-500 mb-4">Selecione por onde deseja enviar os dados das vendas.</p>
             
@@ -483,18 +468,17 @@
             </div>
             
             <div class="flex gap-2 mt-auto">
-                <button onclick="fecharPreviewRelatorio()" class="w-1/3 bg-slate-100 text-slate-600 font-bold py-4 rounded-xl active:scale-95">Voltar</button>
-                <button onclick="enviarRelatorioWhatsapp()" class="w-1/3 bg-green-500 text-white font-bold py-4 rounded-xl shadow-lg active:scale-95 flex flex-col justify-center items-center gap-1 text-[10px] sm:text-xs">
+                <button type="button" onclick="fecharPreviewRelatorio()" class="w-1/3 bg-slate-100 text-slate-600 font-bold py-4 rounded-xl active:scale-95">Voltar</button>
+                <button type="button" onclick="enviarRelatorioWhatsapp()" class="w-1/3 bg-green-500 text-white font-bold py-4 rounded-xl shadow-lg active:scale-95 flex flex-col justify-center items-center gap-1 text-[10px] sm:text-xs">
                     <i class="fab fa-whatsapp text-lg"></i> WhatsApp
                 </button>
-                <button onclick="enviarRelatorioEmail()" class="w-1/3 bg-blue-500 text-white font-bold py-4 rounded-xl shadow-lg active:scale-95 flex flex-col justify-center items-center gap-1 text-[10px] sm:text-xs">
+                <button type="button" onclick="enviarRelatorioEmail()" class="w-1/3 bg-blue-500 text-white font-bold py-4 rounded-xl shadow-lg active:scale-95 flex flex-col justify-center items-center gap-1 text-[10px] sm:text-xs">
                     <i class="fas fa-envelope text-lg"></i> E-mail
                 </button>
             </div>
         </div>
     </div>
 
-    <!-- Modais de Cadastro (Cliente, Fornecedor) -->
     <div id="modal-cliente" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[200] flex items-center justify-center hidden-screen p-4 overflow-y-auto">
         <div class="bg-white rounded-3xl p-6 w-full max-w-md shadow-2xl my-auto">
             <h3 class="text-xl font-bold text-brand-900 mb-4">Novo Cliente</h3>
@@ -508,8 +492,8 @@
                 <input type="tel" id="cli-tel" placeholder="Telefone" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none">
                 <textarea id="cli-endereco" placeholder="Endereço Completo" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none h-20"></textarea>
                 <div class="flex gap-3 mt-2">
-                    <button onclick="fecharModalCliente()" class="flex-1 bg-slate-100 text-slate-600 font-bold py-3 rounded-xl">Cancelar</button>
-                    <button onclick="salvarNovoCliente()" class="flex-1 bg-brand-600 text-white font-bold py-3 rounded-xl shadow-lg">Salvar</button>
+                    <button type="button" onclick="fecharModalCliente()" class="flex-1 bg-slate-100 text-slate-600 font-bold py-3 rounded-xl">Cancelar</button>
+                    <button type="button" onclick="salvarNovoCliente()" class="flex-1 bg-brand-600 text-white font-bold py-3 rounded-xl shadow-lg">Salvar</button>
                 </div>
             </div>
         </div>
@@ -528,19 +512,18 @@
                 <input type="email" id="forn-email" placeholder="E-mail" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none text-slate-700">
                 <textarea id="forn-detalhes" placeholder="Observações" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none h-20 text-slate-700"></textarea>
                 <div class="flex gap-3 mt-2">
-                    <button onclick="fecharModalFornecedor()" class="flex-1 bg-slate-100 text-slate-600 font-bold py-3 rounded-xl">Cancelar</button>
-                    <button onclick="salvarNovoFornecedor()" class="flex-1 bg-brand-600 text-white font-bold py-3 rounded-xl shadow-lg">Salvar</button>
+                    <button type="button" onclick="fecharModalFornecedor()" class="flex-1 bg-slate-100 text-slate-600 font-bold py-3 rounded-xl">Cancelar</button>
+                    <button type="button" onclick="salvarNovoFornecedor()" class="flex-1 bg-brand-600 text-white font-bold py-3 rounded-xl shadow-lg">Salvar</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Modal Resumo Estoque -->
     <div id="modal-resumo-estoque" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[200] flex items-center justify-center hidden-screen p-4">
         <div class="bg-white rounded-3xl p-6 w-full max-w-sm shadow-2xl">
             <div class="flex justify-between items-center mb-5">
                 <h3 class="text-xl font-bold text-brand-900 flex items-center gap-2"><i class="fas fa-clipboard-list text-emerald-600"></i> Resumo Geral</h3>
-                <button onclick="fecharResumoEstoque()" class="text-slate-400 hover:text-slate-600 active:scale-95"><i class="fas fa-times text-xl"></i></button>
+                <button type="button" onclick="fecharResumoEstoque()" class="text-slate-400 hover:text-slate-600 active:scale-95"><i class="fas fa-times text-xl"></i></button>
             </div>
             <div class="flex flex-col gap-3 mb-6">
                 <div class="flex justify-between items-center border-b border-slate-100 pb-3">
@@ -560,19 +543,19 @@
                     <span id="resumo-estoque-lucro" class="text-lg font-black text-emerald-600">R$ 0,00</span>
                 </div>
             </div>
-            <button onclick="fecharResumoEstoque()" class="w-full bg-slate-100 text-slate-700 font-bold py-3 rounded-xl active:scale-95">Fechar</button>
+            <button type="button" onclick="fecharResumoEstoque()" class="w-full bg-slate-100 text-slate-700 font-bold py-3 rounded-xl active:scale-95">Fechar</button>
         </div>
     </div>
 
-    <!-- Modal Confirmação Geral -->
-    <div id="modal-confirmacao" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[400] flex items-center justify-center hidden-screen p-4">
-        <div class="bg-white rounded-3xl p-6 w-full max-w-sm shadow-xl">
+    <!-- Modal Confirmação Blocado e Central -->
+    <div id="modal-confirmacao" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[9999] flex items-center justify-center hidden-screen p-4">
+        <div class="bg-white rounded-3xl p-6 w-full max-w-sm shadow-2xl">
             <div id="modal-confirm-icon" class="w-14 h-14 bg-red-100 text-red-500 rounded-full flex items-center justify-center text-2xl mx-auto mb-4"><i class="fas fa-exclamation-triangle"></i></div>
             <h3 id="modal-confirm-titulo" class="text-xl font-bold text-center text-slate-800 mb-2">Atenção</h3>
             <p id="modal-confirm-texto" class="text-center text-slate-500 mb-6 text-sm"></p>
             <div class="flex gap-3">
-                <button onclick="fecharModalConfirm()" class="flex-1 bg-slate-100 text-slate-600 font-bold py-3 rounded-xl active:scale-95">Não / Cancelar</button>
-                <button id="btn-confirm-yes" class="flex-1 bg-red-500 text-white font-bold py-3 rounded-xl shadow-lg active:scale-95">Sim, Confirmar</button>
+                <button type="button" onclick="fecharModalConfirm()" class="flex-1 bg-slate-100 text-slate-600 font-bold py-3 rounded-xl active:scale-95 transition-all">Cancelar</button>
+                <button type="button" id="btn-confirm-yes" class="flex-1 bg-red-500 text-white font-bold py-3 rounded-xl shadow-lg active:scale-95 transition-all">Confirmar</button>
             </div>
         </div>
     </div>
@@ -580,20 +563,20 @@
     <!-- ================== NAVEGAÇÃO INFERIOR ================== -->
     <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 shadow-lg z-30">
         <div class="max-w-4xl mx-auto flex justify-between p-1 overflow-x-auto no-scrollbar">
-            <button onclick="navegarApp('estoque')" id="tab-estoque" class="flex-1 flex flex-col items-center p-2 text-slate-400 min-w-[60px] tab-active transition-all"><i class="fas fa-box text-lg mb-1"></i><span class="text-[8px] sm:text-[9px] font-bold mt-1 uppercase">Estoque</span></button>
-            <button onclick="navegarApp('clientes')" id="tab-clientes" class="flex-1 flex flex-col items-center p-2 text-slate-400 min-w-[60px] transition-all"><i class="fas fa-users text-lg mb-1"></i><span class="text-[8px] sm:text-[9px] font-bold mt-1 uppercase">Clientes</span></button>
-            <button onclick="navegarApp('fornecedores')" id="tab-fornecedores" class="flex-1 flex flex-col items-center p-2 text-slate-400 min-w-[60px] transition-all"><i class="fas fa-truck text-lg mb-1"></i><span class="text-[8px] sm:text-[9px] font-bold mt-1 uppercase">Fornec.</span></button>
-            <button onclick="navegarApp('vendas')" id="tab-vendas" class="relative flex-1 flex flex-col items-center p-2 text-slate-400 min-w-[60px] transition-all">
+            <button type="button" onclick="navegarApp('estoque')" id="tab-estoque" class="flex-1 flex flex-col items-center p-2 text-slate-400 min-w-[60px] tab-active transition-all"><i class="fas fa-box text-lg mb-1"></i><span class="text-[8px] sm:text-[9px] font-bold mt-1 uppercase">Estoque</span></button>
+            <button type="button" onclick="navegarApp('clientes')" id="tab-clientes" class="flex-1 flex flex-col items-center p-2 text-slate-400 min-w-[60px] transition-all"><i class="fas fa-users text-lg mb-1"></i><span class="text-[8px] sm:text-[9px] font-bold mt-1 uppercase">Clientes</span></button>
+            <button type="button" onclick="navegarApp('fornecedores')" id="tab-fornecedores" class="flex-1 flex flex-col items-center p-2 text-slate-400 min-w-[60px] transition-all"><i class="fas fa-truck text-lg mb-1"></i><span class="text-[8px] sm:text-[9px] font-bold mt-1 uppercase">Fornec.</span></button>
+            <button type="button" onclick="navegarApp('vendas')" id="tab-vendas" class="relative flex-1 flex flex-col items-center p-2 text-slate-400 min-w-[60px] transition-all">
                 <i class="fas fa-list-alt text-lg mb-1"></i>
                 <span class="text-[8px] sm:text-[9px] font-bold mt-1 uppercase">Relatórios</span>
                 <span id="badge-alertas" class="absolute top-1 right-2 sm:right-4 bg-red-500 text-white text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center hidden-screen shadow-md">0</span>
             </button>
-            <button onclick="navegarApp('graficos')" id="tab-graficos" class="flex-1 flex flex-col items-center p-2 text-slate-400 min-w-[60px] transition-all"><i class="fas fa-chart-pie text-lg mb-1"></i><span class="text-[8px] sm:text-[9px] font-bold mt-1 uppercase">Gráficos</span></button>
-            <button onclick="navegarApp('despesas')" id="tab-despesas" class="flex-1 flex flex-col items-center p-2 text-slate-400 min-w-[60px] transition-all"><i class="fas fa-wallet text-lg mb-1"></i><span class="text-[8px] sm:text-[9px] font-bold mt-1 uppercase">Despesas</span></button>
+            <button type="button" onclick="navegarApp('graficos')" id="tab-graficos" class="flex-1 flex flex-col items-center p-2 text-slate-400 min-w-[60px] transition-all"><i class="fas fa-chart-pie text-lg mb-1"></i><span class="text-[8px] sm:text-[9px] font-bold mt-1 uppercase">Gráficos</span></button>
+            <button type="button" onclick="navegarApp('despesas')" id="tab-despesas" class="flex-1 flex flex-col items-center p-2 text-slate-400 min-w-[60px] transition-all"><i class="fas fa-wallet text-lg mb-1"></i><span class="text-[8px] sm:text-[9px] font-bold mt-1 uppercase">Despesas</span></button>
         </div>
     </nav>
 
-    <!-- SCRIPTS E FIREBASE -->
+    <!-- SCRIPT ÚNICO DO APLICATIVO -->
     <script>
         var dbProdutos = [];
         var dbClientes = [];
@@ -612,7 +595,7 @@
         let filtroClienteIdAtual = null;
         let compraAtualEstorno = null;
 
-        // ================= CONEXÃO FIREBASE =================
+        // Conexão com Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyCFo6uzup9jpuVQ0DdqGSCqVsZTONYlHeA",
             authDomain: "appvendasmariajose.firebaseapp.com",
@@ -625,13 +608,8 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
-        // ATIVAÇÃO DE PERSISTÊNCIA OFFLINE
         db.enablePersistence().catch((err) => {
-            if (err.code == 'failed-precondition') {
-                console.warn("Múltiplas abas abertas. Persistência desativada.");
-            } else if (err.code == 'unimplemented') {
-                console.warn("Navegador não suporta persistência.");
-            }
+            console.warn("Aviso PWA/Offline:", err.code);
         });
 
         async function inicializarApp() {
@@ -647,8 +625,7 @@
                     dbFornecedores = dados.fornecedores || [];
                 }
                 renderCategorias();
-                verificarAlertasVencimento(true);
-                verificarBaixasAutomaticas();
+                verificarAlertasVencimento();
             } catch(e) {
                 console.error("Erro no carregamento:", e);
                 renderCategorias();
@@ -666,24 +643,48 @@
                     fornecedores: dbFornecedores
                 });
             } catch(e) {
-                console.warn("Salvando offline. Sincronização pendente.");
+                console.warn("Salvando offline.");
             }
         }
 
-        // --- UTILITÁRIOS ---
         const fmtMoeda = v => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0);
         const fmtData = s => new Date(s).toLocaleDateString('pt-BR');
         const fmtDataHora = s => new Date(s).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
         const guid = () => Date.now().toString() + Math.random().toString(36).substr(2, 5);
+        
         const showToast = m => {
             const c = document.getElementById('toast-container');
             document.getElementById('toast-msg').querySelector('span').textContent = m;
             c.classList.remove('hidden-screen'); 
             c.classList.add('toast-enter');
-            setTimeout(() => c.classList.add('hidden-screen'), 3000);
+            setTimeout(() => {
+                c.classList.add('hidden-screen');
+                c.classList.remove('toast-enter');
+            }, 3000);
         };
 
-        // --- NAVEGAÇÃO ---
+        // MODAL CENTRAL DE CONFIRMAÇÃO (REESCRITO E BLINDADO)
+        function openModalConfirm(t, tx, cb, color = 'red') {
+            document.getElementById('modal-confirm-titulo').textContent = t; 
+            document.getElementById('modal-confirm-texto').textContent = tx;
+            const btn = document.getElementById('btn-confirm-yes');
+            
+            btn.className = `flex-1 ${color === 'red' ? 'bg-red-500 hover:bg-red-600' : 'bg-emerald-600 hover:bg-emerald-700'} text-white font-bold py-3 rounded-xl shadow-lg active:scale-95 transition-all`;
+            
+            // Define o clique do botão de confirmação e força o fechamento.
+            btn.onclick = () => { 
+                cb(); 
+                fecharModalConfirm(); 
+            }; 
+            
+            document.getElementById('modal-confirmacao').classList.remove('hidden-screen');
+        }
+
+        function fecharModalConfirm() { 
+            document.getElementById('modal-confirmacao').classList.add('hidden-screen'); 
+        }
+
+        // TELA NAVEGAÇÃO
         let currentCat = '';
         function navegarApp(screen) {
             ['screen-estoque', 'screen-clientes', 'screen-fornecedores', 'screen-vendas', 'screen-graficos', 'screen-despesas'].forEach(s => document.getElementById(s).classList.add('hidden-screen'));
@@ -694,12 +695,13 @@
 
             if (screen === 'estoque') renderCategorias();
             if (screen === 'clientes') renderClientes();
-            if (screen === 'vendas') { verificarBaixasAutomaticas(); renderRelatorios(); }
+            if (screen === 'fornecedores') renderFornecedores();
+            if (screen === 'vendas') renderRelatorios();
             if (screen === 'graficos') renderGraficos();
             if (screen === 'despesas') renderDespesas();
         }
 
-        // --- INTELIGÊNCIA DE ESTOQUE ---
+        // --- ESTOQUE E INTELIGÊNCIA ---
         function analisarEstoqueInteligente() {
             const hoje = new Date();
             const trintaDias = 30 * 24 * 60 * 60 * 1000;
@@ -753,10 +755,9 @@
                 </div>
             `;
             const listParados = document.getElementById('lista-modal-parados');
-            listParados.innerHTML = itensParados.length > 0 ? itensParados.map(p => `<div class="bg-orange-50 p-3 rounded-xl border border-orange-100 flex justify-between items-center"><div><p class="font-bold text-sm text-slate-800">${p.nome || 'S/N'}</p><p class="text-[10px] text-orange-600">Sem giro há mais de 30 dias.</p></div><button onclick="document.getElementById('modal-alertas-estoque').classList.add('hidden-screen'); abrirCategoria('${p.categoria}', 'Verificando')" class="text-orange-600 text-xs font-bold underline">Ver</button></div>`).join('') : '<p class="text-xs text-slate-500">Nenhum item parado.</p>';
+            listParados.innerHTML = itensParados.length > 0 ? itensParados.map(p => `<div class="bg-orange-50 p-3 rounded-xl border border-orange-100 flex justify-between items-center"><div><p class="font-bold text-sm text-slate-800">${p.nome || 'S/N'}</p><p class="text-[10px] text-orange-600">Sem giro há mais de 30 dias.</p></div><button type="button" onclick="document.getElementById('modal-alertas-estoque').classList.add('hidden-screen'); abrirCategoria('${p.categoria}', 'Verificando')" class="text-orange-600 text-xs font-bold underline">Ver</button></div>`).join('') : '<p class="text-xs text-slate-500">Nenhum item parado.</p>';
         }
 
-        // --- CATEGORIAS E PRODUTOS ---
         const categoriasInfo = [
             { id: 'vestidos', nome: 'Vestidos', icone: 'fa-female' }, { id: 'blusas', nome: 'Blusas', icone: 'fa-tshirt' },
             { id: 'calcas', nome: 'Calças', icone: 'fa-socks' }, { id: 'saias', nome: 'Saias', icone: 'fa-vest' },
@@ -800,22 +801,16 @@
                 const badgeParado = (analise && analise.parado) ? `<span class="bg-orange-100 text-orange-700 text-[9px] px-2 py-0.5 rounded-md font-black ml-2 border border-orange-200 uppercase"><i class="fas fa-clock"></i> Parado</span>` : '';
 
                 const div = document.createElement('div');
-                div.id = `card-${p.id}`;
                 div.className = `bg-white p-5 rounded-3xl border border-brand-100 shadow-sm ${p.isDraft ? 'is-draft' : ''} ${parseInt(p.estoque) <= 3 ? 'alert-low-stock' : ''} ${analise && analise.parado ? 'alert-parado' : ''}`;
                 
-                let footerHtml = '';
-                if (p.isDraft) {
-                    footerHtml = `
-                        <button onclick="salvarNovoItemNoEstoque('${p.id}')" class="flex-1 bg-emerald-600 text-white font-bold py-3 rounded-xl shadow-md flex justify-center items-center gap-2 active:scale-95 transition">
-                            <i class="fas fa-check-circle"></i> Confirmar Cadastro
-                        </button>
-                    `;
-                } else {
-                    footerHtml = `
-                        <button onclick="abrirModalAddCarrinho('${p.id}', 'cheio')" class="flex-1 bg-brand-600 text-white font-bold py-3 rounded-xl shadow-md flex justify-center items-center gap-1 active:scale-95 text-[11px] sm:text-sm"><i class="fas fa-tag"></i> Sacola (Cheio)</button>
-                        <button onclick="abrirModalAddCarrinho('${p.id}', 'desc')" class="flex-1 bg-white border border-brand-200 text-brand-700 font-bold py-3 rounded-xl flex justify-center items-center gap-1 active:scale-95 text-[11px] sm:text-sm"><i class="fas fa-percent"></i> Sacola (Desc.)</button>
-                    `;
-                }
+                let footerHtml = p.isDraft ? `
+                    <button type="button" onclick="salvarNovoItemNoEstoque('${p.id}')" class="flex-1 bg-emerald-600 text-white font-bold py-3 rounded-xl shadow-md flex justify-center items-center gap-2 active:scale-95 transition">
+                        <i class="fas fa-check-circle"></i> Confirmar Cadastro
+                    </button>
+                ` : `
+                    <button type="button" onclick="abrirModalAddCarrinho('${p.id}', 'cheio')" class="flex-1 bg-brand-600 text-white font-bold py-3 rounded-xl shadow-md flex justify-center items-center gap-1 active:scale-95 text-[11px] sm:text-sm"><i class="fas fa-tag"></i> Sacola (Cheio)</button>
+                    <button type="button" onclick="abrirModalAddCarrinho('${p.id}', 'desc')" class="flex-1 bg-white border border-brand-200 text-brand-700 font-bold py-3 rounded-xl flex justify-center items-center gap-1 active:scale-95 text-[11px] sm:text-sm"><i class="fas fa-percent"></i> Sacola (Desc.)</button>
+                `;
 
                 div.innerHTML = `
                     <div class="flex justify-between items-start border-b border-slate-50 pb-3 mb-3">
@@ -825,15 +820,15 @@
                             </span>
                             <input type="text" value="${p.nome}" onchange="updateProd('${p.id}', 'nome', this.value)" class="w-full bg-transparent font-bold text-slate-800 border-none p-0 outline-none" placeholder="Ex: Vestido Floral">
                         </div>
-                        <button onclick="deleteProd('${p.id}')" class="text-slate-300 hover:text-red-500 p-2"><i class="fas fa-trash"></i></button>
+                        <button type="button" onclick="deleteProd('${p.id}')" class="text-slate-300 hover:text-red-500 p-2"><i class="fas fa-trash"></i></button>
                     </div>
                     <div class="grid grid-cols-2 gap-3 mb-3">
                         <div class="bg-brand-50/50 p-2 rounded-2xl border border-brand-100 flex flex-col items-center">
                             <span class="text-[9px] font-bold text-brand-600 uppercase">Estoque</span>
                             <div class="flex items-center gap-2">
-                                <button onclick="modEstoque('${p.id}', -1)" class="w-7 h-7 bg-white rounded-full border border-brand-200 text-xs">-</button>
+                                <button type="button" onclick="modEstoque('${p.id}', -1)" class="w-7 h-7 bg-white rounded-full border border-brand-200 text-xs">-</button>
                                 <span class="font-black text-xl estoque-numero" id="estoque-${p.id}">${p.estoque}</span>
-                                <button onclick="modEstoque('${p.id}', 1)" class="w-7 h-7 bg-brand-500 text-white rounded-full text-xs">+</button>
+                                <button type="button" onclick="modEstoque('${p.id}', 1)" class="w-7 h-7 bg-brand-500 text-white rounded-full text-xs">+</button>
                             </div>
                         </div>
                         <div class="bg-white border border-slate-100 p-2 rounded-2xl flex flex-col">
@@ -877,7 +872,7 @@
                 delete p.isDraft;
                 saveDB();
                 renderProdutos();
-                showToast("Novo item adicionado ao estoque! 📦");
+                showToast("Item adicionado ao estoque! 📦");
             }, 'emerald');
         }
 
@@ -895,25 +890,26 @@
                 const p = dbProdutos[idx];
                 const novaQtd = Math.max(0, (parseInt(p.estoque) || 0) + delta);
                 if (p.isDraft) { p.estoque = novaQtd.toString(); renderProdutos(); return; }
-                openModalConfirm("Alterar Quantidade?", `Deseja mudar o estoque de "${p.nome || 'Produto'}" para ${novaQtd} unidades?`, () => {
-                    p.estoque = novaQtd.toString(); saveDB(); renderProdutos(); showToast("Quantidade atualizada! 📦");
+                openModalConfirm("Alterar Quantidade?", `Deseja mudar o estoque para ${novaQtd} unidades?`, () => {
+                    p.estoque = novaQtd.toString(); saveDB(); renderProdutos(); showToast("Quantidade atualizada!");
                 }, 'emerald');
             }
         }
 
         function deleteProd(id) {
-            openModalConfirm("Excluir Produto?", "Remover permanentemente este item?", () => {
+            openModalConfirm("Excluir Produto?", "Remover permanentemente este item do estoque?", () => {
                 dbProdutos = dbProdutos.filter(p => p.id !== id);
                 carrinho = carrinho.filter(c => c.pid !== id);
-                atualizarBadgeCarrinho(); saveDB(); renderProdutos();
+                atualizarBadgeCarrinho(); saveDB(); renderProdutos(); showToast("Produto Excluído.");
             });
         }
 
+        // --- CARRINHO ---
         function abrirModalAddCarrinho(pid, tipoPreco) {
             const p = dbProdutos.find(x => x.id === pid);
             if (!p || parseInt(p.estoque) <= 0) return alert("Sem estoque!");
             tempMaxEstoque = parseInt(p.estoque) - carrinho.filter(x => x.pid === pid).reduce((sum, i) => sum + i.qtde, 0);
-            if(tempMaxEstoque <= 0) return alert("Indisponível!");
+            if(tempMaxEstoque <= 0) return alert("Indisponível na quantidade desejada!");
             tempAddPid = pid; tempAddTipo = tipoPreco;
             document.getElementById('add-cart-pnome').textContent = p.nome || 'S/N';
             document.getElementById('add-cart-ptipo').textContent = tipoPreco === 'cheio' ? 'Preço Cheio' : 'Com Desconto';
@@ -931,7 +927,7 @@
             const qtd = parseInt(document.getElementById('add-cart-qtd').value);
             const idx = carrinho.findIndex(x => x.pid === tempAddPid && x.tipo === tempAddTipo);
             if (idx > -1) carrinho[idx].qtde += qtd; else carrinho.push({ pid: tempAddPid, qtde: qtd, tipo: tempAddTipo });
-            atualizarBadgeCarrinho(); fecharModalAddCarrinho(); showToast("Adicionado!");
+            atualizarBadgeCarrinho(); fecharModalAddCarrinho(); showToast("Item na sacola!");
         }
 
         function fecharModalAddCarrinho() { document.getElementById('modal-add-carrinho').classList.add('hidden-screen'); }
@@ -959,7 +955,7 @@
             carrinho.forEach((item, index) => {
                 const info = calcularItemCarrinho(item);
                 total += info.valorTotal;
-                lista.innerHTML += `<div class="bg-slate-50 p-4 rounded-xl flex justify-between items-center"><div><p class="font-bold text-sm">${item.qtde}x ${info.nome}</p><p class="text-[10px] uppercase text-brand-600">${item.tipo}</p></div><div class="text-right"><p class="font-black text-brand-600">${fmtMoeda(info.valorTotal)}</p><button onclick="removerDoCarrinho(${index})" class="text-red-400 text-xs mt-1 underline">Remover</button></div></div>`;
+                lista.innerHTML += `<div class="bg-slate-50 p-4 rounded-xl flex justify-between items-center"><div><p class="font-bold text-sm">${item.qtde}x ${info.nome}</p><p class="text-[10px] uppercase text-brand-600">${item.tipo}</p></div><div class="text-right"><p class="font-black text-brand-600">${fmtMoeda(info.valorTotal)}</p><button type="button" onclick="removerDoCarrinho(${index})" class="text-red-400 text-xs mt-1 underline">Remover</button></div></div>`;
             });
             document.getElementById('carrinho-total').textContent = fmtMoeda(total);
             document.getElementById('modal-carrinho').classList.remove('hidden-screen');
@@ -968,6 +964,7 @@
         function removerDoCarrinho(i) { carrinho.splice(i, 1); atualizarBadgeCarrinho(); abrirCarrinho(); }
         function fecharCarrinho() { document.getElementById('modal-carrinho').classList.add('hidden-screen'); }
 
+        // --- CHECKOUT ---
         function iniciarCheckout() {
             if(carrinho.length === 0) return;
             totalCheckoutAtual = carrinho.reduce((sum, item) => sum + calcularItemCarrinho(item).valorTotal, 0);
@@ -1071,6 +1068,7 @@
             }
         }
 
+        // --- ESTORNOS E RELATÓRIOS ---
         function abrirModalEstorno(vId) {
             const v = dbVendas.find(x => x.id === vId); if(!v) return;
             compraAtualEstorno = v.idCompra || v.id;
@@ -1083,8 +1081,8 @@
             if (vendas.length === 0) { fecharModalEstorno(); renderRelatorios(); return; }
             const container = document.getElementById('estorno-content');
             container.innerHTML = `<h4 class="font-bold text-slate-700 mb-2 mt-4">Itens da Compra</h4><div class="space-y-2 mb-6">` + 
-                vendas.map(item => `<div class="bg-slate-50 p-3 rounded-xl border flex justify-between items-center"><div><p class="font-bold text-sm">${item.pnome}</p><p class="text-xs text-slate-500">${item.qtde} un.</p></div><button onclick="estornarUmItem('${item.id}')" class="bg-orange-100 text-orange-600 px-3 py-2 rounded-lg text-xs font-bold active:scale-95">Devolver 1</button></div>`).join('') +
-                `</div><button onclick="estornoTotal()" class="w-full bg-red-50 text-red-600 border border-red-200 font-bold py-4 rounded-xl shadow-md active:scale-95 transition flex justify-center items-center gap-2"><i class="fas fa-trash-alt"></i> Cancelar Toda a Venda</button>`;
+                vendas.map(item => `<div class="bg-slate-50 p-3 rounded-xl border flex justify-between items-center"><div><p class="font-bold text-sm">${item.pnome}</p><p class="text-xs text-slate-500">${item.qtde} un.</p></div><button type="button" onclick="estornarUmItem('${item.id}')" class="bg-orange-100 text-orange-600 px-3 py-2 rounded-lg text-xs font-bold active:scale-95">Devolver 1</button></div>`).join('') +
+                `</div><button type="button" onclick="estornoTotal()" class="w-full bg-red-50 text-red-600 border border-red-200 font-bold py-4 rounded-xl shadow-md active:scale-95 transition flex justify-center items-center gap-2"><i class="fas fa-trash-alt"></i> Cancelar Toda a Venda</button>`;
         }
 
         function estornarUmItem(vId) {
@@ -1109,24 +1107,13 @@
         }
 
         function estornoTotal() {
-            openModalConfirm("Cancelar Tudo?", "Devolve itens e anula débitos.", () => {
+            openModalConfirm("Cancelar Tudo?", "Devolver todos os itens ao estoque e anular débitos?", () => {
                 dbVendas.filter(x => x.idCompra === compraAtualEstorno || x.id === compraAtualEstorno).forEach(i => modEstoqueDireto(i.pid, i.qtde));
                 dbVendas = dbVendas.filter(x => x.idCompra !== compraAtualEstorno && x.id !== compraAtualEstorno);
                 dbParcelas = dbParcelas.filter(x => x.vid !== compraAtualEstorno);
                 saveDB(); fecharModalEstorno(); renderRelatorios(); showToast("Venda Cancelada.");
             });
         }
-
-        function renderClientes() {
-            const list = document.getElementById('listaClientes'); list.innerHTML = '';
-            document.getElementById('msg-vazia-clientes').classList.toggle('hidden-screen', dbClientes.length > 0);
-            dbClientes.forEach(c => {
-                const totalD = dbParcelas.filter(p => p.cid === c.id && p.status === 'pendente').reduce((a, b) => a + b.valor, 0);
-                list.innerHTML += `<div class="bg-white p-5 rounded-3xl border border-brand-100 shadow-sm"><div class="flex justify-between items-start"><div><h3 class="font-bold text-slate-800 text-lg">${c.nome}</h3><p class="text-xs text-slate-400">${c.tel}</p></div><button onclick="deleteCli('${c.id}')" class="text-slate-200 hover:text-red-500"><i class="fas fa-trash"></i></button></div>${totalD > 0 ? `<div class="mt-4 pt-3 border-t flex justify-between items-center"><div><span class="text-[9px] text-red-500 font-bold uppercase">Dívida</span><p class="font-black text-red-600">${fmtMoeda(totalD)}</p></div><button onclick="abrirModalGerenciarParcelas('${c.id}')" class="bg-red-50 text-red-600 px-3 py-2 rounded-xl text-xs font-bold">Ver</button></div>` : ''}</div>`;
-            });
-        }
-
-        function deleteCli(id) { openModalConfirm("Apagar Cliente?", "Isso remove o cadastro permanentemente.", () => { dbClientes = dbClientes.filter(c => c.id !== id); saveDB(); renderClientes(); }); }
 
         function renderRelatorios() {
             const list = document.getElementById('listaVendas'); list.innerHTML = '';
@@ -1138,30 +1125,134 @@
             document.getElementById('resumo-pendente').textContent = fmtMoeda(dbParcelas.filter(p => p.status === 'pendente').reduce((a,b) => a+b.valor, 0));
             document.getElementById('resumo-lucro-real').textContent = fmtMoeda(dbVendas.reduce((a,b) => a+b.lucro, 0));
             hist.forEach(v => {
-                list.innerHTML += `<div class="bg-white p-4 rounded-2xl border flex justify-between items-center shadow-sm"><div><p class="font-bold text-slate-800 text-sm">${v.qtde}x ${v.pnome}</p><p class="text-[10px] text-brand-600 font-bold uppercase">${v.metodo} • ${fmtDataHora(v.data)}</p><span class="text-[10px] bg-emerald-50 text-emerald-600 px-2 py-1 rounded-md font-bold">${fmtMoeda(v.valor)}</span></div><button onclick="abrirModalEstorno('${v.id}')" class="text-slate-200 hover:text-orange-500 p-2"><i class="fas fa-undo-alt text-xl"></i></button></div>`;
+                list.innerHTML += `<div class="bg-white p-4 rounded-2xl border flex justify-between items-center shadow-sm"><div><p class="font-bold text-sm">${v.qtde}x ${v.pnome}</p><p class="text-[10px] text-brand-600 font-bold uppercase">${v.metodo} • ${fmtDataHora(v.data)}</p><span class="text-[10px] bg-emerald-50 text-emerald-600 px-2 py-1 rounded-md font-bold">${fmtMoeda(v.valor)}</span></div><button type="button" onclick="abrirModalEstorno('${v.id}')" class="text-slate-200 hover:text-orange-500 p-2"><i class="fas fa-undo-alt text-xl"></i></button></div>`;
             });
         }
 
+        // --- MÓDULO DESPESAS ---
         function renderDespesas() {
             const hoje = new Date();
             const desp = dbDespesas.filter(d => new Date(d.data).getMonth() === hoje.getMonth());
-            document.getElementById('despesas-total').textContent = fmtMoeda(desp.reduce((a,b) => a+b.valor, 0));
+            const totalDespesas = desp.reduce((a,b) => a+b.valor, 0);
+            
+            let vendasMes = dbVendas.filter(v => new Date(v.data).getMonth() === hoje.getMonth() && new Date(v.data).getFullYear() === hoje.getFullYear());
+            let lucroMes = vendasMes.reduce((a,b) => a + (b.lucro || 0), 0);
+            let lucroLiquido = lucroMes - totalDespesas;
+
+            document.getElementById('despesas-total').textContent = fmtMoeda(totalDespesas);
+            document.getElementById('despesas-lucro-bruto').textContent = fmtMoeda(lucroMes);
+            document.getElementById('despesas-lucro-liquido').textContent = fmtMoeda(lucroLiquido);
+            
+            const barra = document.getElementById('barra-equilibrio');
+            const status = document.getElementById('status-equilibrio');
+            
+            if (lucroLiquido >= 0) {
+                barra.style.width = '100%';
+                barra.className = 'h-full transition-all duration-500 bg-blue-500';
+                status.innerHTML = '<span class="text-xs font-bold text-blue-600 uppercase">Em Lucro</span>';
+                document.getElementById('despesas-lucro-liquido').className = 'text-2xl font-black text-blue-600';
+            } else {
+                barra.style.width = '100%';
+                barra.className = 'h-full transition-all duration-500 bg-red-500';
+                status.innerHTML = '<span class="text-xs font-bold text-red-600 uppercase">Em Prejuízo</span>';
+                document.getElementById('despesas-lucro-liquido').className = 'text-2xl font-black text-red-500';
+            }
+
             const list = document.getElementById('lista-despesas'); list.innerHTML = '';
             document.getElementById('msg-vazia-despesas').classList.toggle('hidden-screen', desp.length > 0);
             desp.slice().reverse().forEach(d => {
-                list.innerHTML += `<div class="bg-white p-4 rounded-2xl border flex justify-between items-center shadow-sm"><div><p class="font-bold text-sm">${d.descricao}</p><p class="text-[10px] uppercase text-slate-400">${fmtDataHora(d.data)}</p></div><div class="flex items-center gap-3"><span class="font-black text-red-500">${fmtMoeda(d.valor)}</span><button onclick="excluirDespesa('${d.id}')" class="text-slate-200 hover:text-red-500 p-2"><i class="fas fa-trash-alt"></i></button></div></div>`;
+                list.innerHTML += `
+                <div class="bg-white p-4 rounded-2xl border flex justify-between items-center shadow-sm">
+                    <div>
+                        <p class="font-bold text-sm">${d.descricao}</p>
+                        <p class="text-[10px] uppercase text-slate-400">${fmtDataHora(d.data)}</p>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <span class="font-black text-red-500">${fmtMoeda(d.valor)}</span>
+                        <button type="button" onclick="excluirDespesa('${d.id}')" class="text-slate-200 hover:text-red-500 p-2 transition">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    </div>
+                </div>`;
             });
         }
 
         function salvarNovaDespesa() {
             const desc = document.getElementById('add-desp-desc').value;
             const val = parseFloat(document.getElementById('add-desp-valor').value);
-            if(!desc || !val) return alert("Preencha!");
+            if(!desc || !val) return alert("Preencha a descrição e o valor da despesa!");
             dbDespesas.push({ id: guid(), descricao: desc, valor: val, data: new Date().toISOString() });
-            saveDB(); document.getElementById('add-desp-desc').value = ''; document.getElementById('add-desp-valor').value = ''; renderDespesas();
+            saveDB(); 
+            document.getElementById('add-desp-desc').value = ''; 
+            document.getElementById('add-desp-valor').value = ''; 
+            renderDespesas();
+            showToast("Despesa registrada!");
         }
-        function excluirDespesa(id) { dbDespesas = dbDespesas.filter(x => x.id !== id); saveDB(); renderDespesas(); }
 
+        // CONFIRMAÇÃO DE EXCLUSÃO DE DESPESA GARANTIDA
+        function excluirDespesa(id) {
+            openModalConfirm("Apagar Despesa?", "Tem certeza que deseja remover esta despesa do mês permanentemente?", () => {
+                dbDespesas = dbDespesas.filter(x => x.id !== id);
+                saveDB();
+                renderDespesas();
+                showToast("Despesa removida com sucesso! 🗑️");
+            }, 'red');
+        }
+
+        // --- CLIENTES E FORNECEDORES ---
+        function renderClientes() {
+            const list = document.getElementById('listaClientes'); list.innerHTML = '';
+            document.getElementById('msg-vazia-clientes').classList.toggle('hidden-screen', dbClientes.length > 0);
+            dbClientes.forEach(c => {
+                const totalD = dbParcelas.filter(p => p.cid === c.id && p.status === 'pendente').reduce((a, b) => a + b.valor, 0);
+                list.innerHTML += `<div class="bg-white p-5 rounded-3xl border border-brand-100 shadow-sm"><div class="flex justify-between items-start"><div><h3 class="font-bold text-slate-800 text-lg">${c.nome}</h3><p class="text-xs text-slate-400">${c.tel}</p></div><button type="button" onclick="deleteCli('${c.id}')" class="text-slate-200 hover:text-red-500"><i class="fas fa-trash"></i></button></div>${totalD > 0 ? `<div class="mt-4 pt-3 border-t flex justify-between items-center"><div><span class="text-[9px] text-red-500 font-bold uppercase">Dívida</span><p class="font-black text-red-600">${fmtMoeda(totalD)}</p></div><button type="button" onclick="abrirModalGerenciarParcelas('${c.id}')" class="bg-red-50 text-red-600 px-3 py-2 rounded-xl text-xs font-bold">Ver</button></div>` : ''}</div>`;
+            });
+        }
+
+        function deleteCli(id) { 
+            openModalConfirm("Apagar Cliente?", "Isso remove o cadastro do cliente permanentemente.", () => { 
+                dbClientes = dbClientes.filter(c => c.id !== id); saveDB(); renderClientes(); showToast("Cliente excluído."); 
+            }); 
+        }
+
+        function abrirModalCliente() { document.getElementById('modal-cliente').classList.remove('hidden-screen'); }
+        function fecharModalCliente() { document.getElementById('modal-cliente').classList.add('hidden-screen'); }
+        function salvarNovoCliente() {
+            const n = document.getElementById('cli-nome').value; if(!n) return;
+            dbClientes.push({ id: guid(), nome: n, tel: document.getElementById('cli-tel').value });
+            saveDB(); fecharModalCliente(); renderClientes(); showToast("Cliente Adicionado!");
+        }
+
+        function abrirModalFornecedor() { document.getElementById('modal-fornecedor').classList.remove('hidden-screen'); }
+        function fecharModalFornecedor() { document.getElementById('modal-fornecedor').classList.add('hidden-screen'); }
+        function salvarNovoFornecedor() {
+            const empresa = document.getElementById('forn-empresa').value;
+            if(!empresa) return alert("Por favor, preencha o nome da empresa ou marca.");
+            dbFornecedores.push({ 
+                id: guid(), empresa: empresa, contato: document.getElementById('forn-contato').value,
+                cnpj: document.getElementById('forn-cnpj').value, tel: document.getElementById('forn-tel').value,
+                email: document.getElementById('forn-email').value, detalhes: document.getElementById('forn-detalhes').value
+            });
+            saveDB(); fecharModalFornecedor(); renderFornecedores(); showToast("Fornecedor Salvo!");
+        }
+
+        function renderFornecedores() {
+            const list = document.getElementById('listaFornecedores');
+            if(!list) return;
+            list.innerHTML = '';
+            document.getElementById('msg-vazia-fornecedores').classList.toggle('hidden-screen', dbFornecedores.length > 0);
+            dbFornecedores.forEach(f => {
+                list.innerHTML += `<div class="bg-white p-5 rounded-3xl border border-brand-100 shadow-sm"><div class="flex justify-between items-start"><div><h3 class="font-bold text-slate-800 text-lg">${f.empresa}</h3><p class="text-xs text-slate-400">${f.tel || f.contato || 'Sem telefone'}</p></div><button type="button" onclick="deleteForn('${f.id}')" class="text-slate-200 hover:text-red-500"><i class="fas fa-trash"></i></button></div></div>`;
+            });
+        }
+
+        function deleteForn(id) {
+            openModalConfirm("Apagar Fornecedor?", "Remover este parceiro permanentemente?", () => { 
+                dbFornecedores = dbFornecedores.filter(c => c.id !== id); saveDB(); renderFornecedores(); showToast("Fornecedor apagado.");
+            }); 
+        }
+
+        // --- GRÁFICOS E PARCELAS ---
         function renderGraficos() {
             const per = document.getElementById('grafico-periodo').value;
             const tipo = document.getElementById('grafico-tipo').value;
@@ -1195,16 +1286,6 @@
             }
         }
 
-        function openModalConfirm(t, tx, cb, color = 'red') {
-            document.getElementById('modal-confirm-titulo').textContent = t; 
-            document.getElementById('modal-confirm-texto').textContent = tx;
-            const btn = document.getElementById('btn-confirm-yes');
-            btn.className = `flex-1 ${color === 'red' ? 'bg-red-500' : 'bg-emerald-600'} text-white font-bold py-3 rounded-xl shadow-lg active:scale-95`;
-            btn.onclick = () => { cb(); fecharModalConfirm(); }; 
-            document.getElementById('modal-confirmacao').classList.remove('hidden-screen');
-        }
-        function fecharModalConfirm() { document.getElementById('modal-confirmacao').classList.add('hidden-screen'); }
-
         function abrirModalGerenciarParcelas(cid = null) { filtroClienteIdAtual = cid; renderListaTodasParcelas(); document.getElementById('modal-gerenciar-parcelas').classList.remove('hidden-screen'); }
         function fecharModalGerenciarParcelas() { document.getElementById('modal-gerenciar-parcelas').classList.add('hidden-screen'); }
 
@@ -1213,7 +1294,7 @@
             let ps = dbParcelas.filter(p => p.status === 'pendente' && (!filtroClienteIdAtual || p.cid === filtroClienteIdAtual));
             ps.sort((a,b) => new Date(a.vencimento) - new Date(b.vencimento));
             ps.forEach(p => {
-                list.innerHTML += `<div class="bg-slate-50 p-4 rounded-xl border flex justify-between items-center"><div><p class="font-bold text-sm">${p.cnome}</p><p class="text-[10px]">Venc: ${fmtData(p.vencimento)}</p></div><div class="flex items-center gap-3"><span class="font-black text-orange-500">${fmtMoeda(p.valor)}</span><button onclick="baixaParcelaModal('${p.id}')" class="bg-emerald-500 text-white px-3 py-2 rounded-lg text-xs font-bold shadow-md active:scale-95">Pagar</button></div></div>`;
+                list.innerHTML += `<div class="bg-slate-50 p-4 rounded-xl border flex justify-between items-center"><div><p class="font-bold text-sm">${p.cnome}</p><p class="text-[10px]">Venc: ${fmtData(p.vencimento)}</p></div><div class="flex items-center gap-3"><span class="font-black text-orange-500">${fmtMoeda(p.valor)}</span><button type="button" onclick="baixaParcelaModal('${p.id}')" class="bg-emerald-500 text-white px-3 py-2 rounded-lg text-xs font-bold shadow-md active:scale-95">Pagar</button></div></div>`;
             });
         }
         function baixaParcelaModal(id) { 
@@ -1245,6 +1326,16 @@
         }
         function fecharPreviewRelatorio() { document.getElementById('modal-preview-relatorio').classList.add('hidden-screen'); }
 
+        function formatarTextoRelatorio() {
+            let texto = "📊 *Relatório de Vendas*\n\n";
+            relatorioTempData.forEach(v => { texto += `- ${v.qtde}x ${v.pnome} (${v.metodo})\n  Valor: ${fmtMoeda(v.valor)}\n`; });
+            const total = relatorioTempData.reduce((acc, v) => acc + v.valor, 0);
+            texto += `\n*Total do Período: ${fmtMoeda(total)}*`;
+            return encodeURIComponent(texto);
+        }
+        function enviarRelatorioWhatsapp() { window.open(`https://wa.me/?text=${formatarTextoRelatorio()}`, '_blank'); }
+        function enviarRelatorioEmail() { window.open(`mailto:?subject=Relatório de Vendas&body=${formatarTextoRelatorio()}`, '_blank'); }
+
         function abrirResumoEstoque() {
             const { totalValorEstoque } = analisarEstoqueInteligente();
             let totalPecas = dbProdutos.reduce((a, b) => a + (parseInt(b.estoque) || 0), 0);
@@ -1257,26 +1348,14 @@
         }
         function fecharResumoEstoque() { document.getElementById('modal-resumo-estoque').classList.add('hidden-screen'); }
 
-        function abrirModalCliente() { document.getElementById('modal-cliente').classList.remove('hidden-screen'); }
-        function fecharModalCliente() { document.getElementById('modal-cliente').classList.add('hidden-screen'); }
-        function salvarNovoCliente() {
-            const n = document.getElementById('cli-nome').value; if(!n) return;
-            dbClientes.push({ id: guid(), nome: n, tel: document.getElementById('cli-tel').value });
-            saveDB(); fecharModalCliente(); renderClientes();
+        // PWA
+        if ('serviceWorker' in navigator && (window.location.protocol === 'https:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                .then(reg => { console.log('App Pronto para uso Offline!', reg.scope); })
+                .catch(err => { console.log('Erro PWA:', err); });
+            });
         }
-
-       // REGISTRO SERVICE WORKER (FORÇADO PARA OFFLINE)
-if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js', { scope: './' })
-        .then(reg => {
-            console.log('App Pronto para uso Offline!', reg);
-        })
-        .catch(err => {
-            console.log('Erro ao preparar modo offline:', err);
-        });
-    });
-}
 
         inicializarApp();
     </script>
