@@ -342,9 +342,15 @@
             <h3 class="text-xl font-bold text-brand-900 mb-4">Concluir Pagamento</h3>
             <div class="flex flex-col gap-4 max-h-[80vh] overflow-y-auto no-scrollbar">
                 
-                <div class="p-4 bg-brand-50 rounded-2xl border border-brand-100 flex justify-between items-center">
-                    <span class="text-sm text-brand-700 font-bold">Total da Compra:</span>
-                    <span class="text-2xl font-black text-brand-600" id="checkout-total-pgto">R$ 0,00</span>
+                <div class="p-4 bg-brand-50 rounded-2xl border border-brand-100 flex flex-col gap-1">
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm text-brand-700 font-bold">Total da Compra:</span>
+                        <span class="text-2xl font-black text-brand-600" id="checkout-total-pgto">R$ 0,00</span>
+                    </div>
+                    <div class="flex justify-between items-center border-t border-brand-100 pt-2 mt-1">
+                        <span class="text-[10px] text-emerald-600 font-bold uppercase tracking-widest">Lucro Líquido desta Venda:</span>
+                        <span class="text-sm font-black text-emerald-600" id="checkout-lucro-pgto">R$ 0,00</span>
+                    </div>
                 </div>
                 
                 <div class="grid grid-cols-2 gap-3">
@@ -713,12 +719,12 @@
 
             dbProdutos.forEach(p => {
                 let estoqueAtual = parseInt(p.estoque) || 0;
-                let custo = parseFloat(p.custo) || 0;
-                let margem = parseFloat(p.margem) || 0;
-                let desc = parseFloat(p.desconto) || 0;
-                let pVitrine = (custo * (1 + (margem / 100))) / (1 - (desc / 100));
+                let custoFixo = parseFloat(p.custo) || 0;
+                let margemFormacao = parseFloat(p.margem) || 0;
+                
+                let pFinal = custoFixo * (1 + (margemFormacao / 100));
 
-                if (estoqueAtual > 0) totalValorEstoque += (pVitrine * estoqueAtual);
+                if (estoqueAtual > 0) totalValorEstoque += (pFinal * estoqueAtual);
 
                 let vendasDesteProduto = dbVendas.filter(v => v.pid === p.id);
                 let ultimaVendaStr = null;
@@ -787,6 +793,84 @@
 
         function voltarCategorias() { renderCategorias(); }
 
+        // CÁLCULO PROFISSIONAL DE PRECIFICAÇÃO (REVERSA E AO VIVO)
+        function recalcularCardProduto(id) {
+            const p = dbProdutos.find(x => x.id === id);
+            if (!p) return;
+
+            const custoFixo = parseFloat(p.custo) || 0; 
+            const despPerc = parseFloat(p.custosVariaveis) || 0; 
+            const margemFormacao = parseFloat(p.margem) || 0; 
+            const descPerc = parseFloat(p.desconto) || 0;
+
+            // 1. PREÇO ALVO E VITRINE (MARGEM DIRETA PARA PREÇO DE VENDA)
+            const valorAlvo = custoFixo * (1 + (margemFormacao / 100));
+            const divisorDesconto = Math.max(0.01, 1 - (descPerc / 100));
+            const pVitrine = descPerc > 0 ? (valorAlvo / divisorDesconto) : valorAlvo;
+            const pFinal = valorAlvo; // O "com desconto" é o valor real da meta
+
+            // 2. CÁLCULO DE DESPESAS (Calculado sobre a Venda) E LUCRO
+            const valorDespesasReaisCheio = pVitrine * (despPerc / 100);
+            const custoTotalOperacaoCheio = custoFixo + valorDespesasReaisCheio;
+            const lucroCheio = pVitrine - custoTotalOperacaoCheio;
+
+            const valorDespesasReais = pFinal * (despPerc / 100);
+            const custoTotalOperacao = custoFixo + valorDespesasReais;
+            const lucro = pFinal - custoTotalOperacao;
+            
+            // 3. MARKUP E PREÇO SUGERIDO (Base Estoque Padrão de 2.5x)
+            const markup = custoFixo > 0 ? (pFinal / custoFixo) : 0;
+            const precoSugerido = custoFixo * 2.5;
+
+            // Atualiza Valores de Venda
+            const elVitrine = document.getElementById(`vitrine-${id}`);
+            const elFinal = document.getElementById(`final-${id}`);
+            if(elVitrine) elVitrine.textContent = fmtMoeda(pVitrine);
+            if(elFinal) elFinal.textContent = fmtMoeda(pFinal);
+
+            // Atualiza Lucros
+            const elLucro = document.getElementById(`lucro-${id}`);
+            const elLucroCheio = document.getElementById(`lucro-cheio-${id}`);
+            const elSugerido = document.getElementById(`sugerido-${id}`);
+            
+            if(elLucro) {
+                elLucro.textContent = fmtMoeda(lucro);
+                if (lucro < 0) {
+                    elLucro.classList.remove('text-emerald-600');
+                    elLucro.classList.add('text-red-600');
+                } else {
+                    elLucro.classList.add('text-emerald-600');
+                    elLucro.classList.remove('text-red-600');
+                }
+            }
+            if(elLucroCheio) {
+                elLucroCheio.textContent = fmtMoeda(lucroCheio);
+                if (lucroCheio < 0) {
+                    elLucroCheio.classList.remove('text-emerald-500');
+                    elLucroCheio.classList.add('text-red-500');
+                } else {
+                    elLucroCheio.classList.add('text-emerald-500');
+                    elLucroCheio.classList.remove('text-red-500');
+                }
+            }
+            if(elSugerido) elSugerido.textContent = fmtMoeda(precoSugerido);
+
+            // Atualiza Markup Badge Dinamicamente
+            const elMarkup = document.getElementById(`markup-${id}`);
+            if(elMarkup) {
+                elMarkup.textContent = markup.toFixed(2) + 'x';
+                elMarkup.className = "px-3 py-1 rounded-lg text-sm font-black border transition-colors ";
+                
+                if (markup >= 2.0) {
+                    elMarkup.classList.add('bg-emerald-100', 'text-emerald-700', 'border-emerald-200');
+                } else if (markup >= 1.5) {
+                    elMarkup.classList.add('bg-yellow-100', 'text-yellow-700', 'border-yellow-200');
+                } else {
+                    elMarkup.classList.add('bg-red-100', 'text-red-700', 'border-red-200');
+                }
+            }
+        }
+
         function renderProdutos() {
             const list = document.getElementById('listaProdutos'); list.innerHTML = '';
             const filtered = dbProdutos.filter(p => p.categoria === currentCat);
@@ -794,11 +878,44 @@
             const { produtosAnalisados } = analisarEstoqueInteligente();
 
             filtered.slice().reverse().forEach(p => {
-                const custo = parseFloat(p.custo) || 0;
-                const margem = parseFloat(p.margem) || 0;
-                const desc = parseFloat(p.desconto) || 0;
-                const pVitrine = (custo * (1 + (margem / 100))) / (1 - (desc / 100));
-                const pFinal = pVitrine * (1 - (desc / 100));
+                const custoFixo = parseFloat(p.custo) || 0;
+                const despPerc = parseFloat(p.custosVariaveis) || 0;
+                const margemFormacao = parseFloat(p.margem) || 0;
+                const descPerc = parseFloat(p.desconto) || 0;
+                
+                const valorAlvo = custoFixo * (1 + (margemFormacao / 100));
+                const divisorDesconto = Math.max(0.01, 1 - (descPerc / 100));
+                
+                const pVitrine = descPerc > 0 ? (valorAlvo / divisorDesconto) : valorAlvo;
+                const pFinal = valorAlvo;
+
+                const valorDespesasReaisCheio = pVitrine * (despPerc / 100);
+                const custoTotalOperacaoCheio = custoFixo + valorDespesasReaisCheio;
+                const lucroCheio = pVitrine - custoTotalOperacaoCheio;
+
+                const valorDespesasReais = pFinal * (despPerc / 100);
+                const custoTotalOperacao = custoFixo + valorDespesasReais;
+                const lucro = pFinal - custoTotalOperacao;
+                
+                const markup = custoFixo > 0 ? (pFinal / custoFixo) : 0;
+                const precoSugerido = custoFixo * 2.5; // Base Estoque Padrão
+                
+                let corMarkupBg = 'bg-red-100';
+                let corMarkupText = 'text-red-700';
+                let corMarkupBorder = 'border-red-200';
+                
+                if (markup >= 2.0) {
+                    corMarkupBg = 'bg-emerald-100';
+                    corMarkupText = 'text-emerald-700';
+                    corMarkupBorder = 'border-emerald-200';
+                } else if (markup >= 1.5) {
+                    corMarkupBg = 'bg-yellow-100';
+                    corMarkupText = 'text-yellow-700';
+                    corMarkupBorder = 'border-yellow-200';
+                }
+
+                let corLucroText = lucro < 0 ? 'text-red-600' : 'text-emerald-600';
+                let corLucroCheioText = lucroCheio < 0 ? 'text-red-500' : 'text-emerald-500';
 
                 const analise = produtosAnalisados.find(x => x.id === p.id);
                 const badgeParado = (analise && analise.parado) ? `<span class="bg-orange-100 text-orange-700 text-[9px] px-2 py-0.5 rounded-md font-black ml-2 border border-orange-200 uppercase"><i class="fas fa-clock"></i> Parado</span>` : '';
@@ -825,32 +942,70 @@
                         </div>
                         <button type="button" onclick="deleteProd('${p.id}')" class="text-slate-300 hover:text-red-500 p-2"><i class="fas fa-trash"></i></button>
                     </div>
-                    <div class="grid grid-cols-2 gap-3 mb-3">
-                        <div class="bg-brand-50/50 p-2 rounded-2xl border border-brand-100 flex flex-col items-center">
-                            <span class="text-[9px] font-bold text-brand-600 uppercase">Estoque</span>
+                    
+                    <div class="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-3">
+                        <div class="col-span-2 sm:col-span-1 bg-brand-50/50 p-2 rounded-2xl border border-brand-100 flex flex-col items-center justify-center">
+                            <span class="text-[9px] font-bold text-brand-600 uppercase tracking-wider mb-1">Em Estoque</span>
                             <div class="flex items-center gap-2">
-                                <button type="button" onclick="modEstoque('${p.id}', -1)" class="w-7 h-7 bg-white rounded-full border border-brand-200 text-xs">-</button>
-                                <span class="font-black text-xl estoque-numero" id="estoque-${p.id}">${p.estoque}</span>
-                                <button type="button" onclick="modEstoque('${p.id}', 1)" class="w-7 h-7 bg-brand-500 text-white rounded-full text-xs">+</button>
+                                <button type="button" onclick="modEstoque('${p.id}', -1)" class="w-6 h-6 bg-white rounded-full border border-brand-200 text-brand-600 text-xs shadow-sm flex items-center justify-center">-</button>
+                                <span class="font-black text-xl text-brand-900 estoque-numero" id="estoque-${p.id}">${p.estoque}</span>
+                                <button type="button" onclick="modEstoque('${p.id}', 1)" class="w-6 h-6 bg-brand-600 text-white rounded-full text-xs shadow-sm flex items-center justify-center">+</button>
                             </div>
                         </div>
                         <div class="bg-white border border-slate-100 p-2 rounded-2xl flex flex-col">
-                            <span class="text-[9px] font-bold text-slate-400 uppercase">Custo (R$)</span>
-                            <input type="number" value="${p.custo}" oninput="updateProd('${p.id}', 'custo', this.value)" class="bg-transparent border-none font-bold text-lg p-0 outline-none">
+                            <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider" title="Custo Fixo do Produto">Custo Fixo</span>
+                            <input type="number" value="${p.custo}" oninput="updateProd('${p.id}', 'custo', this.value)" placeholder="0.00" class="bg-transparent border-none font-bold text-lg text-slate-700 p-0 outline-none mt-auto">
                         </div>
-                        <div class="bg-white border border-slate-100 p-2 rounded-2xl flex flex-col">
-                            <span class="text-[9px] font-bold text-slate-400 uppercase">Margem (%)</span>
-                            <input type="number" value="${p.margem}" oninput="updateProd('${p.id}', 'margem', this.value)" class="bg-transparent border-none font-bold text-lg p-0 outline-none">
+                        <div class="bg-white border border-slate-100 p-2 rounded-2xl flex flex-col relative group">
+                            <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider" title="Taxas, Fretes e Variáveis">Despesas (%)</span>
+                            <input type="number" value="${p.custosVariaveis || ''}" oninput="updateProd('${p.id}', 'custosVariaveis', this.value)" class="bg-transparent border-none font-bold text-lg text-orange-500 p-0 outline-none mt-auto w-full pr-4" placeholder="0">
+                            <i class="fas fa-percentage absolute right-2 bottom-3 text-orange-500 opacity-50 text-sm"></i>
                         </div>
-                        <div class="bg-white border border-slate-100 p-2 rounded-2xl flex flex-col">
-                            <span class="text-[9px] font-bold text-slate-400 uppercase">Desconto (%)</span>
-                            <input type="number" value="${p.desconto}" oninput="updateProd('${p.id}', 'desconto', this.value)" class="bg-transparent border-none font-bold text-lg p-0 outline-none">
+                        <div class="bg-white border border-slate-100 p-2 rounded-2xl flex flex-col relative">
+                            <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider" title="Lucro desejado sobre o custo">Margem (%)</span>
+                            <input type="number" value="${p.margem}" oninput="updateProd('${p.id}', 'margem', this.value)" placeholder="0" class="bg-transparent border-none font-bold text-lg text-slate-700 p-0 outline-none mt-auto w-full pr-4">
+                            <i class="fas fa-percentage absolute right-2 bottom-3 text-slate-400 opacity-50 text-sm"></i>
+                        </div>
+                        <div class="bg-white border border-slate-100 p-2 rounded-2xl flex flex-col relative">
+                            <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider" title="Desconto para inflar preço vitrine">Desc. (%)</span>
+                            <input type="number" value="${p.desconto}" oninput="updateProd('${p.id}', 'desconto', this.value)" placeholder="0" class="bg-transparent border-none font-bold text-lg text-slate-700 p-0 outline-none mt-auto w-full pr-4">
+                            <i class="fas fa-percentage absolute right-2 bottom-3 text-slate-400 opacity-50 text-sm"></i>
                         </div>
                     </div>
-                    <div class="grid grid-cols-2 gap-2 bg-slate-50 p-3 rounded-2xl mb-3">
-                        <div><p class="text-[9px] text-brand-700 uppercase">Valor Cheio</p><p class="font-black text-brand-600 text-lg" id="vitrine-${p.id}">${fmtMoeda(pVitrine)}</p></div>
-                        <div><p class="text-[9px] text-slate-400 uppercase">Com Desconto</p><p class="font-bold text-slate-600" id="final-${p.id}">${fmtMoeda(pFinal)}</p></div>
+
+                    <div class="grid grid-cols-2 gap-2 bg-slate-50 p-3 rounded-2xl mb-1 border border-slate-100">
+                        <div>
+                            <p class="text-[9px] text-brand-700 uppercase font-bold tracking-wider">Valor Cheio</p>
+                            <p class="font-black text-brand-600 text-lg" id="vitrine-${p.id}">${fmtMoeda(pVitrine)}</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-[9px] text-slate-400 uppercase font-bold tracking-wider">Com Desconto</p>
+                            <p class="font-bold text-slate-600 text-lg" id="final-${p.id}">${fmtMoeda(pFinal)}</p>
+                        </div>
                     </div>
+                    
+                    <div class="border-t border-slate-100 pt-3 pb-2 mt-3 px-3 bg-white rounded-2xl shadow-sm">
+                        <div class="flex justify-between items-start mb-2">
+                            <div>
+                                <p class="text-[9px] text-slate-400 uppercase font-bold tracking-widest mb-0.5">Lucro (Venda Cheia)</p>
+                                <span id="lucro-cheio-${p.id}" class="${corLucroCheioText} font-bold text-sm block mb-1">${fmtMoeda(lucroCheio)}</span>
+                                
+                                <p class="text-[10px] text-brand-800 uppercase font-bold tracking-widest mb-0.5">Lucro Líquido Real</p>
+                                <span id="lucro-${p.id}" class="${corLucroText} font-black text-xl">${fmtMoeda(lucro)}</span>
+                            </div>
+                            <div class="text-right flex flex-col items-end">
+                                <p class="text-[10px] text-slate-400 uppercase font-bold mb-1 tracking-widest">Markup</p>
+                                <span id="markup-${p.id}" class="px-3 py-1 rounded-lg text-sm font-black border transition-colors ${corMarkupBg} ${corMarkupText} ${corMarkupBorder}">
+                                    ${markup.toFixed(2)}x
+                                </span>
+                            </div>
+                        </div>
+                        <div class="flex justify-between items-center border-t border-slate-100 pt-2 mt-1">
+                            <p class="text-[10px] text-slate-500 font-bold tracking-wide uppercase"><i class="fas fa-bullseye text-purple-500 mr-1"></i> Preço Seguro (Custo x2.5):</p>
+                            <p id="sugerido-${p.id}" class="text-sm font-black text-purple-600">${fmtMoeda(precoSugerido)}</p>
+                        </div>
+                    </div>
+
                     <div class="mt-4 border-t border-slate-100 pt-3 flex gap-2">
                         ${footerHtml}
                     </div>
@@ -861,7 +1016,7 @@
 
         function adicionarProduto() {
             dbProdutos.push({ 
-                id: guid(), categoria: currentCat, nome: '', estoque: '0', custo: '', margem: '', desconto: '', 
+                id: guid(), categoria: currentCat, nome: '', estoque: '0', custo: '', custosVariaveis: '', margem: '', desconto: '', 
                 dataCadastro: new Date().toISOString(), isDraft: true 
             });
             renderProdutos();
@@ -884,6 +1039,9 @@
             if (idx > -1) { 
                 dbProdutos[idx][field] = val; 
                 if (!dbProdutos[idx].isDraft) saveDB(); 
+                
+                // Dispara o cálculo em tempo real SEM recarregar a lista
+                recalcularCardProduto(id); 
             }
         }
 
@@ -943,13 +1101,23 @@
 
         function calcularItemCarrinho(item) {
             const p = dbProdutos.find(x => x.id === item.pid);
-            const custo = parseFloat(p.custo) || 0;
-            const margem = parseFloat(p.margem) || 0;
-            const desc = parseFloat(p.desconto) || 0;
-            const pVitrine = (custo * (1 + (margem / 100))) / (1 - (desc / 100));
-            const pFinal = pVitrine * (1 - (desc / 100));
+            const custoFixo = parseFloat(p.custo) || 0; 
+            const despPerc = parseFloat(p.custosVariaveis) || 0;
+            const margemFormacao = parseFloat(p.margem) || 0; 
+            const descPerc = parseFloat(p.desconto) || 0;
+            
+            const valorAlvo = custoFixo * (1 + (margemFormacao / 100));
+            const divisorDesconto = Math.max(0.01, 1 - (descPerc / 100));
+            const pVitrine = descPerc > 0 ? (valorAlvo / divisorDesconto) : valorAlvo;
+            const pFinal = valorAlvo;
+
             const unit = item.tipo === 'cheio' ? pVitrine : pFinal;
-            return { nome: p.nome, valorTotal: unit * item.qtde, custoUnit: custo };
+            
+            // Custo Total da unidade já deduzindo a % de despesa baseada no preço exato de venda!
+            const valorDespesasReais = unit * (despPerc / 100);
+            const custoTotalUnidadeDaVenda = custoFixo + valorDespesasReais;
+            
+            return { nome: p.nome, valorTotal: unit * item.qtde, custoUnit: custoTotalUnidadeDaVenda };
         }
 
         function abrirCarrinho() {
@@ -970,8 +1138,17 @@
         // --- CHECKOUT ---
         function iniciarCheckout() {
             if(carrinho.length === 0) return;
-            totalCheckoutAtual = carrinho.reduce((sum, item) => sum + calcularItemCarrinho(item).valorTotal, 0);
+            
+            let totalLucroAtual = 0;
+            totalCheckoutAtual = carrinho.reduce((sum, item) => {
+                const info = calcularItemCarrinho(item);
+                totalLucroAtual += info.valorTotal - (info.custoUnit * item.qtde);
+                return sum + info.valorTotal;
+            }, 0);
+            
             document.getElementById('checkout-total-pgto').textContent = fmtMoeda(totalCheckoutAtual);
+            document.getElementById('checkout-lucro-pgto').textContent = fmtMoeda(totalLucroAtual);
+            
             document.getElementById('checkout-sel-cliente').innerHTML = dbClientes.map(c => `<option value="${c.id}">${c.nome}</option>`).join('');
             fecharCarrinho(); toggleMetodoPgto();
             document.getElementById('modal-checkout-pgto').classList.remove('hidden-screen');
@@ -1054,7 +1231,11 @@
             carrinho.forEach(item => {
                 const info = calcularItemCarrinho(item);
                 const valorComJ = info.valorTotal * multiplicador;
-                dbVendas.push({ id: guid(), idCompra: idC, pid: item.pid, pnome: info.nome, qtde: item.qtde, valor: valorComJ, lucro: valorComJ - (info.custoUnit*item.qtde), metodo: met, canal: can, data: dataIso, status: 'pago' });
+                
+                // Lucro real da venda (o juros da maquininha repassado não engana o relatório de lucro)
+                const lucroRealDaVenda = info.valorTotal - (info.custoUnit * item.qtde);
+                
+                dbVendas.push({ id: guid(), idCompra: idC, pid: item.pid, pnome: info.nome, qtde: item.qtde, valor: valorComJ, lucro: lucroRealDaVenda, metodo: met, canal: can, data: dataIso, status: 'pago' });
                 modEstoqueDireto(item.pid, -item.qtde);
             });
 
@@ -1155,7 +1336,8 @@
                 status.innerHTML = '<span class="text-xs font-bold text-blue-600 uppercase">Em Lucro</span>';
                 document.getElementById('despesas-lucro-liquido').className = 'text-2xl font-black text-blue-600';
             } else {
-                barra.style.width = '100%';
+                let p = totalDespesas > 0 ? (lucroMes / totalDespesas) * 100 : 0;
+                barra.style.width = Math.min(Math.max(p, 0), 100) + '%';
                 barra.className = 'h-full transition-all duration-500 bg-red-500';
                 status.innerHTML = '<span class="text-xs font-bold text-red-600 uppercase">Em Prejuízo</span>';
                 document.getElementById('despesas-lucro-liquido').className = 'text-2xl font-black text-red-500';
@@ -1192,7 +1374,6 @@
             showToast("Despesa registrada!");
         }
 
-        // CONFIRMAÇÃO DE EXCLUSÃO DE DESPESA GARANTIDA
         function excluirDespesa(id) {
             openModalConfirm("Apagar Despesa?", "Tem certeza que deseja remover esta despesa do mês permanentemente?", () => {
                 dbDespesas = dbDespesas.filter(x => x.id !== id);
@@ -1342,7 +1523,10 @@
         function abrirResumoEstoque() {
             const { totalValorEstoque } = analisarEstoqueInteligente();
             let totalPecas = dbProdutos.reduce((a, b) => a + (parseInt(b.estoque) || 0), 0);
+            
+            // O custo investido no estoque é focado SOMENTE no Custo Fixo!
             let custoTotal = dbProdutos.reduce((a, b) => a + ((parseFloat(b.custo) || 0) * (parseInt(b.estoque) || 0)), 0);
+            
             document.getElementById('resumo-estoque-pecas').textContent = totalPecas;
             document.getElementById('resumo-estoque-custo').textContent = fmtMoeda(custoTotal);
             document.getElementById('resumo-estoque-venda').textContent = fmtMoeda(totalValorEstoque);
